@@ -24,6 +24,14 @@
 
 #define LOCK_RELEASE do{ pthread_mutex_unlock(&rb->base->mutex); }while(0)
 
+#define READ_LOCK do{ pthread_mutex_lock(&rb->base->readMutex); }while(0)
+
+#define READ_RELEASE do{ pthread_mutex_unlock(&rb->base->readMutex); }while(0)
+
+#define WRITE_LOCK do{ pthread_mutex_lock(&rb->base->writeMutex); }while(0)
+
+#define WRITE_RELEASE do{ pthread_mutex_unlock(&rb->base->writeMutex); }while(0)
+
 #define VALID_HANDLE(handle) ( (handle) != NULL && (handle)->magic == CONCURRENT_RING_BUFFER_MAGIC )
 
 /*******************************************************/
@@ -32,6 +40,8 @@
 
 struct Base_t {
     pthread_mutex_t mutex;
+    pthread_mutex_t readMutex;
+    pthread_mutex_t writeMutex;
     pthread_cond_t readCV;
     pthread_cond_t writeCV;
     int enabled;
@@ -103,21 +113,17 @@ CRingBuffer CRingBuffer_new(uint32_t size) {
     memset(rb, 0x00, sizeof(struct ConcurrentRingBuffer_t));
 
     rb->base = (struct Base_t*)malloc(sizeof(struct Base_t));
-
     rb->magic = CONCURRENT_RING_BUFFER_MAGIC;
 
     pthread_mutex_init(&rb->base->mutex, NULL);
-
+    pthread_mutex_init(&rb->base->readMutex, NULL);
+    pthread_mutex_init(&rb->base->writeMutex, NULL);
     pthread_cond_init(&rb->base->readCV, NULL);
-
     pthread_cond_init(&rb->base->writeCV, NULL);
 
     rb->buffer = RingBuffer_new(size);
-
     rb->base->enabled = 1;
-
     rb->sharedMemory = 0;
-
     rb->owned = 1;
 
     return rb;
@@ -134,9 +140,9 @@ int32_t CRingBuffer_free(CRingBuffer* rb) {
 
     if((*rb)->owned) {
         pthread_mutex_destroy(&(*rb)->base->mutex);
-
+        pthread_mutex_destroy(&(*rb)->base->writeMutex);
+        pthread_mutex_destroy(&(*rb)->base->readMutex);
         pthread_cond_destroy(&(*rb)->base->readCV);
-
         pthread_cond_destroy(&(*rb)->base->writeCV);
     }
 
@@ -147,7 +153,6 @@ int32_t CRingBuffer_free(CRingBuffer* rb) {
     }
 
     free(*rb);
-
     *rb = NULL;
 
     return res;
@@ -165,12 +170,17 @@ int32_t CRingBuffer_read(CRingBuffer rb, uint8_t* data, uint32_t size, CRingBuff
         return 0;
     }
 
+    READ_LOCK
+    ;
+
     LOCK_ACQUIRE
     ;
 
     // Checkpoint
     if(!rb->base->enabled) {
         LOCK_RELEASE
+        ;
+        READ_RELEASE
         ;
         return 0;
     }
@@ -188,6 +198,8 @@ int32_t CRingBuffer_read(CRingBuffer rb, uint8_t* data, uint32_t size, CRingBuff
             // Checkpoint
             if(!rb->base->enabled) {
                 LOCK_RELEASE
+                ;
+                READ_RELEASE
                 ;
 
                 return size - bytesRemaining;
@@ -214,6 +226,8 @@ int32_t CRingBuffer_read(CRingBuffer rb, uint8_t* data, uint32_t size, CRingBuff
             if(!rb->base->enabled) {
                 LOCK_RELEASE
                 ;
+                READ_RELEASE
+                ;
                 return 0;
             }
 
@@ -236,6 +250,8 @@ int32_t CRingBuffer_read(CRingBuffer rb, uint8_t* data, uint32_t size, CRingBuff
 
     LOCK_RELEASE
     ;
+    READ_RELEASE
+    ;
 
     return bytesRead;
 }
@@ -253,12 +269,17 @@ int32_t CRingBuffer_write(CRingBuffer rb, const uint8_t* data, uint32_t size, CR
         return 0;
     }
 
+    WRITE_LOCK
+    ;
+
     LOCK_ACQUIRE
     ;
 
     // Checkpoint
     if(!rb->base->enabled) {
         LOCK_RELEASE
+        ;
+        WRITE_RELEASE
         ;
         return 0;
     }
@@ -276,6 +297,8 @@ int32_t CRingBuffer_write(CRingBuffer rb, const uint8_t* data, uint32_t size, CR
             // Checkpoint
             if(!rb->base->enabled) {
                 LOCK_RELEASE
+                ;
+                WRITE_RELEASE
                 ;
 
                 return size - bytesRemaining;
@@ -307,6 +330,8 @@ int32_t CRingBuffer_write(CRingBuffer rb, const uint8_t* data, uint32_t size, CR
     }
 
     LOCK_RELEASE
+    ;
+    WRITE_RELEASE
     ;
 
     return bytesWritten;
