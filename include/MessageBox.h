@@ -9,7 +9,7 @@
 #include <stdint.h>
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 struct MessageBox_t;
@@ -30,7 +30,5 @@ int32_t MessageBox_getNumMessages(MessageBox mb);
 }
 #endif
 
-
 #endif /* MESSAGEBOX_H_ */
-
 

@@ -25,77 +25,75 @@
 /*              Typedefs                               */
 /*******************************************************/
 
-
-struct MessageBox_t{
-	uint32_t magic;
-	int32_t messageSize;
-	CRingBuffer buffer;
-}; // </ConcurrentRingBuffer_t>
+struct MessageBox_t {
+    uint32_t magic;
+    int32_t messageSize;
+    CRingBuffer buffer;
+};
+// </ConcurrentRingBuffer_t>
 
 /*******************************************************/
 /*              Functions Definitions                  */
 /*******************************************************/
 
+MessageBox MessageBox_new(int32_t messageSize, int32_t capacity) {
+    MessageBox mb = (MessageBox)malloc(sizeof(struct MessageBox_t));
 
-MessageBox MessageBox_new(int32_t messageSize, int32_t capacity){
-	MessageBox mb = (MessageBox)malloc(sizeof(struct MessageBox_t));
+    memset(mb, 0x00, sizeof(struct MessageBox_t));
 
-	memset(mb, 0x00, sizeof(struct MessageBox_t));
+    mb->magic = MESSAGE_BOX_MAGIC;
 
-	mb->magic = MESSAGE_BOX_MAGIC;
+    mb->buffer = CRingBuffer_new(capacity * messageSize);
 
-	mb->buffer = CRingBuffer_new(capacity*messageSize);
+    mb->messageSize = messageSize;
 
-	mb->messageSize = messageSize;
-
-	return mb;
+    return mb;
 }
 
-int32_t MessageBox_free(MessageBox* mb){
-	if(mb == NULL || !VALID_HANDLE(*mb)){
-		return -1;
-	}
+int32_t MessageBox_free(MessageBox* mb) {
+    if(mb == NULL || !VALID_HANDLE(*mb)) {
+        return -1;
+    }
 
-	CRingBuffer_free(&(*mb)->buffer);
+    CRingBuffer_free(&(*mb)->buffer);
 
-	free(*mb);
+    free(*mb);
 
-	*mb = NULL;
+    *mb = NULL;
 
-	return 0;
+    return 0;
 }
 
-int32_t MessageBox_read(MessageBox mb, void* message){
-	if(!VALID_HANDLE(mb)){
-		return -1;
-	}
+int32_t MessageBox_read(MessageBox mb, void* message) {
+    if(!VALID_HANDLE(mb)) {
+        return -1;
+    }
 
-	int32_t res = CRingBuffer_read(mb->buffer, (uint8_t*)message, mb->messageSize, eREAD_BLOCK_FULL);
+    int32_t res = CRingBuffer_read(mb->buffer, (uint8_t*)message, mb->messageSize, eREAD_BLOCK_FULL);
 
-	return res == mb->messageSize ? 0 : -1;
+    return res == mb->messageSize ? 0 : -1;
 }
 
-int32_t MessageBox_write(MessageBox mb, const void* message){
-	if(!VALID_HANDLE(mb)){
-		return -1;
-	}
+int32_t MessageBox_write(MessageBox mb, const void* message) {
+    if(!VALID_HANDLE(mb)) {
+        return -1;
+    }
 
-	int32_t res = CRingBuffer_write(mb->buffer, (const uint8_t*)message, mb->messageSize, eWRITE_BLOCK_FULL);
+    int32_t res = CRingBuffer_write(mb->buffer, (const uint8_t*)message, mb->messageSize, eWRITE_BLOCK_FULL);
 
-	return res == mb->messageSize ? 0 : -1;
+    return res == mb->messageSize ? 0 : -1;
 }
 
-int32_t MessageBox_getNumMessages(MessageBox mb){
-	if(!VALID_HANDLE(mb)){
-		return -1;
-	}
+int32_t MessageBox_getNumMessages(MessageBox mb) {
+    if(!VALID_HANDLE(mb)) {
+        return -1;
+    }
 
-	int32_t res = CRingBuffer_getBytesUsed(mb->buffer);
+    int32_t res = CRingBuffer_getBytesUsed(mb->buffer);
 
-	if(res == -1){
-		return -1;
-	}
-	else{
-		return res / mb->messageSize;
-	}
+    if(res == -1) {
+        return -1;
+    } else {
+        return res / mb->messageSize;
+    }
 }

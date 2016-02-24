@@ -7,44 +7,44 @@
 #define CONCURRENTRINGBUFFER_H_
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 #include <stdint.h>
 #include <pthread.h>
 
-typedef enum{
-	/**
-	 * Block until there is enough data to fill the entire buffer
-	 */
-	eREAD_BLOCK_FULL,
+typedef enum {
+    /**
+     * Block until there is enough data to fill the entire buffer
+     */
+    eREAD_BLOCK_FULL,
 
-	/**
-	 * Blocks until there is at least some data available
-	 */
-	eREAD_BLOCK_PARTIAL,
+    /**
+     * Blocks until there is at least some data available
+     */
+    eREAD_BLOCK_PARTIAL,
 
-	/**
-	 * Return immidietly without blocking (may return zero)
-	 */
-	eREAD_BLOCK_NONE
+    /**
+     * Return immidietly without blocking (may return zero)
+     */
+    eREAD_BLOCK_NONE
 } CRingBuffer_ReadMode; // </ReadMode>
 
-typedef enum{
-	/**
-	 * Blocks until there is enough free space to write the total ammount of data provided
-	 */
-	eWRITE_BLOCK_FULL,
+typedef enum {
+    /**
+     * Blocks until there is enough free space to write the total ammount of data provided
+     */
+    eWRITE_BLOCK_FULL,
 
-	/**
-	 * Does not block, writes all data possibly overwriting old data
-	 */
-	eWRITE_OVERFLOW,
+    /**
+     * Does not block, writes all data possibly overwriting old data
+     */
+    eWRITE_OVERFLOW,
 
-	/**
-	 * Does not block, attempts to write all data if there is enough space, otherwise writes at least some data
-	 */
-	eWRITE_WRITE_SOME
+    /**
+     * Does not block, attempts to write all data if there is enough space, otherwise writes at least some data
+     */
+    eWRITE_WRITE_SOME
 } CRingBuffer_WriteMode;
 
 struct ConcurrentRingBuffer_t;
@@ -97,7 +97,7 @@ int32_t CRingBuffer_read(CRingBuffer rb, uint8_t* data, uint32_t size, CRingBuff
  * @param[in] mode Mode which decides the behavior of the function call. See 'CRingBuffer_WriteMode' enumeration for more info.
  * @return -1 on failure, number of bytes written otherwise.
  */
-int32_t CRingBuffer_write(CRingBuffer rb,  const uint8_t* data, uint32_t size, CRingBuffer_WriteMode mode);
+int32_t CRingBuffer_write(CRingBuffer rb, const uint8_t* data, uint32_t size, CRingBuffer_WriteMode mode);
 
 /**
  * Gets the number of bytes currently contained in the buffer.

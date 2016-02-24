@@ -15,107 +15,103 @@ void* consumerThread(void* arg);
 
 void* producerThread(void* arg);
 
-int main(){
-	void* producerRes = NULL;
-	void* consumerRes = NULL;
-	pthread_t producer, consumer;
+int main() {
+    void* producerRes = NULL;
+    void* consumerRes = NULL;
+    pthread_t producer, consumer;
 
-	// Seed the RNG
-	srand(time(NULL));
+    // Seed the RNG
+    srand(time(NULL));
 
-	// Create a concurrent ring buffer
-	CRingBuffer bfr = CRingBuffer_new( BUFFER_SIZE );
+    // Create a concurrent ring buffer
+    CRingBuffer bfr = CRingBuffer_new( BUFFER_SIZE);
 
-	// Start the producer thread
-	pthread_create(&producer, NULL, producerThread, bfr);
+    // Start the producer thread
+    pthread_create(&producer, NULL, producerThread, bfr);
 
-	// Start the consumer thread
-	pthread_create(&consumer, NULL, consumerThread, bfr);
+    // Start the consumer thread
+    pthread_create(&consumer, NULL, consumerThread, bfr);
 
+    // Wait untill they're finished
+    pthread_join(producer, &producerRes);
+    pthread_join(consumer, &consumerRes);
 
-	// Wait untill they're finished
-	pthread_join(producer, &producerRes);
-	pthread_join(consumer, &consumerRes);
+    // Relase the buffer
+    CRingBuffer_free(&bfr);
 
-	// Relase the buffer
-	CRingBuffer_free(&bfr);
+    if(producerRes == NULL && consumerRes == NULL) {
 
-	if( producerRes == NULL && consumerRes == NULL ){
+        printf("#################\n");
+        printf("Test OK\n");
+        printf("#################\n");
 
-		printf("#################\n");
-		printf("Test OK\n");
-		printf("#################\n");
+        return 0;
+    } else {
 
-		return 0;
-	}
-	else{
+        printf("#################\n");
+        printf("Test failed\n");
+        printf("#################\n");
 
-		printf("#################\n");
-		printf("Test failed\n");
-		printf("#################\n");
-
-		return 1;
-	}
+        return 1;
+    }
 }
 
+void* consumerThread(void* arg) {
+    CRingBuffer buffer = (CRingBuffer)arg;
+    uint8_t data[CONSUMER_BFR_SIZE];
+    int totalRead = 0;
+    uint8_t counter = 0;
+    void* error = NULL;
+    int i;
 
-void* consumerThread(void* arg){
-	CRingBuffer buffer = (CRingBuffer)arg;
-	uint8_t data[CONSUMER_BFR_SIZE];
-	int totalRead = 0;
-	uint8_t counter = 0;
-	void* error = NULL;
-	int i;
+    while(totalRead < BUFFER_SIZE) {
+        // Read data (block until there's at least some data to read)
+        int read = CRingBuffer_read(buffer, data, rand() % CONSUMER_BFR_SIZE, eREAD_BLOCK_PARTIAL);
 
-	while(totalRead < BUFFER_SIZE){
-		// Read data (block until there's at least some data to read)
-		int read = CRingBuffer_read(buffer, data, rand() % CONSUMER_BFR_SIZE, eREAD_BLOCK_PARTIAL);
+        for(i = 0; i < read; i++) {
+            // Verify data correctness
+            if(data[i] != counter++) {
+                // Corrupt data
+                return (void*)1;
+            }
+        }
 
+        // Repeat until we consumed BUFFER_SIZE bytes
+        totalRead += read;
+    }
 
-		for(i=0; i<read; i++){
-			// Verify data correctness
-			if(data[i] != counter++){
-				// Corrupt data
-				return (void*)1;
-			}
-		}
+    printf("Consumer thread finished\n");
 
-		// Repeat until we consumed BUFFER_SIZE bytes
-		totalRead += read;
-	}
-
-	printf("Consumer thread finished\n");
-
-	return error;
+    return error;
 }
 
-void* producerThread(void* arg){
-	CRingBuffer buffer = (CRingBuffer)arg;
-	uint8_t data[PRODUCER_BFR_SIZE];
-	int totalWritten = 0;
-	int i = 0;
+void* producerThread(void* arg) {
+    CRingBuffer buffer = (CRingBuffer)arg;
+    uint8_t data[PRODUCER_BFR_SIZE];
+    int totalWritten = 0;
+    int i = 0;
 
-	// Used for veryfing data
-	uint8_t counter = 0;
+    // Used for veryfing data
+    uint8_t counter = 0;
 
-	while(totalWritten < BUFFER_SIZE){
+    while(totalWritten < BUFFER_SIZE) {
 
-		// Write a random number of bytes
-		int toWrite = rand() % PRODUCER_BFR_SIZE;
+        // Write a random number of bytes
+        int toWrite = rand() % PRODUCER_BFR_SIZE;
 
-		// Set data buffer
-		for(i=0; i<toWrite; i++){
-			data[i] = counter++;
-		}
+        // Set data buffer
+        for(i = 0; i < toWrite; i++) {
+            data[i] = counter++;
+        }
 
-		// Write data (block until everything has been written)
-		int written = CRingBuffer_write(buffer, data, toWrite, eWRITE_BLOCK_FULL);
+        // Write data (block until everything has been written)
+        int written = CRingBuffer_write(buffer, data, toWrite, eWRITE_BLOCK_FULL);
 
-		// Repeat untill we write BUFFER_SIZE bytes
-		totalWritten += written;
-	}
+        // Repeat untill we write BUFFER_SIZE bytes
+        totalWritten += written;
+    }
 
-	printf("Producer thread finished\n");
+    printf("Producer thread finished\n");
 
-	return NULL;
+    return NULL;
 }

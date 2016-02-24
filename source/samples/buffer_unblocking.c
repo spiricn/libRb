@@ -7,45 +7,43 @@
 
 void* consumerThread(void* arg);
 
+int main() {
+    pthread_t consumer;
+    CRingBuffer buffer = CRingBuffer_new(1024);
 
-int main(){
-	pthread_t consumer;
-	CRingBuffer buffer = CRingBuffer_new(1024);
+    // Start the producer thread
+    pthread_create(&consumer, NULL, consumerThread, buffer);
 
-	// Start the producer thread
-	pthread_create(&consumer, NULL, consumerThread, buffer);
+    printf("Press any key to unblock the consumer thread\n");
+    getchar();
 
+    // Unblock consumer
+    CRingBuffer_disable(buffer);
 
-	printf("Press any key to unblock the consumer thread\n");
-	getchar();
+    // Wait for the thread to finish
+    pthread_join(consumer, NULL);
 
-	// Unblock consumer
-	CRingBuffer_disable(buffer);
+    CRingBuffer_free(&buffer);
 
-	// Wait for the thread to finish
-	pthread_join(consumer, NULL);
+    printf("#################\n");
+    printf("Test OK\n");
+    printf("#################\n");
 
-	CRingBuffer_free(&buffer);
-
-	printf("#################\n");
-	printf("Test OK\n");
-	printf("#################\n");
-
-	return 0;
+    return 0;
 }
 
-void* consumerThread(void* arg){
-	CRingBuffer buffer = (CRingBuffer)arg;
+void* consumerThread(void* arg) {
+    CRingBuffer buffer = (CRingBuffer)arg;
 
-	uint8_t dummy;
+    uint8_t dummy;
 
-	// Block untill disable is called
-	printf("Blocking consumer...\n");
+    // Block untill disable is called
+    printf("Blocking consumer...\n");
 
-	CRingBuffer_read(buffer, &dummy, 1, eREAD_BLOCK_FULL);
+    CRingBuffer_read(buffer, &dummy, 1, eREAD_BLOCK_FULL);
 
-	printf("Consumer unblocked\n");
+    printf("Consumer unblocked\n");
 
-	return NULL;
+    return NULL;
 }
 
