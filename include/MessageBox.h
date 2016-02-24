@@ -26,6 +26,10 @@ int32_t MessageBox_write(MessageBox mb, const void* message);
 
 int32_t MessageBox_getNumMessages(MessageBox mb);
 
+int32_t MessageBox_disable(MessageBox mb);
+
+int32_t MessageBox_enable(MessageBox mb);
+
 #ifdef __cplusplus
 }
 #endif

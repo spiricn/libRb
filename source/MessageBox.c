@@ -97,3 +97,19 @@ int32_t MessageBox_getNumMessages(MessageBox mb) {
         return res / mb->messageSize;
     }
 }
+
+int32_t MessageBox_disable(MessageBox mb) {
+    if(!VALID_HANDLE(mb)) {
+        return -1;
+    }
+
+    return CRingBuffer_disable(mb->buffer);
+}
+
+int32_t MessageBox_enable(MessageBox mb) {
+    if(!VALID_HANDLE(mb)) {
+        return -1;
+    }
+
+    return CRingBuffer_enable(mb->buffer);
+}
