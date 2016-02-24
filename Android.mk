@@ -8,8 +8,8 @@ SRC_DIR := source
 INC_DIR := $(LOCAL_PATH)/include
 
 LOCAL_SRC_FILES := \
-			$(SRC_DIR)/ConcurrentRingBuffer.c \
 			$(SRC_DIR)/RingBuffer.c \
+			$(SRC_DIR)/ConcurrentRingBuffer.c \
 			$(SRC_DIR)/MessageBox.c \
 					
 LOCAL_C_INCLUDES += \

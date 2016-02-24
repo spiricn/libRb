@@ -12,9 +12,7 @@
 extern "C" {
 #endif
 
-struct ringbuf_t;
-
-typedef struct ringbuf_t* RingBuffer;
+typedef void* RingBufferHandle;
 
 /**
  * Creates new ring buffer object.
@@ -22,7 +20,7 @@ typedef struct ringbuf_t* RingBuffer;
  * @param[in] capacity Buffer capacity.
  * @return Buffer object on sucess, NULL on failure.
  */
-RingBuffer RingBuffer_new(uint32_t capacity);
+RingBufferHandle RingBuffer_new(uint32_t capacity);
 
 /**
  * Creates ring buffer from an already allocated memory block (may be shared between processes).
@@ -32,7 +30,8 @@ RingBuffer RingBuffer_new(uint32_t capacity);
  * @param[in] init If set to 1 initializes the memory (creates a new buffer object). If set to 0 assumes the buffer was already created.
  * @return Buffer object on sucess, NULL on failure
  */
-RingBuffer RingBuffer_fromSharedMemory(void* data, uint32_t size, int init);
+RingBufferHandle RingBuffer_fromSharedMemory(void* data, uint32_t size,
+		int init);
 
 /**
  * The size of the internal buffer, in bytes. One or more bytes may be
@@ -41,90 +40,91 @@ RingBuffer RingBuffer_fromSharedMemory(void* data, uint32_t size, int init);
  * For the usable capacity of the ring buffer, use the
  * RingBuffer_getCapacity function.
  *
- * @param[in] rb Valid ring buffer handle.
+ * @param[in] handle Valid ring buffer handle.
  * @return -1 on failure, buffer size otherwise.
  */
-int32_t RingBuffer_getSize(const RingBuffer rb);
+int32_t RingBuffer_getSize(RingBufferHandle handle);
 
 /**
  * Deallocate a ring buffer, and, as a side effect, set the pointer to NULL.
  *
- * @param[in,out] rb Pointer to a valid ring buffer handle.
+ * @param[in,out] handle Pointer to a valid ring buffer handle.
  * @return -1 on failure, 0 on success.
  */
-int32_t RingBuffer_free(RingBuffer* rb);
+int32_t RingBuffer_free(RingBufferHandle* handle);
 
 /**
  * Reset a ring buffer to its initial state (empty).
  *
- * @param[in] rb Valid ring buffer handle.
+ * @param[in] handle Valid ring buffer handle.
  * @return -1 on failure, 0 on success.
  */
-int32_t RingBuffer_clear(RingBuffer rb);
+int32_t RingBuffer_clear(RingBufferHandle handle);
 
 /**
  * The usable capacity of the ring buffer, in bytes. Note that this
  * value may be less than the ring buffer's internal buffer size, as
  * returned by RingBuffer_getSize.
  *
- * @param[in] rb Valid ring buffer handle.
+ * @param[in] handle Valid ring buffer handle.
  * @return -1 on failure, ring buffer capacity otherwise
  */
-int32_t RingBuffer_getCapacity(const RingBuffer rb);
+int32_t RingBuffer_getCapacity(RingBufferHandle handle);
 
 /**
  * The number of free/available bytes in the ring buffer. This value
  * is never larger than the ring buffer's usable capacity.
  *
- * @param[in] rb Valid ring buffer handle.
+ * @param[in] handle Valid ring buffer handle.
  * @return
  */
-int32_t RingBuffer_getBytesFree(const RingBuffer rb);
+int32_t RingBuffer_getBytesFree(RingBufferHandle handle);
 
 /**
  * The number of bytes currently being used in the ring buffer. This
  * value is never larger than the ring buffer's usable capacity.
  *
- * @param[in] rb Valid ring buffer handle.
+ * @param[in] handle Valid ring buffer handle.
  * @return -1 on failure, number of buffer bytes used otherwise.
  */
-int32_t RingBuffer_getBytesUsed(const RingBuffer rb);
+int32_t RingBuffer_getBytesUsed(RingBufferHandle handle);
 
 /**
  * Checks if the ring buffer is full.
  *
- * @param[in] rb Valid ring buffer handle.
+ * @param[in] handle Valid ring buffer handle.
  * @return -1 on failure, 1 if the buffer is full 0 otherwise.
  */
-int32_t RingBuffer_isFull(const RingBuffer);
+int32_t RingBuffer_isFull(RingBufferHandle handle);
 
 /**
  * Checks if the ring buffer is empty.
  *
- * @param[in] rb Valid ring buffer handle.
+ * @param[in] handle Valid ring buffer handle.
  * @return -1 on failure, 1 if the buffer is empty 0 otherwise.
  */
-int32_t RingBuffer_isEmpty(const RingBuffer);
+int32_t RingBuffer_isEmpty(RingBufferHandle handle);
 
 /**
  * Copy bytes from a contiguous memory area into the ring buffer.
  *
- * @param[in] rb Valid ring buffer handle.
+ * @param[in] handle Valid ring buffer handle.
  * @param[in] src Source buffer.
  * @param[in] count Source buffer size.
  * @return -1 on failure, number of bytes written otherwise.
  */
-int32_t RingBuffer_write(RingBuffer rb, const void* src, uint32_t count);
+int32_t RingBuffer_write(RingBufferHandle handle, const void* src,
+		uint32_t count);
 
 /**
  * Reads data from the buffer.
  *
- * @param[in] rb Valid ring buffer handle.
+ * @param[in] handle Valid ring buffer handle.
  * @param[out] dst Destination buffer.
  * @param[in] count Destination buffer size.
  * @return -1 on failure, number of bytes read otherwise.
  */
-int32_t RingBuffer_read(RingBuffer rb, void* dst, uint32_t count);
+int32_t RingBuffer_read(RingBufferHandle handle, void* dst, uint32_t count);
 
 #ifdef __cplusplus
 }
