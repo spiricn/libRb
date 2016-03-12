@@ -1,14 +1,11 @@
-/**
- * @file ConcurrentRingBuffer.h
- * @author Nikola Spiric <nikola.spiric@rt-rk.com>
- */
-
 #ifndef CONCURRENTRINGBUFFER_H_
 #define CONCURRENTRINGBUFFER_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "Common.h"
 
 #include <stdint.h>
 #include <pthread.h>
@@ -65,13 +62,14 @@ CRingBufferHandle CRingBuffer_new(uint32_t size);
  * @param[in] init If set to 1 initializes the memory (creates a new buffer object). If set to 0 assumes the buffer was already created.
  * @return Buffer object on sucess, NULL on failure
  */
-CRingBufferHandle CRingBuffer_fromSharedMemory(void* memory, uint32_t size, int init);
+CRingBufferHandle CRingBuffer_fromSharedMemory(void* memory, uint32_t size,
+        int init);
 
 /**
  * Frees a buffer object created via 'CRingBuffer_new' or 'CRingBuffer_fromSharedMemory' functions.
  *
  * @param[in,out] handle Valid ring buffer handle.
- * @return -1 on failure, 0 on success
+ * @return Negative value on failure, RB_OK on success.
  */
 int32_t CRingBuffer_free(CRingBufferHandle* handle);
 
@@ -82,9 +80,10 @@ int32_t CRingBuffer_free(CRingBufferHandle* handle);
  * @param[in] data Destination buffer.
  * @param[in] size Size of the destination buffer.
  * @param[in] mode Mode which decides the behavior of the function call. See 'CRingBuffer_ReadMode' enumeration for more info.
- * @return -1 on failure, number of bytes read otherwise.
+ * @return Negative value on failure, number of bytes read otherwise.
  */
-int32_t CRingBuffer_read(CRingBufferHandle handle, uint8_t* data, uint32_t size, CRingBuffer_ReadMode mode);
+int32_t CRingBuffer_read(CRingBufferHandle handle, uint8_t* data, uint32_t size,
+        CRingBuffer_ReadMode mode);
 
 /**
  * Writes data to the buffer. May block depending on the write mode.
@@ -93,15 +92,16 @@ int32_t CRingBuffer_read(CRingBufferHandle handle, uint8_t* data, uint32_t size,
  * @param[in] data Source buffer.
  * @param[in] size Size of the source buffer.
  * @param[in] mode Mode which decides the behavior of the function call. See 'CRingBuffer_WriteMode' enumeration for more info.
- * @return -1 on failure, number of bytes written otherwise.
+ * @return Negative value on failure, number of bytes written otherwise.
  */
-int32_t CRingBuffer_write(CRingBufferHandle handle, const uint8_t* data, uint32_t size, CRingBuffer_WriteMode mode);
+int32_t CRingBuffer_write(CRingBufferHandle handle, const uint8_t* data,
+        uint32_t size, CRingBuffer_WriteMode mode);
 
 /**
  * Gets the number of bytes currently contained in the buffer.
  *
  * @param[in] handle Valid ring buffer handle.
- * @return -1 on failure, number of bytes contained otherwise.
+ * @return Negative value on failure, number of bytes contained otherwise.
  */
 int32_t CRingBuffer_getBytesUsed(CRingBufferHandle handle);
 
@@ -109,7 +109,7 @@ int32_t CRingBuffer_getBytesUsed(CRingBufferHandle handle);
  * Gets the number of free space left in the buffer.
  *
  * @param[in] handle Valid ring buffer handle.
- * @return -1 on failure, number of bytes free otherwise.
+ * @return Negative value on failure, number of bytes free otherwise.
  */
 int32_t CRingBuffer_getBytesFree(CRingBufferHandle handle);
 
@@ -117,7 +117,7 @@ int32_t CRingBuffer_getBytesFree(CRingBufferHandle handle);
  * Gets the total capacity of the buffer.
  *
  * @param[in] handle Valid ring buffer handle.
- * @return -1 on failure, ring buffer capacity otherwise.
+ * @return Negative value on failure, ring buffer capacity otherwise.
  */
 int32_t CRingBuffer_getSize(CRingBufferHandle handle);
 
@@ -126,7 +126,7 @@ int32_t CRingBuffer_getSize(CRingBufferHandle handle);
  * After this call any further 'CRingBuffer_read' or 'CRingBuffer_write' calls will return 0 without blocking.
  *
  * @param[in] handle Valid ring buffer handle.
- * @return -1 on failure, 0 otherwise.
+ * @return Negative value on failure, RB_OK otherwise.
  */
 int32_t CRingBuffer_disable(CRingBufferHandle handle);
 
@@ -135,7 +135,7 @@ int32_t CRingBuffer_disable(CRingBufferHandle handle);
  * After this call 'CRingBuffer_read' or 'CRingBuffer_write' functions operate normally.
  *
  * @param[in] handle Valid ring buffer handle.
- * @return -1 on failure, 0 otherwise.
+ * @return Negative value on failure, RB_OK otherwise.
  */
 int32_t CRingBuffer_enable(CRingBufferHandle handle);
 
@@ -144,7 +144,7 @@ int32_t CRingBuffer_enable(CRingBufferHandle handle);
  * Buffer may be disabled/enabled via 'CRingBuffer_disable'/'CRingBuffer_enable' functions respectively.
  *
  * @param[in] handle Valid ring buffer handle.
- * @return -1 on failure, 1 if the buffer is enabled, 0 if it's disabled.
+ * @return Negative value on failure, RB_TRUE if the buffer is enabled, RB_FALSE otherwise
  */
 int32_t CRingBuffer_isEnabled(CRingBufferHandle handle);
 
@@ -152,7 +152,7 @@ int32_t CRingBuffer_isEnabled(CRingBufferHandle handle);
  * Purge existing data from the buffer.
  *
  * @param[in] handle Valid ring buffer handle.
- * @return -1 on failure, 0 otherwise.
+ * @return Negative value on failure, RB_OK otherwise.
  */
 int32_t CRingBuffer_clear(CRingBufferHandle handle);
 
@@ -160,7 +160,7 @@ int32_t CRingBuffer_clear(CRingBufferHandle handle);
  * Checks if the ring buffer is full.
  *
  * @param[in] handle Valid ring buffer handle.
- * @return -1 on failure, 1 if the buffer is full 0 otherwise.
+ * @return Negative value on failure, 1 if the buffer is full 0 otherwise.
  */
 int32_t CRingBuffer_isFull(CRingBufferHandle handle);
 
@@ -168,7 +168,7 @@ int32_t CRingBuffer_isFull(CRingBufferHandle handle);
  * Checks if the ring buffer is empty.
  *
  * @param[in] handle Valid ring buffer handle.
- * @return -1 on failure, 1 if the buffer is empty 0 otherwise.
+ * @return Negative value on failure, 1 if the buffer is empty 0 otherwise.
  */
 int32_t CRingBuffer_isEmpty(CRingBufferHandle handle);
 
@@ -176,4 +176,4 @@ int32_t CRingBuffer_isEmpty(CRingBufferHandle handle);
 }
 #endif
 
-#endif /* CONCURRENTRINGBUFFER_H_ */
+#endif

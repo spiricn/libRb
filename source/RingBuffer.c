@@ -1,8 +1,3 @@
-/**
- * @file ConcurrentRingBuffer.h
- * @author Nikola Spiric <nikola.spiric@rt-rk.com>
- */
-
 /*******************************************************/
 /*              Includes                               */
 /*******************************************************/
@@ -28,16 +23,16 @@
 /*******************************************************/
 
 typedef struct {
-	uint32_t head;
-	uint32_t tail;
-	uint32_t size;
+    uint32_t head;
+    uint32_t tail;
+    uint32_t size;
 } RingBufferBase;
 
 typedef struct {
-	uint32_t magic;
-	uint8_t* buffer;
-	RingBufferBase* base;
-	int sharedMemory;
+    uint32_t magic;
+    uint8_t* buffer;
+    RingBufferBase* base;
+    int sharedMemory;
 } RingBufferContext;
 
 /*******************************************************/
@@ -55,219 +50,219 @@ static RingBufferContext* RingBufferPriv_getContext(RingBufferHandle handle);
 /*******************************************************/
 
 RingBufferHandle RingBuffer_fromSharedMemory(void* vptr, uint32_t size,
-		int init) {
-	RingBufferContext* rb = (RingBufferContext*) malloc(
-			sizeof(RingBufferContext));
-	memset(rb, 0x00, sizeof(RingBufferContext));
+        int init) {
+    RingBufferContext* rb = (RingBufferContext*) malloc(
+            sizeof(RingBufferContext));
+    memset(rb, 0x00, sizeof(RingBufferContext));
 
-	uint8_t* data = (uint8_t*) vptr;
+    uint8_t* data = (uint8_t*) vptr;
 
-	rb->base = (RingBufferBase*) data;
-	rb->base->size = size - sizeof(RingBufferBase);
-	rb->buffer = data + sizeof(RingBufferBase);
-	rb->magic = RING_BUFFER_MAGIC;
-	rb->sharedMemory = 1;
+    rb->base = (RingBufferBase*) data;
+    rb->base->size = size - sizeof(RingBufferBase);
+    rb->buffer = data + sizeof(RingBufferBase);
+    rb->magic = RING_BUFFER_MAGIC;
+    rb->sharedMemory = 1;
 
-	if (init) {
-		RingBuffer_clear(rb);
-	}
+    if(init) {
+        RingBuffer_clear(rb);
+    }
 
-	return (RingBufferHandle) rb;
+    return (RingBufferHandle) rb;
 }
 
 RingBufferHandle RingBuffer_new(uint32_t capacity) {
-	RingBufferContext* rb = (RingBufferContext*) calloc(1,
-			sizeof(RingBufferContext));
+    RingBufferContext* rb = (RingBufferContext*) calloc(1,
+            sizeof(RingBufferContext));
 
-	// One byte is used for detecting the full condition.
-	rb->base = (RingBufferBase*) calloc(1, sizeof(RingBufferBase));
-	rb->base->size = capacity + 1;
-	rb->buffer = (uint8_t*) malloc(rb->base->size);
-	rb->magic = RING_BUFFER_MAGIC;
-	rb->sharedMemory = 0;
+    // One byte is used for detecting the full condition.
+    rb->base = (RingBufferBase*) calloc(1, sizeof(RingBufferBase));
+    rb->base->size = capacity + 1;
+    rb->buffer = (uint8_t*) malloc(rb->base->size);
+    rb->magic = RING_BUFFER_MAGIC;
+    rb->sharedMemory = 0;
 
-	RingBuffer_clear(rb);
+    RingBuffer_clear(rb);
 
-	return (RingBufferHandle) rb;
+    return (RingBufferHandle) rb;
 }
 
 int32_t RingBuffer_free(RingBufferHandle* handle) {
-	RingBufferContext* rb = RingBufferPriv_getContext(*handle);
-	if (rb == NULL) {
-		return -1;
-	}
+    RingBufferContext* rb = RingBufferPriv_getContext(*handle);
+    if(rb == NULL) {
+        return RB_INVALID_ARG;
+    }
 
-	if (!rb->sharedMemory) {
-		free(rb->buffer);
-		free(rb->base);
-	}
+    if(!rb->sharedMemory) {
+        free(rb->buffer);
+        free(rb->base);
+    }
 
-	free(rb);
-	*handle = NULL;
+    free(rb);
+    *handle = NULL;
 
-	return 0;
+    return RB_OK;
 }
 
 int32_t RingBuffer_getSize(RingBufferHandle handle) {
-	RingBufferContext* rb = RingBufferPriv_getContext(handle);
-	if (rb == NULL) {
-		return -1;
-	}
+    RingBufferContext* rb = RingBufferPriv_getContext(handle);
+    if(rb == NULL) {
+        return RB_INVALID_ARG;
+    }
 
-	return rb->base->size;
+    return rb->base->size;
 }
 
 int32_t RingBuffer_clear(RingBufferHandle handle) {
-	RingBufferContext* rb = RingBufferPriv_getContext(handle);
-	if (rb == NULL) {
-		return -1;
-	}
+    RingBufferContext* rb = RingBufferPriv_getContext(handle);
+    if(rb == NULL) {
+        return -1;
+    }
 
-	rb->base->head = rb->base->tail = 0;
+    rb->base->head = rb->base->tail = 0;
 
-	return 0;
+    return 0;
 }
 
 int32_t RingBuffer_getCapacity(RingBufferHandle handle) {
-	RingBufferContext* rb = RingBufferPriv_getContext(handle);
-	if (rb == NULL) {
-		return -1;
-	}
+    RingBufferContext* rb = RingBufferPriv_getContext(handle);
+    if(rb == NULL) {
+        return -1;
+    }
 
-	return RingBuffer_getSize(rb) - 1;
+    return RingBuffer_getSize(rb) - 1;
 }
 
 const uint8_t* RingBufferPriv_getEnd(RingBufferHandle handle) {
-	RingBufferContext* rb = RingBufferPriv_getContext(handle);
-	if (rb == NULL) {
-		return NULL;
-	}
+    RingBufferContext* rb = RingBufferPriv_getContext(handle);
+    if(rb == NULL) {
+        return NULL;
+    }
 
-	return rb->buffer + RingBuffer_getSize(rb);
+    return rb->buffer + RingBuffer_getSize(rb);
 }
 
 int32_t RingBuffer_getBytesFree(RingBufferHandle handle) {
-	RingBufferContext* rb = RingBufferPriv_getContext(handle);
-	if (rb == NULL) {
-		return -1;
-	}
+    RingBufferContext* rb = RingBufferPriv_getContext(handle);
+    if(rb == NULL) {
+        return RB_INVALID_ARG;
+    }
 
-	if (rb->base->head >= rb->base->tail) {
-		return RingBuffer_getCapacity(rb) - (rb->base->head - rb->base->tail);
-	} else {
-		return rb->base->tail - rb->base->head - 1;
-	}
+    if(rb->base->head >= rb->base->tail) {
+        return RingBuffer_getCapacity(rb) - (rb->base->head - rb->base->tail);
+    } else {
+        return rb->base->tail - rb->base->head - 1;
+    }
 }
 
 int32_t RingBuffer_getBytesUsed(RingBufferHandle handle) {
-	RingBufferContext* rb = RingBufferPriv_getContext(handle);
-	if (rb == NULL) {
-		return -1;
-	}
+    RingBufferContext* rb = RingBufferPriv_getContext(handle);
+    if(rb == NULL) {
+        return RB_INVALID_ARG;
+    }
 
-	return RingBuffer_getCapacity(rb) - RingBuffer_getBytesFree(rb);
+    return RingBuffer_getCapacity(rb) - RingBuffer_getBytesFree(rb);
 }
 
 int32_t RingBuffer_isFull(RingBufferHandle handle) {
-	RingBufferContext* rb = RingBufferPriv_getContext(handle);
-	if (rb == NULL) {
-		return -1;
-	}
+    RingBufferContext* rb = RingBufferPriv_getContext(handle);
+    if(rb == NULL) {
+        return RB_INVALID_ARG;
+    }
 
-	return RingBuffer_getBytesFree(rb) == 0;
+    return RingBuffer_getBytesFree(rb) == 0;
 }
 
 int32_t RingBuffer_isEmpty(RingBufferHandle handle) {
-	RingBufferContext* rb = RingBufferPriv_getContext(handle);
-	if (rb == NULL) {
-		return -1;
-	}
+    RingBufferContext* rb = RingBufferPriv_getContext(handle);
+    if(rb == NULL) {
+        return RB_INVALID_ARG;
+    }
 
-	return RingBuffer_getBytesFree(rb) == RingBuffer_getCapacity(rb);
+    return RingBuffer_getBytesFree(rb) == RingBuffer_getCapacity(rb);
 }
 
 uint8_t* RingBufferPriv_nextp(RingBufferHandle handle, const uint8_t *p) {
-	RingBufferContext* rb = RingBufferPriv_getContext(handle);
-	if (rb == NULL) {
-		return NULL;
-	}
+    RingBufferContext* rb = RingBufferPriv_getContext(handle);
+    if(rb == NULL) {
+        return NULL;
+    }
 
-	return rb->buffer + ((++p - rb->buffer) % RingBuffer_getSize(rb));
+    return rb->buffer + ((++p - rb->buffer) % RingBuffer_getSize(rb));
 }
 
 int32_t RingBuffer_write(RingBufferHandle handle, const void *src,
-		uint32_t count) {
-	RingBufferContext* rb = RingBufferPriv_getContext(handle);
-	if (rb == NULL) {
-		return -1;
-	}
+        uint32_t count) {
+    RingBufferContext* rb = RingBufferPriv_getContext(handle);
+    if(rb == NULL) {
+        return RB_INVALID_ARG;
+    }
 
-	const uint8_t* u8src = (const uint8_t *) src;
-	const uint8_t* bufend = RingBufferPriv_getEnd(rb);
-	int overflow = (int32_t) count > RingBuffer_getBytesFree(rb);
-	uint32_t nread = 0;
+    const uint8_t* u8src = (const uint8_t *) src;
+    const uint8_t* bufend = RingBufferPriv_getEnd(rb);
+    int overflow = (int32_t) count > RingBuffer_getBytesFree(rb);
+    uint32_t nread = 0;
 
-	while (nread != count) {
-		// Don't copy beyond the end of the buffer
-		uint32_t n = MIN(bufend - (rb->buffer + rb->base->head),
-				(int32_t)(count - nread));
-		memcpy((rb->buffer + rb->base->head), u8src + nread, n);
-		rb->base->head += n;
-		nread += n;
+    while(nread != count) {
+        // Don't copy beyond the end of the buffer
+        uint32_t n = MIN(bufend - (rb->buffer + rb->base->head),
+                (int32_t)(count - nread));
+        memcpy((rb->buffer + rb->base->head), u8src + nread, n);
+        rb->base->head += n;
+        nread += n;
 
-		// Wrap ?
-		if ((rb->buffer + rb->base->head) == bufend) {
-			rb->base->head = 0;
-		}
-	}
-	if (overflow) {
-		rb->base->tail = RingBufferPriv_nextp(rb, (rb->buffer + rb->base->head))
-				- rb->buffer;
-	}
+        // Wrap ?
+        if((rb->buffer + rb->base->head) == bufend) {
+            rb->base->head = 0;
+        }
+    }
+    if(overflow) {
+        rb->base->tail = RingBufferPriv_nextp(rb, (rb->buffer + rb->base->head))
+                - rb->buffer;
+    }
 
-	return count;
+    return count;
 }
 
 int32_t RingBuffer_read(RingBufferHandle handle, void *dst, uint32_t count) {
-	RingBufferContext* rb = RingBufferPriv_getContext(handle);
-	if (rb == NULL) {
-		return -1;
-	}
+    RingBufferContext* rb = RingBufferPriv_getContext(handle);
+    if(rb == NULL) {
+        return RB_INVALID_ARG;
+    }
 
-	uint32_t bytes_used = RingBuffer_getBytesUsed(rb);
-	if (count > bytes_used) {
-		return -1;
-	}
+    uint32_t bytes_used = RingBuffer_getBytesUsed(rb);
+    if(count > bytes_used) {
+        return RB_ERROR;
+    }
 
-	uint8_t *u8dst = (uint8_t *) dst;
-	const uint8_t *bufend = RingBufferPriv_getEnd(rb);
-	uint32_t nwritten = 0;
+    uint8_t *u8dst = (uint8_t *) dst;
+    const uint8_t *bufend = RingBufferPriv_getEnd(rb);
+    uint32_t nwritten = 0;
 
-	while (nwritten != count) {
-		uint32_t n = MIN(bufend - (rb->buffer + rb->base->tail),
-				(int32_t)(count - nwritten));
-		memcpy(u8dst + nwritten, (rb->buffer + rb->base->tail), n);
-		rb->base->tail += n;
-		nwritten += n;
+    while(nwritten != count) {
+        uint32_t n = MIN(bufend - (rb->buffer + rb->base->tail),
+                (int32_t)(count - nwritten));
+        memcpy(u8dst + nwritten, (rb->buffer + rb->base->tail), n);
+        rb->base->tail += n;
+        nwritten += n;
 
-		// Wrap?
-		if ((rb->buffer + rb->base->tail) == bufend) {
-			rb->base->tail = 0;
-		}
-	}
+        // Wrap?
+        if((rb->buffer + rb->base->tail) == bufend) {
+            rb->base->tail = 0;
+        }
+    }
 
-	return count;
+    return count;
 }
 
 RingBufferContext* RingBufferPriv_getContext(RingBufferHandle handle) {
-	if (handle == NULL) {
-		return NULL;
-	}
+    if(handle == NULL) {
+        return NULL;
+    }
 
-	RingBufferContext* rb = (RingBufferContext*) handle;
-	if (rb->magic != RING_BUFFER_MAGIC) {
-		return NULL;
-	}
+    RingBufferContext* rb = (RingBufferContext*) handle;
+    if(rb->magic != RING_BUFFER_MAGIC) {
+        return NULL;
+    }
 
-	return rb;
+    return rb;
 }

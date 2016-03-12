@@ -33,17 +33,20 @@ int main() {
 }
 
 void* consumerThread(void* arg) {
-    CRingBuffer buffer = (CRingBuffer)arg;
+    CRingBuffer buffer = (CRingBuffer) arg;
 
     uint8_t dummy;
 
     // Block untill disable is called
     printf("Blocking consumer...\n");
 
-    CRingBuffer_read(buffer, &dummy, 1, eREAD_BLOCK_FULL);
+    int32_t rc = CRingBuffer_read(buffer, &dummy, 1, eREAD_BLOCK_FULL);
 
-    printf("Consumer unblocked\n");
+    if(rc == RB_DISABLED) {
+        printf("Consumer unblocked OK\n");
+        return (void*) 0;
+    }
 
-    return NULL;
+    return (void*) -1;
 }
 
