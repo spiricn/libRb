@@ -11,6 +11,7 @@ LOCAL_SRC_FILES := \
 			$(SRC_DIR)/RingBuffer.c \
 			$(SRC_DIR)/ConcurrentRingBuffer.c \
 			$(SRC_DIR)/MessageBox.c \
+			$(SRC_DIR)/Array.c
 					
 LOCAL_C_INCLUDES += \
 		$(INC_DIR) \
