@@ -114,7 +114,7 @@ int32_t Array_write(ArrayHandle handle, void* ptr, uint32_t size) {
         return RB_INVALID_ARG;
     }
 
-    return fwrite(ptr, size, 1, array->stream);
+    return fwrite(ptr, 1, size, array->stream);
 }
 
 ArrayContext* ArrayPriv_getContext(ArrayHandle handle) {

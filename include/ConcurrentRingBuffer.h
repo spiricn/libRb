@@ -82,8 +82,19 @@ int32_t CRingBuffer_free(CRingBufferHandle* handle);
  * @param[in] mode Mode which decides the behavior of the function call. See 'CRingBuffer_ReadMode' enumeration for more info.
  * @return Negative value on failure, number of bytes read otherwise.
  */
-int32_t CRingBuffer_read(CRingBufferHandle handle, uint8_t* data, uint32_t size,
-        CRingBuffer_ReadMode mode);
+int32_t CRingBuffer_read(CRingBufferHandle handle, uint8_t* data, uint32_t size, CRingBuffer_ReadMode mode);
+
+/**
+ * Reads data from the buffer. May block depending on the read mode.
+ *
+ * @param[in] handle Valid ring buffer handle.
+ * @param[in] data Destination buffer.
+ * @param[in] size Size of the destination buffer.
+ * @param[in] mode Mode which decides the behavior of the function call. See 'CRingBuffer_ReadMode' enumeration for more info.
+ * @param[in] timeoutMs Time in milliseconds after which the function times out and exists with a failure.
+ * @return Negative value on failure, number of bytes read otherwise.
+ */
+int32_t CRingBuffer_readTimed(CRingBufferHandle handle, uint8_t* data, uint32_t size, CRingBuffer_ReadMode mode, int64_t timeoutMs);
 
 /**
  * Writes data to the buffer. May block depending on the write mode.
@@ -96,6 +107,19 @@ int32_t CRingBuffer_read(CRingBufferHandle handle, uint8_t* data, uint32_t size,
  */
 int32_t CRingBuffer_write(CRingBufferHandle handle, const uint8_t* data,
         uint32_t size, CRingBuffer_WriteMode mode);
+
+/**
+ * Writes data to the buffer. May block depending on the write mode.
+ *
+ * @param[in] handle Valid ring buffer handle.
+ * @param[in] data Source buffer.
+ * @param[in] size Size of the source buffer.
+ * @param[in] mode Mode which decides the behavior of the function call. See 'CRingBuffer_WriteMode' enumeration for more info.
+ * @param[in] timeoutMs Time in milliseconds after which the function times out and exists with a failure.
+ * @return Negative value on failure, number of bytes written otherwise.
+ */
+int32_t CRingBuffer_writeTimed(CRingBufferHandle handle, const uint8_t* data,
+        uint32_t size, CRingBuffer_WriteMode mode, int64_t timeoutMs);
 
 /**
  * Gets the number of bytes currently contained in the buffer.
