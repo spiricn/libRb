@@ -1,6 +1,8 @@
 #ifndef MESSAGEBOX_H_
 #define MESSAGEBOX_H_
 
+#include "Common.h"
+
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -35,6 +37,16 @@ int32_t MessageBox_free(MessageBoxHandle* handle);
 int32_t MessageBox_read(MessageBoxHandle handle, void* message);
 
 /**
+ * Reads a single message.
+ *
+ * @param[in] handle Valid message box handle
+ * @param[in] timeoutMs Time in milliseconds after which the function times out and exists with a failure.
+ * @param[out] message Memory where read message will be stored
+ * @return Negative value on failure, RB_OK on success
+ */
+int32_t MessageBox_readTimed(MessageBoxHandle handle, void* message, int32_t timeoutMs);
+
+/**
  * Writes a single message.
  *
  * @param[in] handle Valid message box handle
@@ -42,6 +54,16 @@ int32_t MessageBox_read(MessageBoxHandle handle, void* message);
  * @return Negative value on failure, RB_OK on success
  */
 int32_t MessageBox_write(MessageBoxHandle handle, const void* message);
+
+/**
+ * Writes a single message.
+ *
+ * @param[in] handle Valid message box handle
+ * @param[in] message Message memory
+ * @param[in] timeoutMs Time in milliseconds after which the function times out and exists with a failure.
+ * @return Negative value on failure, RB_OK on success
+ */
+int32_t MessageBox_writeTimed(MessageBoxHandle handle, const void* message, int32_t timeoutMs);
 
 /**
  * Acquires the total number of available messages

@@ -70,13 +70,18 @@ int32_t MessageBox_free(MessageBoxHandle* handle) {
 }
 
 int32_t MessageBox_read(MessageBoxHandle handle, void* message) {
+    return MessageBox_readTimed(handle, message, RB_WAIT_INFINITE);
+
+}
+
+int32_t MessageBox_readTimed(MessageBoxHandle handle, void* message, int32_t timeoutMs){
     MessageBoxContext* mb = MessageBoxPriv_getContext(handle);
     if(mb == NULL) {
         return RB_INVALID_ARG;
     }
 
-    int32_t res = CRingBuffer_read(mb->buffer, (uint8_t*) message,
-            mb->messageSize, eREAD_BLOCK_FULL);
+    int32_t res = CRingBuffer_readTimed(mb->buffer, (uint8_t*) message,
+            mb->messageSize, eREAD_BLOCK_FULL, timeoutMs);
 
     if(res != mb->messageSize && CRingBuffer_isEnabled(mb->buffer) == RB_FALSE) {
         return RB_DISABLED;
@@ -86,12 +91,16 @@ int32_t MessageBox_read(MessageBoxHandle handle, void* message) {
 }
 
 int32_t MessageBox_write(MessageBoxHandle handle, const void* message) {
+    return MessageBox_writeTimed(handle, message, RB_WAIT_INFINITE);
+}
+
+int32_t MessageBox_writeTimed(MessageBoxHandle handle, const void* message, int32_t timeoutMs){
     MessageBoxContext* mb = MessageBoxPriv_getContext(handle);
     if(mb == NULL) {
         return RB_INVALID_ARG;
     }
-    int32_t res = CRingBuffer_write(mb->buffer, (const uint8_t*) message,
-            mb->messageSize, eWRITE_BLOCK_FULL);
+    int32_t res = CRingBuffer_writeTimed(mb->buffer, (const uint8_t*) message,
+            mb->messageSize, eWRITE_BLOCK_FULL, timeoutMs);
 
     if(res != mb->messageSize && CRingBuffer_isEnabled(mb->buffer) == RB_FALSE) {
         return RB_DISABLED;
@@ -99,6 +108,7 @@ int32_t MessageBox_write(MessageBoxHandle handle, const void* message) {
 
     return res == mb->messageSize ? RB_OK : RB_ERROR;
 }
+
 
 int32_t MessageBox_getNumMessages(MessageBoxHandle handle) {
     MessageBoxContext* mb = MessageBoxPriv_getContext(handle);

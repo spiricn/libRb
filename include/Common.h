@@ -16,6 +16,8 @@ extern "C" {
 #define RB_INVALID_ARG ( RB_ERROR_BASE - 3 )
 #define RB_TIMEOUT ( RB_ERROR_BASE - 4 )
 
+#define RB_WAIT_INFINITE ( LONG_MIN )
+
 #ifdef __cplusplus
 }
 #endif

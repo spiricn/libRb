@@ -30,8 +30,6 @@
 
 #define WRITE_RELEASE do{ pthread_mutex_unlock(&rb->base->writeMutex); }while(0)
 
-#define WAIT_INFINITE ( LONG_MIN )
-
 /*******************************************************/
 /*              Typedefs                               */
 /*******************************************************/
@@ -92,7 +90,7 @@ static void CRingBufferPriv_getOffsetTime(struct timespec* time, int64_t offsetM
 }
 
 static bool CRingBufferPriv_timedLock(pthread_mutex_t* mutex, int64_t ms){
-    if(ms == WAIT_INFINITE){
+    if(ms == RB_WAIT_INFINITE){
         pthread_mutex_lock(mutex);
 
         return true;
@@ -110,7 +108,7 @@ static bool CRingBufferPriv_timedLock(pthread_mutex_t* mutex, int64_t ms){
 }
 
 static bool CRingBufferPriv_timedWait(pthread_cond_t* cv, pthread_mutex_t* mutex, int64_t ms){
-    if(ms == WAIT_INFINITE){
+    if(ms == RB_WAIT_INFINITE){
         pthread_cond_wait(cv, mutex);
 
         return true;
@@ -246,7 +244,7 @@ int32_t CRingBuffer_readTimed(CRingBufferHandle handle, uint8_t* data, uint32_t 
     }
 
     // Buffer lock
-    if(!CRingBufferPriv_timedLock(&rb->base->mutex, timeoutMs == WAIT_INFINITE ? WAIT_INFINITE : timeoutMs - Stopwatch_elapsedMs(&sw))){
+    if(!CRingBufferPriv_timedLock(&rb->base->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE : timeoutMs - Stopwatch_elapsedMs(&sw))){
         return RB_TIMEOUT;
     }
 
@@ -266,7 +264,7 @@ int32_t CRingBuffer_readTimed(CRingBufferHandle handle, uint8_t* data, uint32_t 
         while(bytesRemaining) {
             // Wait until some data is available
             while((bytesUsed = RingBuffer_getBytesUsed(rb->buffer)) == 0 && rb->base->enabled) {
-                if(!CRingBufferPriv_timedWait(&rb->base->writeCV, &rb->base->mutex, timeoutMs == WAIT_INFINITE ? WAIT_INFINITE : timeoutMs - Stopwatch_elapsedMs(&sw))){
+                if(!CRingBufferPriv_timedWait(&rb->base->writeCV, &rb->base->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE : timeoutMs - Stopwatch_elapsedMs(&sw))){
                     LOCK_RELEASE
                     ;
                     READ_RELEASE
@@ -299,7 +297,7 @@ int32_t CRingBuffer_readTimed(CRingBufferHandle handle, uint8_t* data, uint32_t 
         if(mode == eREAD_BLOCK_PARTIAL) {
             // Wait at least some of the data we requires is available
             while(RingBuffer_getBytesUsed(rb->buffer) == 0 && rb->base->enabled) {
-                if(!CRingBufferPriv_timedWait(&rb->base->writeCV, &rb->base->mutex, timeoutMs == WAIT_INFINITE ? WAIT_INFINITE : timeoutMs - Stopwatch_elapsedMs(&sw))){
+                if(!CRingBufferPriv_timedWait(&rb->base->writeCV, &rb->base->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE : timeoutMs - Stopwatch_elapsedMs(&sw))){
                     LOCK_RELEASE
                     ;
                     READ_RELEASE
@@ -344,7 +342,7 @@ int32_t CRingBuffer_readTimed(CRingBufferHandle handle, uint8_t* data, uint32_t 
 
 int32_t CRingBuffer_read(CRingBufferHandle handle, uint8_t* data, uint32_t size,
         CRingBuffer_ReadMode mode) {
-    return CRingBuffer_readTimed(handle, data, size, mode, WAIT_INFINITE);
+    return CRingBuffer_readTimed(handle, data, size, mode, RB_WAIT_INFINITE);
 }
 
 int32_t CRingBuffer_writeTimed(CRingBufferHandle handle, const uint8_t* data,
@@ -372,7 +370,7 @@ int32_t CRingBuffer_writeTimed(CRingBufferHandle handle, const uint8_t* data,
     }
 
     // Buffer lock
-    if(!CRingBufferPriv_timedLock(&rb->base->mutex, timeoutMs == WAIT_INFINITE ? WAIT_INFINITE : timeoutMs - Stopwatch_elapsedMs(&sw))){
+    if(!CRingBufferPriv_timedLock(&rb->base->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE : timeoutMs - Stopwatch_elapsedMs(&sw))){
         return RB_TIMEOUT;
     }
 
@@ -393,7 +391,7 @@ int32_t CRingBuffer_writeTimed(CRingBufferHandle handle, const uint8_t* data,
             // Wait until some space is free
             while((bytesFree = RingBuffer_getBytesFree(rb->buffer)) == 0
                     && rb->base->enabled) {
-                if(!CRingBufferPriv_timedWait(&rb->base->readCV, &rb->base->mutex, timeoutMs == WAIT_INFINITE ? WAIT_INFINITE :  timeoutMs - Stopwatch_elapsedMs(&sw))){
+                if(!CRingBufferPriv_timedWait(&rb->base->readCV, &rb->base->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE :  timeoutMs - Stopwatch_elapsedMs(&sw))){
                    LOCK_RELEASE
                    ;
                    WRITE_RELEASE
@@ -449,7 +447,7 @@ int32_t CRingBuffer_writeTimed(CRingBufferHandle handle, const uint8_t* data,
 
 int32_t CRingBuffer_write(CRingBufferHandle handle, const uint8_t* data,
         uint32_t size, CRingBuffer_WriteMode mode) {
-    return CRingBuffer_writeTimed(handle, data, size, mode, WAIT_INFINITE);
+    return CRingBuffer_writeTimed(handle, data, size, mode, RB_WAIT_INFINITE);
 }
 
 int32_t CRingBuffer_getBytesUsed(CRingBufferHandle handle) {
