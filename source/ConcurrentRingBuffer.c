@@ -4,11 +4,11 @@
 
 #include "ConcurrentRingBuffer.h"
 #include "RingBuffer.h"
+#include "Stopwatch.h"
 
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <stdbool.h>
 #include <limits.h>
 
@@ -50,28 +50,6 @@ typedef struct {
     int sharedMemory;
     int owned;
 } CRingBufferContext;
-
-typedef struct {
-    struct timespec time;
-} StopWatch;
-
-static void Stopwatch_start(StopWatch* stopwatch){
-    memset(stopwatch, 0x00, sizeof(StopWatch));
-
-    clock_gettime(CLOCK_REALTIME, &stopwatch->time);
-}
-
-static int64_t Stopwatch_elapsedMs(StopWatch* stopwatch){
-    struct timespec currTime;
-    clock_gettime(CLOCK_REALTIME, &currTime);
-
-    int64_t elapsedMs = 0;
-
-    elapsedMs += ( currTime.tv_sec - stopwatch->time.tv_sec ) * 1000;
-    elapsedMs += ( currTime.tv_nsec - stopwatch->time.tv_nsec ) / 1000000;
-
-    return elapsedMs;
-}
 
 /*******************************************************/
 /*              Functions Declarations                 */
@@ -228,23 +206,26 @@ int32_t CRingBuffer_readTimed(CRingBufferHandle handle, uint8_t* data, uint32_t 
         return RB_INVALID_ARG;
     }
 
-    StopWatch sw;
-    Stopwatch_start(&sw);
+    StopwatchHandle sw = Stopwatch_new();
+    Stopwatch_start(sw);
 
     uint32_t bytesRead = 0;
 
     // Checkpoint
     if(!rb->base->enabled) {
+        Stopwatch_free(&sw);
         return 0;
     }
 
     // Read lock
     if(!CRingBufferPriv_timedLock(&rb->base->readMutex, timeoutMs)){
+        Stopwatch_free(&sw);
         return RB_TIMEOUT;
     }
 
     // Buffer lock
     if(!CRingBufferPriv_timedLock(&rb->base->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE : timeoutMs - Stopwatch_elapsedMs(&sw))){
+        Stopwatch_free(&sw);
         return RB_TIMEOUT;
     }
 
@@ -254,6 +235,7 @@ int32_t CRingBuffer_readTimed(CRingBufferHandle handle, uint8_t* data, uint32_t 
         ;
         READ_RELEASE
         ;
+        Stopwatch_free(&sw);
         return 0;
     }
 
@@ -269,6 +251,7 @@ int32_t CRingBuffer_readTimed(CRingBufferHandle handle, uint8_t* data, uint32_t 
                     ;
                     READ_RELEASE
                     ;
+                    Stopwatch_free(&sw);
                     return RB_TIMEOUT;
                 }
             }
@@ -279,7 +262,7 @@ int32_t CRingBuffer_readTimed(CRingBufferHandle handle, uint8_t* data, uint32_t 
                 ;
                 READ_RELEASE
                 ;
-
+                Stopwatch_free(&sw);
                 return size - bytesRemaining;
             }
 
@@ -302,6 +285,7 @@ int32_t CRingBuffer_readTimed(CRingBufferHandle handle, uint8_t* data, uint32_t 
                     ;
                     READ_RELEASE
                     ;
+                    Stopwatch_free(&sw);
                     return RB_TIMEOUT;
                 }
             }
@@ -312,6 +296,7 @@ int32_t CRingBuffer_readTimed(CRingBufferHandle handle, uint8_t* data, uint32_t 
                 ;
                 READ_RELEASE
                 ;
+                Stopwatch_free(&sw);
                 return 0;
             }
 
@@ -336,7 +321,7 @@ int32_t CRingBuffer_readTimed(CRingBufferHandle handle, uint8_t* data, uint32_t 
     ;
     READ_RELEASE
     ;
-
+    Stopwatch_free(&sw);
     return bytesRead;
 }
 
@@ -353,7 +338,7 @@ int32_t CRingBuffer_writeTimed(CRingBufferHandle handle, const uint8_t* data,
         return RB_INVALID_ARG;
     }
 
-    StopWatch sw;
+    StopwatchHandle sw = Stopwatch_new();
     Stopwatch_start(&sw);
 
     // Total bytes written
@@ -361,16 +346,19 @@ int32_t CRingBuffer_writeTimed(CRingBufferHandle handle, const uint8_t* data,
 
     // Checkpoint
     if(!rb->base->enabled) {
+        Stopwatch_free(&sw);
         return 0;
     }
 
     // Write lock
     if(!CRingBufferPriv_timedLock(&rb->base->writeMutex, timeoutMs)){
+        Stopwatch_free(&sw);
         return RB_TIMEOUT;
     }
 
     // Buffer lock
     if(!CRingBufferPriv_timedLock(&rb->base->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE : timeoutMs - Stopwatch_elapsedMs(&sw))){
+        Stopwatch_free(&sw);
         return RB_TIMEOUT;
     }
 
@@ -380,6 +368,7 @@ int32_t CRingBuffer_writeTimed(CRingBufferHandle handle, const uint8_t* data,
         ;
         WRITE_RELEASE
         ;
+        Stopwatch_free(&sw);
         return 0;
     }
 
@@ -396,6 +385,7 @@ int32_t CRingBuffer_writeTimed(CRingBufferHandle handle, const uint8_t* data,
                    ;
                    WRITE_RELEASE
                    ;
+                   Stopwatch_free(&sw);
                    return RB_TIMEOUT;
                }
             }
@@ -406,7 +396,7 @@ int32_t CRingBuffer_writeTimed(CRingBufferHandle handle, const uint8_t* data,
                 ;
                 WRITE_RELEASE
                 ;
-
+                Stopwatch_free(&sw);
                 return size - bytesRemaining;
             }
 
@@ -441,7 +431,7 @@ int32_t CRingBuffer_writeTimed(CRingBufferHandle handle, const uint8_t* data,
     ;
     WRITE_RELEASE
     ;
-
+    Stopwatch_free(&sw);
     return bytesWritten;
 }
 
