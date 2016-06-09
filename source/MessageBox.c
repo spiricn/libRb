@@ -23,6 +23,7 @@
 typedef struct {
     uint32_t magic;
     int32_t messageSize;
+    int32_t capacity;
     CRingBufferHandle buffer;
 } MessageBoxContext;
 
@@ -43,6 +44,7 @@ MessageBoxHandle MessageBox_new(int32_t messageSize, int32_t capacity) {
     mb->magic = MESSAGE_BOX_MAGIC;
     mb->buffer = CRingBuffer_new(capacity * messageSize);
     mb->messageSize = messageSize;
+    mb->capacity = capacity;
 
     if(mb->buffer == NULL) {
         free(mb);
@@ -123,6 +125,16 @@ int32_t MessageBox_getNumMessages(MessageBoxHandle handle) {
     } else {
         return res / mb->messageSize;
     }
+}
+
+int32_t MessageBox_getCapacity(MessageBoxHandle handle){
+    MessageBoxContext* mb = MessageBoxPriv_getContext(handle);
+    if(mb == NULL) {
+        return RB_INVALID_ARG;
+    }
+
+
+    return mb->capacity;
 }
 
 int32_t MessageBox_disable(MessageBoxHandle handle) {

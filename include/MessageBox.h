@@ -74,6 +74,14 @@ int32_t MessageBox_writeTimed(MessageBoxHandle handle, const void* message, int3
 int32_t MessageBox_getNumMessages(MessageBoxHandle handle);
 
 /**
+ * Acquires message box capacity
+ *
+ * @param[in] handle Valid message box handle
+ * @return Negative value on failure, message box capacity otherwise
+ */
+int32_t MessageBox_getCapacity(MessageBoxHandle handle);
+
+/**
  * Disables underyling buffers and unblocks all pending operations. All following calls to message box will fail without blocking.
  *
  * @param[in] handle Valid message box handle
