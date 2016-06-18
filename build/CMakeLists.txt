@@ -13,7 +13,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 ###############################################################################
 
-project("libHTTPServer")
+project("libRingBuffer")
 
 
 set(SOURCE_DIR "../source")
@@ -27,6 +27,7 @@ set(SOURCES
 	${SOURCE_DIR}/MessageBox.c
 	${SOURCE_DIR}/RingBuffer.c
 	${SOURCE_DIR}/Stopwatch.c
+	${SOURCE_DIR}/Array.c
 )
 
 set(HEADERS
@@ -35,6 +36,7 @@ set(HEADERS
 	${INCLUDE_DIR}/Log.h
 	${INCLUDE_DIR}/MessageBox.h
 	${INCLUDE_DIR}/RingBuffer.h
+	${INCLUDE_DIR}/Array.h
 )
 
 include_directories(${INCLUDE_DIR})
@@ -60,9 +62,20 @@ add_library(
 )
 
 
-add_executable(test_buffers "../tests/TestBuffer.c")
+set(TEST_DIR "../tests")
 
-TARGET_LINK_LIBRARIES( test_buffers
+set(TEST_SOURCES
+	${TEST_DIR}/TestBuffer.c
+	${TEST_DIR}/TestCBuffer.c
+	${TEST_DIR}/TestConcurrency.c
+	${TEST_DIR}/TestMessageBox.c
+	${TEST_DIR}/TestArray.c
+	${TEST_DIR}/Tests.c
+)
+
+add_executable(libRingBuffer_tests ${TEST_SOURCES})
+
+TARGET_LINK_LIBRARIES(libRingBuffer_tests
 	RingBuffer
 	pthread
 )
