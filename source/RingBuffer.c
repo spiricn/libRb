@@ -74,9 +74,8 @@ RingBufferHandle RingBuffer_new(uint32_t capacity) {
     RingBufferContext* rb = (RingBufferContext*) calloc(1,
             sizeof(RingBufferContext));
 
-    // One byte is used for detecting the full condition.
     rb->base = (RingBufferBase*) calloc(1, sizeof(RingBufferBase));
-    rb->base->size = capacity + 1;
+    rb->base->size = capacity + 1 /* One byte is used for detecting the full condition. */;
     rb->buffer = (uint8_t*) malloc(rb->base->size);
     rb->magic = RING_BUFFER_MAGIC;
     rb->sharedMemory = 0;
@@ -252,6 +251,28 @@ int32_t RingBuffer_read(RingBufferHandle handle, void *dst, uint32_t count) {
     }
 
     return count;
+}
+
+int32_t RingBuffer_resize(RingBufferHandle handle, uint32_t capacity) {
+	RingBufferContext* rb = RingBufferPriv_getContext(handle);
+	if (rb == NULL) {
+		return RB_INVALID_ARG;
+	}
+
+	if (rb->sharedMemory) {
+		// Not yet implemented
+		return RB_INVALID_ARG;
+	}
+
+	if (capacity < rb->base->size) {
+		// Shrinking not yet implemented
+		return RB_INVALID_ARG;
+	}
+
+	rb->base->size = capacity + 1;
+	rb->buffer = (uint8_t*) realloc(rb->buffer, rb->base->size);
+
+	return RB_OK;
 }
 
 RingBufferContext* RingBufferPriv_getContext(RingBufferHandle handle) {

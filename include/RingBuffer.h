@@ -123,6 +123,15 @@ int32_t RingBuffer_write(RingBufferHandle handle, const void* src,
  */
 int32_t RingBuffer_read(RingBufferHandle handle, void* dst, uint32_t count);
 
+/**
+ * Grows or shrinks ring buffers internal buffer
+ *
+ * @param[in] handle Valid ring buffer handle.
+ * @param[in] capacity New ring buffer size.
+ * @return Negative value on failure, RB_OK otherwise.
+ */
+int32_t RingBuffer_resize(RingBufferHandle handle, uint32_t capacity);
+
 #ifdef __cplusplus
 }
 #endif
