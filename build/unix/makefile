@@ -9,7 +9,9 @@ SOURCES=\
 	RingBuffer.c \
 	Stopwatch.c \
 	ConcurrentRingBuffer.c \
-	MessageBox.c
+	MessageBox.c \
+	Log.c \
+
 OBJECTS=$(SOURCES:.c=.o)
 CFLAGS=-fPIC \
 		-I$(INCDIR)
