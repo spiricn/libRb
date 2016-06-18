@@ -4,9 +4,11 @@ include $(CLEAR_VARS)
 
 ANDROID_NDK_ROOT=ndk
 
-SRC_DIR := source
-INC_DIR := $(LOCAL_PATH)/include
 
+SRC_DIR := ../../source
+INC_DIR := $(LOCAL_PATH)/../../include
+
+$(warning $(SRC_DIR)/RingBuffer.c)
 LOCAL_SRC_FILES := \
 			$(SRC_DIR)/RingBuffer.c \
 			$(SRC_DIR)/ConcurrentRingBuffer.c \
