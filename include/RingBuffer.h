@@ -29,19 +29,6 @@ RingBufferHandle RingBuffer_new(uint32_t capacity);
  */
 RingBufferHandle RingBuffer_fromSharedMemory(void* data, uint32_t size,
         int init);
-
-/**
- * The size of the internal buffer, in bytes. One or more bytes may be
- * unusable in order to distinguish the "buffer full" state from the
- * "buffer empty" state.
- * For the usable capacity of the ring buffer, use the
- * RingBuffer_getCapacity function.
- *
- * @param[in] handle Valid ring buffer handle.
- * @return Negative value on failure, buffer size otherwise.
- */
-int32_t RingBuffer_getSize(RingBufferHandle handle);
-
 /**
  * Deallocate a ring buffer, and, as a side effect, set the pointer to NULL.
  *
@@ -59,9 +46,7 @@ int32_t RingBuffer_free(RingBufferHandle* handle);
 int32_t RingBuffer_clear(RingBufferHandle handle);
 
 /**
- * The usable capacity of the ring buffer, in bytes. Note that this
- * value may be less than the ring buffer's internal buffer size, as
- * returned by RingBuffer_getSize.
+ * The usable capacity of the ring buffer, in bytes.
  *
  * @param[in] handle Valid ring buffer handle.
  * @return Negative value on failure, ring buffer capacity otherwise

@@ -143,7 +143,7 @@ int32_t CRingBuffer_getBytesFree(CRingBufferHandle handle);
  * @param[in] handle Valid ring buffer handle.
  * @return Negative value on failure, ring buffer capacity otherwise.
  */
-int32_t CRingBuffer_getSize(CRingBufferHandle handle);
+int32_t CRingBuffer_getCapacity(CRingBufferHandle handle);
 
 /**
  * Disables the ring buffer. All currently blocking operations (e.g. 'CRingBuffer_read' or 'CRingBuffer_write' calls) will return immediately.

@@ -102,15 +102,6 @@ int32_t RingBuffer_free(RingBufferHandle* handle) {
     return RB_OK;
 }
 
-int32_t RingBuffer_getSize(RingBufferHandle handle) {
-    RingBufferContext* rb = RingBufferPriv_getContext(handle);
-    if(rb == NULL) {
-        return RB_INVALID_ARG;
-    }
-
-    return rb->base->size;
-}
-
 int32_t RingBuffer_clear(RingBufferHandle handle) {
     RingBufferContext* rb = RingBufferPriv_getContext(handle);
     if(rb == NULL) {
@@ -128,7 +119,7 @@ int32_t RingBuffer_getCapacity(RingBufferHandle handle) {
         return -1;
     }
 
-    return RingBuffer_getSize(rb) - 1;
+    return rb->base->size - 1;
 }
 
 const uint8_t* RingBufferPriv_getEnd(RingBufferHandle handle) {
@@ -137,7 +128,7 @@ const uint8_t* RingBufferPriv_getEnd(RingBufferHandle handle) {
         return NULL;
     }
 
-    return rb->buffer + RingBuffer_getSize(rb);
+    return rb->buffer + rb->base->size;
 }
 
 int32_t RingBuffer_getBytesFree(RingBufferHandle handle) {
@@ -186,7 +177,7 @@ uint8_t* RingBufferPriv_nextp(RingBufferHandle handle, const uint8_t *p) {
         return NULL;
     }
 
-    return rb->buffer + ((++p - rb->buffer) % RingBuffer_getSize(rb));
+    return rb->buffer + ((++p - rb->buffer) % rb->base->size);
 }
 
 int32_t RingBuffer_write(RingBufferHandle handle, const void *src,

@@ -474,7 +474,7 @@ int32_t CRingBuffer_getBytesFree(CRingBufferHandle handle) {
     return res;
 }
 
-int32_t CRingBuffer_getSize(CRingBufferHandle handle) {
+int32_t CRingBuffer_getCapacity(CRingBufferHandle handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
         return RB_INVALID_ARG;
@@ -483,7 +483,7 @@ int32_t CRingBuffer_getSize(CRingBufferHandle handle) {
     LOCK_ACQUIRE
     ;
 
-    const int32_t res = RingBuffer_getSize(rb->buffer);
+    const int32_t res = RingBuffer_getCapacity(rb->buffer);
 
     LOCK_RELEASE
     ;
