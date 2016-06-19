@@ -1,15 +1,26 @@
 #ifndef MESSAGEBOX_H_
 #define MESSAGEBOX_H_
 
-#include "Common.h"
+/********************************************************/
+/*                 Includes                             */
+/********************************************************/
 
+#include "Common.h"
 #include <stdint.h>
+
+/********************************************************/
+/*                 Typedefs                             */
+/********************************************************/
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef void* MessageBoxHandle;
+
+/********************************************************/
+/*                 Functions Declarations               */
+/********************************************************/
 
 /*
  * Creates new message box object

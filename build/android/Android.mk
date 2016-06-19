@@ -12,6 +12,7 @@ LOCAL_SRC_FILES := \
 			$(SRC_DIR)/Array.c \
 			$(SRC_DIR)/Stopwatch.c \
 			$(SRC_DIR)/Log.c \
+            $(SRC_DIR)/Common.c
 					
 LOCAL_C_INCLUDES += \
 		$(INC_DIR) \

@@ -1,15 +1,26 @@
 #ifndef RINGBUFFER_H_
 #define RINGBUFFER_H_
 
-#include "Common.h"
+/********************************************************/
+/*                 Includes                             */
+/********************************************************/
 
+#include "Common.h"
 #include <stdint.h>
+
+/********************************************************/
+/*                 Typedefs                             */
+/********************************************************/
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef void* RingBufferHandle;
+
+/********************************************************/
+/*                 Functions Declarations               */
+/********************************************************/
 
 /**
  * Creates new ring buffer object.

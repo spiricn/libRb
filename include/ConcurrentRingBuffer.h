@@ -5,10 +5,18 @@
 extern "C" {
 #endif
 
+/*******************************************************/
+/*              Includes                               */
+/*******************************************************/
+
 #include "Common.h"
 
 #include <stdint.h>
 #include <pthread.h>
+
+/*******************************************************/
+/*              Typedefs                               */
+/*******************************************************/
 
 typedef enum {
     /**
@@ -45,6 +53,10 @@ typedef enum {
 } CRingBuffer_WriteMode;
 
 typedef void* CRingBufferHandle;
+
+/*******************************************************/
+/*              Functions Declarations                 */
+/*******************************************************/
 
 /**
  * Creates new concurrent ring buffer object

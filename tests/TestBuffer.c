@@ -19,6 +19,11 @@
 /*******************************************************/
 
 int testBuffer() {
+	if(!RB_CHECK_VERSION){
+		RBLE("Invalid binary version");
+		return -1;
+	}
+
 	int32_t rc;
 	int32_t i;
 	const int32_t kCAPACITY = 10;

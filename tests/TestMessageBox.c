@@ -29,6 +29,11 @@ typedef struct {
 /*******************************************************/
 
 int testMessageBox() {
+	if(!RB_CHECK_VERSION){
+		RBLE("Invalid binary version");
+		return -1;
+	}
+
 	int32_t rc;
 
 	// Create message box

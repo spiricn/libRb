@@ -28,6 +28,7 @@ set(SOURCES
 	${SOURCE_DIR}/RingBuffer.c
 	${SOURCE_DIR}/Stopwatch.c
 	${SOURCE_DIR}/Array.c
+	${SOURCE_DIR}/Common.c
 )
 
 set(HEADERS
