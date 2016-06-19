@@ -16,9 +16,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 project("libRingBuffer")
 
 
-set(SOURCE_DIR "../source")
+set(LIB_ROOT "../../")
 
-set(INCLUDE_DIR "../include")
+set(SOURCE_DIR "${LIB_ROOT}/source")
+
+set(INCLUDE_DIR "${LIB_ROOT}/include")
 
 
 set(SOURCES
@@ -63,7 +65,7 @@ add_library(
 )
 
 
-set(TEST_DIR "../tests")
+set(TEST_DIR "${LIB_ROOT}/tests")
 
 set(TEST_SOURCES
 	${TEST_DIR}/TestBuffer.c
