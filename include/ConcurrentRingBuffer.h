@@ -208,6 +208,15 @@ int32_t CRingBuffer_isFull(CRingBufferHandle handle);
  */
 int32_t CRingBuffer_isEmpty(CRingBufferHandle handle);
 
+/**
+ * Grows or shrinks ring buffers internal buffer
+ *
+ * @param[in] handle Valid ring buffer handle.
+ * @param[in] capacity New ring buffer size.
+ * @return Negative value on failure, RB_OK otherwise.
+ */
+int32_t CRingBuffer_resize(CRingBufferHandle handle, uint32_t capacity);
+
 #ifdef __cplusplus
 }
 #endif

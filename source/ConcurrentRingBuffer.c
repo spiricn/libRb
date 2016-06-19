@@ -598,6 +598,23 @@ int32_t CRingBuffer_isEmpty(CRingBufferHandle handle) {
     return res;
 }
 
+int32_t CRingBuffer_resize(CRingBufferHandle handle, uint32_t capacity){
+    CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
+    if(rb == NULL) {
+        return RB_INVALID_ARG;
+    }
+
+    LOCK_ACQUIRE
+    ;
+
+    int32_t res = RingBuffer_resize(rb->buffer, capacity);
+
+    LOCK_RELEASE
+    ;
+
+    return res;
+}
+
 CRingBufferContext* CRingBufferPriv_getContext(CRingBufferHandle handle) {
     if(handle == NULL) {
         return NULL;
