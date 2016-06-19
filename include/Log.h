@@ -66,7 +66,7 @@ typedef enum {
 /*                 Functions Declarations               */
 /********************************************************/
 
-int32_t RB_log(int32_t level, const char* tag, const char* fmt, ...);
+int32_t RB_log(RB_LogLevel level, const char* tag, const char* fmt, ...);
 
 #ifdef __cplusplus
 }
