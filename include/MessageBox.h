@@ -108,6 +108,15 @@ int32_t MessageBox_disable(MessageBoxHandle handle);
  */
 int32_t MessageBox_enable(MessageBoxHandle handle);
 
+/**
+ * Resizes the message box capacity.
+ *
+ * @param[in] handle Valid message box handle.
+ * @param[in] New message box capacity.
+ * @return Negative value on failure, RB_OK otherwise
+ */
+int32_t MessageBox_resize(MessageBoxHandle handle, uint32_t capacity);
+
 #ifdef __cplusplus
 }
 #endif

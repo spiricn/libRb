@@ -155,6 +155,17 @@ int32_t MessageBox_enable(MessageBoxHandle handle) {
     return CRingBuffer_enable(mb->buffer);
 }
 
+int32_t MessageBox_resize(MessageBoxHandle handle, uint32_t capacity){
+    MessageBoxContext* mb = MessageBoxPriv_getContext(handle);
+    if(mb == NULL) {
+        return RB_INVALID_ARG;
+    }
+
+    mb->capacity = capacity;
+
+    return CRingBuffer_resize(mb->buffer, mb->capacity * mb->messageSize);
+}
+
 MessageBoxContext* MessageBoxPriv_getContext(MessageBoxHandle handle) {
     if(handle == NULL) {
         return NULL;
