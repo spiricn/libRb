@@ -1,6 +1,12 @@
+# cmake files
 CMakeCache.txt
 CMakeFiles/
 Makefile
 cmake_install.cmake
 bin
 lib
+
+# cmake eclipse files
+.project
+.cproject
+
