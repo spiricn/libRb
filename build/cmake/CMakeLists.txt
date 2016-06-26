@@ -31,6 +31,7 @@ set(SOURCES
 	${SOURCE_DIR}/Stopwatch.c
 	${SOURCE_DIR}/Array.c
 	${SOURCE_DIR}/Common.c
+	${SOURCE_DIR}/List.c
 )
 
 set(HEADERS
@@ -40,6 +41,7 @@ set(HEADERS
 	${INCLUDE_DIR}/rb/MessageBox.h
 	${INCLUDE_DIR}/rb/RingBuffer.h
 	${INCLUDE_DIR}/rb/Array.h
+	${INCLUDE_DIR}/rb/List.h
 )
 
 include_directories(${INCLUDE_DIR})
@@ -73,6 +75,7 @@ set(TEST_SOURCES
 	${TEST_DIR}/TestConcurrency.c
 	${TEST_DIR}/TestMessageBox.c
 	${TEST_DIR}/TestArray.c
+	${TEST_DIR}/TestList.c
 	${TEST_DIR}/Tests.c
 )
 

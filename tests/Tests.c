@@ -14,7 +14,7 @@
 #endif
 #define RB_LOG_TAG "TestBuffer"
 #define ADD_TEST(x) {x, #x},
-#define NUM_TESTS ( 5 )
+#define NUM_TESTS ( 6 )
 
 /*******************************************************/
 /*              Functions Declarations                 */
@@ -25,6 +25,7 @@ extern int testCBuffer();
 extern int testConcurrency();
 extern int testArray();
 extern int testMessageBox();
+extern int testList();
 
 /*******************************************************/
 /*              Typedefs                               */
@@ -47,6 +48,7 @@ TestEntry gTests[NUM_TESTS] = {
 		ADD_TEST(testConcurrency)
 		ADD_TEST(testArray)
 		ADD_TEST(testMessageBox)
+		ADD_TEST(testList)
 };
 
 /*******************************************************/

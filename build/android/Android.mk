@@ -12,7 +12,8 @@ LOCAL_SRC_FILES := \
 			$(SRC_DIR)/Array.c \
 			$(SRC_DIR)/Stopwatch.c \
 			$(SRC_DIR)/Log.c \
-            $(SRC_DIR)/Common.c
+            $(SRC_DIR)/Common.c \
+            $(SRC_DIR)/List.c
 					
 LOCAL_C_INCLUDES += \
 		$(INC_DIR) \
@@ -41,6 +42,7 @@ LOCAL_SRC_FILES := \
 			$(SRC_DIR)/TestCBuffer.c \
 			$(SRC_DIR)/TestConcurrency.c \
 			$(SRC_DIR)/TestMessageBox.c \
+			$(SRC_DIR)/TestList.c
 
 LOCAL_C_INCLUDES += \
 		$(INC_DIR) \
