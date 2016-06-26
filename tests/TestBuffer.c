@@ -2,8 +2,8 @@
 /*              Includes                               */
 /*******************************************************/
 
-#include <RingBuffer.h>
-#include <Log.h>
+#include <rb/RingBuffer.h>
+#include <rb/Log.h>
 
 /*******************************************************/
 /*              Defines                                */

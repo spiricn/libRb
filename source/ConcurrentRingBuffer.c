@@ -2,9 +2,9 @@
 /*              Includes                               */
 /*******************************************************/
 
-#include "ConcurrentRingBuffer.h"
-#include "RingBuffer.h"
-#include "Stopwatch.h"
+#include "rb/ConcurrentRingBuffer.h"
+#include "rb/RingBuffer.h"
+#include "rb/Stopwatch.h"
 
 #include <pthread.h>
 #include <stdlib.h>

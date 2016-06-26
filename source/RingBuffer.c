@@ -2,7 +2,7 @@
 /*              Includes                               */
 /*******************************************************/
 
-#include "RingBuffer.h"
+#include "rb/RingBuffer.h"
 
 #include <stdio.h>
 #include <string.h>

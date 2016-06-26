@@ -34,12 +34,12 @@ set(SOURCES
 )
 
 set(HEADERS
-	${INCLUDE_DIR}/Common.h
-	${INCLUDE_DIR}/ConcurrentRingBuffer.h
-	${INCLUDE_DIR}/Log.h
-	${INCLUDE_DIR}/MessageBox.h
-	${INCLUDE_DIR}/RingBuffer.h
-	${INCLUDE_DIR}/Array.h
+	${INCLUDE_DIR}/rb/Common.h
+	${INCLUDE_DIR}/rb/ConcurrentRingBuffer.h
+	${INCLUDE_DIR}/rb/Log.h
+	${INCLUDE_DIR}/rb/MessageBox.h
+	${INCLUDE_DIR}/rb/RingBuffer.h
+	${INCLUDE_DIR}/rb/Array.h
 )
 
 include_directories(${INCLUDE_DIR})
