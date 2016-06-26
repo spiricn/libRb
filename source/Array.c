@@ -108,7 +108,7 @@ int32_t Array_seek(ArrayHandle handle, uint32_t pos) {
     return fseek(array->stream, pos, SEEK_SET);
 }
 
-int32_t Array_write(ArrayHandle handle, void* ptr, uint32_t size) {
+int32_t Array_write(ArrayHandle handle, const void* ptr, uint32_t size) {
     ArrayContext* array = ArrayPriv_getContext(handle);
     if(array == NULL) {
         return RB_INVALID_ARG;
