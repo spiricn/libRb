@@ -8,12 +8,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 /*******************************************************/
 /*              Defines                                */
 /*******************************************************/
 
 #define LIST_MAGIC ( 0xFF3FA233 )
+
+#define LOCK_ACQUIRE do{ pthread_mutex_lock(&list->mutex); }while(0)
+
+#define LOCK_RELEASE do{ pthread_mutex_unlock(&list->mutex); }while(0)
 
 /*******************************************************/
 /*              Typedefs                               */
@@ -30,6 +35,7 @@ typedef struct {
     uint32_t size;
     uint32_t elementSize;
     ListNode* head;
+    pthread_mutex_t mutex;
 } ListContext;
 
 /*******************************************************/
@@ -37,8 +43,8 @@ typedef struct {
 /*******************************************************/
 
 static ListContext* ListPriv_getContext(ListHandle handle);
-
 static ListNode* ListPriv_getNode(ListContext* list, int32_t index);
+static int32_t ListPriv_insertLockless(ListContext* list, int32_t index, const void* element);
 
 /*******************************************************/
 /*              Functions Definitions                  */
@@ -49,6 +55,7 @@ ListHandle List_new(uint32_t elementSize){
 
     list->magic = LIST_MAGIC;
     list->elementSize = elementSize;
+    pthread_mutex_init(&list->mutex, NULL);
 
     return (ListHandle)list;
 }
@@ -68,6 +75,8 @@ int32_t List_free(ListHandle* handle){
         }
     }
 
+    pthread_mutex_destroy(&list->mutex);
+
     free(list);
     *handle = NULL;
 
@@ -80,7 +89,13 @@ int32_t List_add(ListHandle handle, const void* element){
         return RB_INVALID_ARG;
     }
 
-    return List_insert(handle, list->size, element);
+    LOCK_ACQUIRE;
+
+    int32_t rc = ListPriv_insertLockless(list, list->size, element);
+
+    LOCK_RELEASE;
+
+    return rc;
 }
 
 int32_t List_get(ListHandle handle, int32_t index, void* element){
@@ -89,13 +104,18 @@ int32_t List_get(ListHandle handle, int32_t index, void* element){
         return RB_INVALID_ARG;
     }
 
+    LOCK_ACQUIRE;
+
     ListNode* node = ListPriv_getNode(list, index);
 
     if(!node){
+        LOCK_RELEASE;
         return RB_INVALID_ARG;
     }
 
     memcpy(element, node->element, list->elementSize);
+
+    LOCK_RELEASE;
 
     return RB_OK;
 }
@@ -106,8 +126,11 @@ int32_t List_remove(ListHandle handle, int32_t index){
         return RB_INVALID_ARG;
     }
 
+    LOCK_ACQUIRE;
+
     ListNode* node = ListPriv_getNode(list, index);
     if(!node){
+        LOCK_RELEASE;
         return RB_INVALID_ARG;
     }
 
@@ -132,6 +155,8 @@ int32_t List_remove(ListHandle handle, int32_t index){
     free(node->element);
     free(node);
 
+    LOCK_RELEASE;
+
     return RB_OK;
 }
 
@@ -141,24 +166,13 @@ int32_t List_insert(ListHandle handle, int32_t index, const void* element){
         return RB_INVALID_ARG;
     }
 
-    if((int32_t)list->size > index){
-        return RB_INVALID_ARG;
-    }
-    ListNode* node = (ListNode*)calloc(1, sizeof(ListNode));
-    node->element = (void*)calloc(1, list->elementSize);
-    memcpy(node->element, element, list->elementSize);
-    if(!list->size){
-        list->head = node;
-    }
-    else{
-        ListNode* parent = ListPriv_getNode(list, index-1);
-        parent->next = node;
-        node->prev = parent;
-    }
+    LOCK_ACQUIRE;
 
-    list->size++;
+    int32_t rc = ListPriv_insertLockless(list, index, element);
 
-    return RB_OK;
+    LOCK_RELEASE;
+
+    return rc;
 }
 
 int32_t List_getSize(ListHandle handle){
@@ -167,7 +181,13 @@ int32_t List_getSize(ListHandle handle){
         return RB_INVALID_ARG;
     }
 
-    return list->size;
+    LOCK_ACQUIRE;
+
+    int32_t res = list->size;
+
+    LOCK_RELEASE;
+
+    return res;
 }
 
 ListContext* ListPriv_getContext(ListHandle handle) {
@@ -202,4 +222,26 @@ ListNode* ListPriv_getNode(ListContext* list, int32_t index){
     }
 
     return node;
+}
+
+int32_t ListPriv_insertLockless(ListContext* list, int32_t index, const void* element){
+    if((int32_t)list->size > index){
+        return RB_INVALID_ARG;
+    }
+
+    ListNode* node = (ListNode*)calloc(1, sizeof(ListNode));
+    node->element = (void*)calloc(1, list->elementSize);
+    memcpy(node->element, element, list->elementSize);
+    if(!list->size){
+        list->head = node;
+    }
+    else{
+        ListNode* parent = ListPriv_getNode(list, index-1);
+        parent->next = node;
+        node->prev = parent;
+    }
+
+    list->size++;
+
+    return RB_OK;
 }
