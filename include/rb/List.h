@@ -17,7 +17,14 @@
 extern "C" {
 #endif
 
+typedef enum {
+    eRB_SORT_ASCEND,
+    eRB_SORT_DESCEND
+} Rb_SortMode;
+
 typedef void* Rb_ListHandle;
+
+typedef int32_t (*Rb_List_compareFnc)(Rb_ListHandle handle, void* elem1, void* elem2);
 
 /*******************************************************/
 /*              Functions Declarations                 */
@@ -85,6 +92,36 @@ int32_t Rb_List_insert(Rb_ListHandle handle, int32_t index, const void* element)
  * @return Number of elements in the list on success, negative value otherwise.
  */
 int32_t Rb_List_getSize(Rb_ListHandle handle);
+
+/**
+ * Removes all the elements from the list.
+ *
+ * @param[in] handle Valid list handle.
+ * @return RB_OK on success, negative value otherwise.
+ */
+int32_t Rb_List_clear(Rb_ListHandle handle);
+
+/**
+ * Sorts the list elements.
+ *
+ * @param[in] handle Valid list handle.
+ * @param[in] compareFnc Function used to compare two elements of the list. The function should
+ *            return -1 if the first elements value is lesser than the value of the second one,
+ *            0 if they're the same, and 1 if its greater.
+ * @param[in] mode Sorting mode. Determines the order in which the elements will be sorted
+ * @return RB_OK on success, negative value otherwise.
+ */
+int32_t Rb_List_sort(Rb_ListHandle handle, Rb_List_compareFnc compareFnc, Rb_SortMode mode);
+
+/**
+ * Swaps the values of two elements in the list.
+ *
+ * @param[in] handle Valid list handle.
+ * @param[in] index1 Index of the first element.
+ * @param[in] index2 Index of the second element.
+ * @return RB_OK on success, negative value otherwise.
+ */
+int32_t Rb_List_swap(Rb_ListHandle handle, int32_t index1, int32_t index2);
 
 #ifdef __cplusplus
 }

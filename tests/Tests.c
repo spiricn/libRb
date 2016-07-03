@@ -17,6 +17,18 @@
 #define NUM_TESTS ( 6 )
 
 /*******************************************************/
+/*              Typedefs                               */
+/*******************************************************/
+
+typedef int (*testFnc)();;
+
+typedef struct {
+    testFnc fnc;
+    char* name;
+} TestEntry;
+
+
+/*******************************************************/
 /*              Functions Declarations                 */
 /*******************************************************/
 
@@ -27,22 +39,13 @@ extern int testArray();
 extern int testMessageBox();
 extern int testList();
 
-/*******************************************************/
-/*              Typedefs                               */
-/*******************************************************/
-
-typedef int (*testFnc)();;
-
-typedef struct {
-	testFnc fnc;
-	char* name;
-} TestEntry;
+static int runTests();
 
 /********************************************************/
 /*                 Local Module Variables (MODULE)      */
 /********************************************************/
 
-TestEntry gTests[NUM_TESTS] = {
+static const TestEntry gTests[NUM_TESTS] = {
 		ADD_TEST(testBuffer)
 		ADD_TEST(testCBuffer)
 		ADD_TEST(testConcurrency)
@@ -56,33 +59,37 @@ TestEntry gTests[NUM_TESTS] = {
 /*******************************************************/
 
 int main() {
-	int32_t i;
-	int32_t numFailed = 0;
-	int32_t numPassed = 0;
+    return runTests();
+}
 
-	RBLI("Running %d test(s) ..", NUM_TESTS);
+int runTests(){
+    int32_t i;
+    int32_t numFailed = 0;
+    int32_t numPassed = 0;
 
-	for(i=0; i<NUM_TESTS; i++){
-		TestEntry* test = &gTests[i];
+    RBLI("Running %d test(s) ..", NUM_TESTS);
 
-		RBLI("-------------------------------------");
-		RBLI("Running test '%s' (%d/%d)", test->name, i+1, NUM_TESTS);
+    for(i=0; i<NUM_TESTS; i++){
+        const TestEntry* test = &gTests[i];
 
-		int32_t rc = test->fnc();
+        RBLI("-------------------------------------");
+        RBLI("Running test '%s' (%d/%d)", test->name, i+1, NUM_TESTS);
 
-		if(rc){
-			RBLE("Test failed: %d", rc);
-			++numFailed;
-		}
-		else{
-			RBLI("Test OK");
-			++numPassed;
-		}
-	}
+        int32_t rc = test->fnc();
 
-	RBLI("-------------------------------------");
-	RBLE("Tests failed: %d ( %.2f%% )", numFailed, ((float)numFailed/(float)NUM_TESTS)*100.0f);
-	RBLI("Tests passed: %d ( %.2f%% )", numPassed, ((float)numPassed/(float)NUM_TESTS)*100.0f);
+        if(rc){
+            RBLE("Test failed: %d", rc);
+            ++numFailed;
+        }
+        else{
+            RBLI("Test OK");
+            ++numPassed;
+        }
+    }
 
-	return numFailed ? -1 : 0;
+    RBLI("-------------------------------------");
+    RBLE("Tests failed: %d ( %.2f%% )", numFailed, ((float)numFailed/(float)NUM_TESTS)*100.0f);
+    RBLI("Tests passed: %d ( %.2f%% )", numPassed, ((float)numPassed/(float)NUM_TESTS)*100.0f);
+
+    return numFailed ? -1 : 0;
 }

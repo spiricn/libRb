@@ -34,6 +34,8 @@ extern "C" {
 
 #define RB_WAIT_INFINITE ( INT_MIN )
 
+#define RB_UNUSED(var) do{ (void*)&var; }while(0)
+
 /*******************************************************/
 /*              Functions Declarations                 */
 /*******************************************************/
