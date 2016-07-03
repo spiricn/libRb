@@ -17,7 +17,7 @@
 extern "C" {
 #endif
 
-typedef void* ListHandle;
+typedef void* Rb_ListHandle;
 
 /*******************************************************/
 /*              Functions Declarations                 */
@@ -29,7 +29,7 @@ typedef void* ListHandle;
  *@param[in] elementSize  Size of the individual list element.
  *@return Valid list handle if successful, NULL otherwise.
  */
-ListHandle List_new(uint32_t elementSize);
+Rb_ListHandle Rb_List_new(uint32_t elementSize);
 
 /**
  * Frees existing list.
@@ -37,7 +37,7 @@ ListHandle List_new(uint32_t elementSize);
  * @param[in,ou] handle Pointer to a valid list handle.
  * @return RB_OK on success, negative value otherwise.
  */
-int32_t List_free(ListHandle* handle);
+int32_t Rb_List_free(Rb_ListHandle* handle);
 
 /**
  * Adds a new element to the end of the list.
@@ -46,7 +46,7 @@ int32_t List_free(ListHandle* handle);
  * @param[in] element Pointer to a list element.
  * @return RB_OK on success, negative value otherwise.
  */
-int32_t List_add(ListHandle handle, const void* element);
+int32_t Rb_List_add(Rb_ListHandle handle, const void* element);
 
 /**
  * Gets existing list element.
@@ -56,7 +56,7 @@ int32_t List_add(ListHandle handle, const void* element);
  * @param[out] element Pointer to a element memory.
  * @return RB_OK on success, negative value otherwise.
  */
-int32_t List_get(ListHandle handle, int32_t index, void* element);
+int32_t Rb_List_get(Rb_ListHandle handle, int32_t index, void* element);
 
 /**
  * Removes existing element from the list.
@@ -66,7 +66,7 @@ int32_t List_get(ListHandle handle, int32_t index, void* element);
  * @return RB_OK on success, negative value otherwise.
  *
  */
-int32_t List_remove(ListHandle handle, int32_t index);
+int32_t Rb_List_remove(Rb_ListHandle handle, int32_t index);
 
 /**
  * Inserts a new element at the given index.
@@ -76,7 +76,7 @@ int32_t List_remove(ListHandle handle, int32_t index);
  * @param[in] element Element to be inserted.
  * @return RB_OK on success, negative value otherwise.
  */
-int32_t List_insert(ListHandle handle, int32_t index, const void* element);
+int32_t Rb_List_insert(Rb_ListHandle handle, int32_t index, const void* element);
 
 /**
  * Gets the number of elements in the list.
@@ -84,7 +84,7 @@ int32_t List_insert(ListHandle handle, int32_t index, const void* element);
  * @param[in] handle Valid list handle.
  * @return Number of elements in the list on success, negative value otherwise.
  */
-int32_t List_getSize(ListHandle handle);
+int32_t Rb_List_getSize(Rb_ListHandle handle);
 
 #ifdef __cplusplus
 }

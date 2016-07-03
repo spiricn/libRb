@@ -27,22 +27,22 @@ typedef struct {
 /*              Functions Declarations                 */
 /*******************************************************/
 
-static StopwatchContext* StopwatchPriv_getContext(StopwatchHandle handle);
+static StopwatchContext* StopwatchPriv_getContext(Rb_StopwatchHandle handle);
 
 /*******************************************************/
 /*              Functions Definitions                  */
 /*******************************************************/
 
 
-StopwatchHandle Stopwatch_new(){
+Rb_StopwatchHandle Rb_Stopwatch_new(){
     StopwatchContext* sw = (StopwatchContext*)calloc(1, sizeof(StopwatchContext));
 
     sw->magic = STOPWATCH_MAGIC;
 
-    return (StopwatchHandle)sw;
+    return (Rb_StopwatchHandle)sw;
 }
 
-int32_t Stopwatch_free(StopwatchHandle* handle){
+int32_t Rb_Stopwatch_free(Rb_StopwatchHandle* handle){
     StopwatchContext* sw = StopwatchPriv_getContext(*handle);
     if(sw == NULL) {
         return RB_INVALID_ARG;
@@ -54,7 +54,7 @@ int32_t Stopwatch_free(StopwatchHandle* handle){
     return RB_OK;
 }
 
-int32_t Stopwatch_start(StopwatchHandle handle){
+int32_t Rb_Stopwatch_start(Rb_StopwatchHandle handle){
     StopwatchContext* sw = StopwatchPriv_getContext(handle);
     if(sw == NULL) {
         return -1;
@@ -65,7 +65,7 @@ int32_t Stopwatch_start(StopwatchHandle handle){
     return 0;
 }
 
-int64_t Stopwatch_elapsedMs(StopwatchHandle handle){
+int64_t Rb_Stopwatch_elapsedMs(Rb_StopwatchHandle handle){
     StopwatchContext* sw = StopwatchPriv_getContext(handle);
     if(sw == NULL) {
         return -1;
@@ -82,7 +82,7 @@ int64_t Stopwatch_elapsedMs(StopwatchHandle handle){
     return elapsedMs;
 }
 
-StopwatchContext* StopwatchPriv_getContext(StopwatchHandle handle) {
+StopwatchContext* StopwatchPriv_getContext(Rb_StopwatchHandle handle) {
     if(handle == NULL) {
         return NULL;
     }

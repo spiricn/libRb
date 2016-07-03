@@ -37,21 +37,21 @@ int testMessageBox() {
 	int32_t rc;
 
 	// Create message box
-	MessageBoxHandle mb = MessageBox_new(sizeof(Message), NUM_MESSAGES);
+	Rb_MessageBoxHandle mb = Rb_MessageBox_new(sizeof(Message), NUM_MESSAGES);
 	if(!mb){
-		RBLE("MessageBox_new failed");
+		RBLE("Rb_MessageBox_new failed");
 		return -1;
 	}
 
 	// Check capacity
-	if(MessageBox_getCapacity(mb) != NUM_MESSAGES){
-		RBLE("MessageBox_getCapacity failed");
+	if(Rb_MessageBox_getCapacity(mb) != NUM_MESSAGES){
+		RBLE("Rb_MessageBox_getCapacity failed");
 		return -1;
 	}
 
 	// Check if it's empty
-	if(MessageBox_getNumMessages(mb)){
-		RBLE("MessageBox_getNumMessages failed");
+	if(Rb_MessageBox_getNumMessages(mb)){
+		RBLE("Rb_MessageBox_getNumMessages failed");
 		return -1;
 	}
 
@@ -59,21 +59,21 @@ int testMessageBox() {
 	Message msgOut;
 
 	// Write message
-	rc = MessageBox_write(mb, &msgIn);
+	rc = Rb_MessageBox_write(mb, &msgIn);
 	if(rc != RB_OK){
-		RBLE("MessageBox_write failed");
+		RBLE("Rb_MessageBox_write failed");
 		return -1;
 	}
 
-	if(MessageBox_getNumMessages(mb) != 1){
-		RBLE("MessageBox_getNumMessages failed");
+	if(Rb_MessageBox_getNumMessages(mb) != 1){
+		RBLE("Rb_MessageBox_getNumMessages failed");
 		return -1;
 	}
 
 	// Read message
-	rc = MessageBox_read(mb, &msgOut);
+	rc = Rb_MessageBox_read(mb, &msgOut);
 	if(rc != RB_OK){
-		RBLE("MessageBox_read failed");
+		RBLE("Rb_MessageBox_read failed");
 		return -1;
 	}
 
@@ -84,9 +84,9 @@ int testMessageBox() {
 	}
 
 	// Destroy message box
-	rc = MessageBox_free(&mb);
+	rc = Rb_MessageBox_free(&mb);
 	if(rc != RB_OK && mb){
-		RBLE("MessageBox_free failed");
+		RBLE("Rb_MessageBox_free failed");
 		return -1;
 	}
 

@@ -16,7 +16,7 @@
 extern "C" {
 #endif
 
-typedef void* StopwatchHandle;
+typedef void* Rb_StopwatchHandle;
 
 /********************************************************/
 /*                 Functions Declarations               */
@@ -27,28 +27,28 @@ typedef void* StopwatchHandle;
  *
  * @return Valid stopwatch handle on success, NULL otherwise.
  */
-StopwatchHandle Stopwatch_new();
+Rb_StopwatchHandle Rb_Stopwatch_new();
 
 /**
  * Destroys Stopwatch object
  *
  * @return RB_OK on success, negative value otherwise.
  */
-int32_t Stopwatch_free(StopwatchHandle* handle);
+int32_t Rb_Stopwatch_free(Rb_StopwatchHandle* handle);
 
 /**
  * (Re)starts counting time.
  *
  * @return RB_OK on succes, negative value otherwise.
  */
-int32_t Stopwatch_start(StopwatchHandle handle);
+int32_t Rb_Stopwatch_start(Rb_StopwatchHandle handle);
 
 /**
- * Acquires current elapsed time since the last 'Stopwatch_start' call.
+ * Acquires current elapsed time since the last 'Rb_Stopwatch_start' call.
  *
  * @return Elapsed time in milliseconds on success, negative value otherwise.
  */
-int64_t Stopwatch_elapsedMs(StopwatchHandle handle);
+int64_t Rb_Stopwatch_elapsedMs(Rb_StopwatchHandle handle);
 
 #ifdef __cplusplus
 }

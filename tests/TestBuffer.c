@@ -36,59 +36,59 @@ int testBuffer() {
 		testData[i] = i;
 	}
 
-	RingBufferHandle rb = RingBuffer_new(kCAPACITY);
+	Rb_RingBufferHandle rb = Rb_RingBuffer_new(kCAPACITY);
 	if (rb == NULL) {
-		RBLE("RingBuffer_new failed");
+		RBLE("Rb_RingBuffer_new failed");
 		return -1;
 	}
 
-	if (RingBuffer_getCapacity(rb) != kCAPACITY) {
-		RBLE("RingBuffer_getCapacity failed");
+	if (Rb_RingBuffer_getCapacity(rb) != kCAPACITY) {
+		RBLE("Rb_RingBuffer_getCapacity failed");
 		return -1;
 	}
 
-	if (RingBuffer_getBytesFree(rb) != kCAPACITY) {
-		RBLE("RingBuffer_getBytesFree failed");
+	if (Rb_RingBuffer_getBytesFree(rb) != kCAPACITY) {
+		RBLE("Rb_RingBuffer_getBytesFree failed");
 		return -1;
 	}
 
-	if (RingBuffer_getBytesUsed(rb) != 0) {
-		RBLE("RingBuffer_getBytesUsed failed");
+	if (Rb_RingBuffer_getBytesUsed(rb) != 0) {
+		RBLE("Rb_RingBuffer_getBytesUsed failed");
 		return -1;
 	}
 
-	if(!RingBuffer_isEmpty(rb) || RingBuffer_isFull(rb)){
-		RBLE("RingBuffer_isEmpty or RingBuffer_isFull failed");
+	if(!Rb_RingBuffer_isEmpty(rb) || Rb_RingBuffer_isFull(rb)){
+		RBLE("Rb_RingBuffer_isEmpty or Rb_RingBuffer_isFull failed");
 		return -1;
 	}
 
 	// Write some data
-	rc = RingBuffer_write(rb, testData, kCAPACITY);
+	rc = Rb_RingBuffer_write(rb, testData, kCAPACITY);
 	if(rc != kCAPACITY){
-		RBLE("RingBuffer_write failed");
+		RBLE("Rb_RingBuffer_write failed");
 		return -1;
 	}
 
 	// Make sure buffer is full
-	if(RingBuffer_isEmpty(rb) || !RingBuffer_isFull(rb)){
-		RBLE("RingBuffer_isEmpty or RingBuffer_isFull failed");
+	if(Rb_RingBuffer_isEmpty(rb) || !Rb_RingBuffer_isFull(rb)){
+		RBLE("Rb_RingBuffer_isEmpty or Rb_RingBuffer_isFull failed");
 		return -1;
 	}
 
-	if(RingBuffer_getBytesFree(rb)){
-		RBLE("RingBuffer_getBytesFree failed");
+	if(Rb_RingBuffer_getBytesFree(rb)){
+		RBLE("Rb_RingBuffer_getBytesFree failed");
 		return -1;
 	}
 
-	if(RingBuffer_getBytesUsed(rb) != kCAPACITY){
-		RBLE("RingBuffer_getBytesUsed failed");
+	if(Rb_RingBuffer_getBytesUsed(rb) != kCAPACITY){
+		RBLE("Rb_RingBuffer_getBytesUsed failed");
 		return -1;
 	}
 
 	// Read previously written data
-	rc = RingBuffer_read(rb, testOutData, kCAPACITY);
+	rc = Rb_RingBuffer_read(rb, testOutData, kCAPACITY);
 	if(rc != kCAPACITY){
-		RBLE("RingBuffer_read failed");
+		RBLE("Rb_RingBuffer_read failed");
 		return -1;
 	}
 
@@ -99,28 +99,28 @@ int testBuffer() {
 	}
 
 	// Make sure buffer is empty
-	if(!RingBuffer_isEmpty(rb) || RingBuffer_isFull(rb)){
-		RBLE("RingBuffer_isEmpty or RingBuffer_isFull failed");
+	if(!Rb_RingBuffer_isEmpty(rb) || Rb_RingBuffer_isFull(rb)){
+		RBLE("Rb_RingBuffer_isEmpty or Rb_RingBuffer_isFull failed");
 		return -1;
 	}
 
 	// Write some data (fill it up)
-	rc = RingBuffer_write(rb, testData, kCAPACITY);
+	rc = Rb_RingBuffer_write(rb, testData, kCAPACITY);
 	if(rc != kCAPACITY){
-		RBLE("RingBuffer_write failed");
+		RBLE("Rb_RingBuffer_write failed");
 		return -1;
 	}
 
 	const int32_t kNEW_CAPACITY = kCAPACITY*2;
 
-	rc = RingBuffer_resize(rb, kNEW_CAPACITY);
+	rc = Rb_RingBuffer_resize(rb, kNEW_CAPACITY);
 	if(rc != RB_OK){
-		RBLE("RingBuffer_resize failed");
+		RBLE("Rb_RingBuffer_resize failed");
 		return -1;
 	}
 
-	if(RingBuffer_getCapacity(rb) != kNEW_CAPACITY){
-		RBLE("RingBuffer_getCapacity failed");
+	if(Rb_RingBuffer_getCapacity(rb) != kNEW_CAPACITY){
+		RBLE("Rb_RingBuffer_getCapacity failed");
 		return -1;
 	}
 
@@ -130,15 +130,15 @@ int testBuffer() {
 		largeTestData[i] = i % 0xFF;
 	}
 
-	rc = RingBuffer_write(rb, largeTestData, kNEW_CAPACITY);
+	rc = Rb_RingBuffer_write(rb, largeTestData, kNEW_CAPACITY);
 	if(rc != kNEW_CAPACITY){
-		RBLE("RingBuffer_write failed");
+		RBLE("Rb_RingBuffer_write failed");
 		return -1;
 	}
 
-	rc = RingBuffer_read(rb, largeOutData, kNEW_CAPACITY);
+	rc = Rb_RingBuffer_read(rb, largeOutData, kNEW_CAPACITY);
 	if(rc != kNEW_CAPACITY){
-		RBLE("RingBuffer_read failed");
+		RBLE("Rb_RingBuffer_read failed");
 		return -1;
 	}
 
@@ -149,9 +149,9 @@ int testBuffer() {
 		}
 	}
 
-	rc = RingBuffer_free(&rb);
+	rc = Rb_RingBuffer_free(&rb);
 	if (rc != RB_OK || rb != NULL) {
-		RBLE("RingBuffer_free failed");
+		RBLE("Rb_RingBuffer_free failed");
 	}
 
 	return 0;

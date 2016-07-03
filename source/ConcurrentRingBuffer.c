@@ -46,7 +46,7 @@ typedef struct {
 typedef struct {
     uint32_t magic;
     CRingBufferBase* base;
-    RingBufferHandle buffer;
+    Rb_RingBufferHandle buffer;
     int sharedMemory;
     int owned;
 } CRingBufferContext;
@@ -55,7 +55,7 @@ typedef struct {
 /*              Functions Declarations                 */
 /*******************************************************/
 
-static CRingBufferContext* CRingBufferPriv_getContext(CRingBufferHandle handle);
+static CRingBufferContext* CRingBufferPriv_getContext(Rb_CRingBufferHandle handle);
 
 static void CRingBufferPriv_getOffsetTime(struct timespec* time, int64_t offsetMs){
     clock_gettime(CLOCK_REALTIME , time);
@@ -107,7 +107,7 @@ static bool CRingBufferPriv_timedWait(pthread_cond_t* cv, pthread_mutex_t* mutex
 /*              Functions Definitions                  */
 /*******************************************************/
 
-CRingBufferHandle CRingBuffer_fromSharedMemory(void* memory, uint32_t size,
+Rb_CRingBufferHandle Rb_CRingBuffer_fromSharedMemory(void* memory, uint32_t size,
         int init) {
     if(size == 0) {
         return NULL;
@@ -119,7 +119,7 @@ CRingBufferHandle CRingBuffer_fromSharedMemory(void* memory, uint32_t size,
 
     rb->magic = CONCURRENT_RING_BUFFER_MAGIC;
 
-    rb->buffer = RingBuffer_fromSharedMemory(
+    rb->buffer = Rb_RingBuffer_fromSharedMemory(
             ((uint8_t*) memory) + sizeof(CRingBufferBase),
             size - sizeof(CRingBufferBase), init);
 
@@ -149,7 +149,7 @@ CRingBufferHandle CRingBuffer_fromSharedMemory(void* memory, uint32_t size,
     return rb;
 }
 
-CRingBufferHandle CRingBuffer_new(uint32_t size) {
+Rb_CRingBufferHandle Rb_CRingBuffer_new(uint32_t size) {
     if(size == 0) {
         return NULL;
     }
@@ -166,7 +166,7 @@ CRingBufferHandle CRingBuffer_new(uint32_t size) {
     pthread_cond_init(&rb->base->readCV, NULL);
     pthread_cond_init(&rb->base->writeCV, NULL);
 
-    rb->buffer = RingBuffer_new(size);
+    rb->buffer = Rb_RingBuffer_new(size);
     rb->base->enabled = 1;
     rb->sharedMemory = 0;
     rb->owned = 1;
@@ -174,7 +174,7 @@ CRingBufferHandle CRingBuffer_new(uint32_t size) {
     return rb;
 }
 
-int32_t CRingBuffer_free(CRingBufferHandle* handle) {
+int32_t Rb_CRingBuffer_free(Rb_CRingBufferHandle* handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(*handle);
     if(rb == NULL) {
         return RB_INVALID_ARG;
@@ -188,7 +188,7 @@ int32_t CRingBuffer_free(CRingBufferHandle* handle) {
         pthread_cond_destroy(&rb->base->writeCV);
     }
 
-    const int32_t res = RingBuffer_free(&rb->buffer);
+    const int32_t res = Rb_RingBuffer_free(&rb->buffer);
 
     if(!rb->sharedMemory) {
         free(rb->base);
@@ -200,32 +200,32 @@ int32_t CRingBuffer_free(CRingBufferHandle* handle) {
     return res;
 }
 
-int32_t CRingBuffer_readTimed(CRingBufferHandle handle, uint8_t* data, uint32_t size, CRingBuffer_ReadMode mode, int64_t timeoutMs){
+int32_t Rb_CRingBuffer_readTimed(Rb_CRingBufferHandle handle, uint8_t* data, uint32_t size, Rb_CRingBuffer_ReadMode mode, int64_t timeoutMs){
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
         return RB_INVALID_ARG;
     }
 
-    StopwatchHandle sw = Stopwatch_new();
-    Stopwatch_start(sw);
+    Rb_StopwatchHandle sw = Rb_Stopwatch_new();
+    Rb_Stopwatch_start(sw);
 
     uint32_t bytesRead = 0;
 
     // Checkpoint
     if(!rb->base->enabled) {
-        Stopwatch_free(&sw);
+        Rb_Stopwatch_free(&sw);
         return 0;
     }
 
     // Read lock
     if(!CRingBufferPriv_timedLock(&rb->base->readMutex, timeoutMs)){
-        Stopwatch_free(&sw);
+        Rb_Stopwatch_free(&sw);
         return RB_TIMEOUT;
     }
 
     // Buffer lock
-    if(!CRingBufferPriv_timedLock(&rb->base->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE : timeoutMs - Stopwatch_elapsedMs(&sw))){
-        Stopwatch_free(&sw);
+    if(!CRingBufferPriv_timedLock(&rb->base->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE : timeoutMs - Rb_Stopwatch_elapsedMs(&sw))){
+        Rb_Stopwatch_free(&sw);
         return RB_TIMEOUT;
     }
 
@@ -235,23 +235,23 @@ int32_t CRingBuffer_readTimed(CRingBufferHandle handle, uint8_t* data, uint32_t 
         ;
         READ_RELEASE
         ;
-        Stopwatch_free(&sw);
+        Rb_Stopwatch_free(&sw);
         return 0;
     }
 
-    if(mode == eREAD_BLOCK_FULL) {
+    if(mode == eRB_READ_BLOCK_FULL) {
         uint32_t bytesRemaining = size;
         uint32_t bytesUsed = 0;
 
         while(bytesRemaining) {
             // Wait until some data is available
-            while((bytesUsed = RingBuffer_getBytesUsed(rb->buffer)) == 0 && rb->base->enabled) {
-                if(!CRingBufferPriv_timedWait(&rb->base->writeCV, &rb->base->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE : timeoutMs - Stopwatch_elapsedMs(&sw))){
+            while((bytesUsed = Rb_RingBuffer_getBytesUsed(rb->buffer)) == 0 && rb->base->enabled) {
+                if(!CRingBufferPriv_timedWait(&rb->base->writeCV, &rb->base->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE : timeoutMs - Rb_Stopwatch_elapsedMs(&sw))){
                     LOCK_RELEASE
                     ;
                     READ_RELEASE
                     ;
-                    Stopwatch_free(&sw);
+                    Rb_Stopwatch_free(&sw);
                     return RB_TIMEOUT;
                 }
             }
@@ -262,13 +262,13 @@ int32_t CRingBuffer_readTimed(CRingBufferHandle handle, uint8_t* data, uint32_t 
                 ;
                 READ_RELEASE
                 ;
-                Stopwatch_free(&sw);
+                Rb_Stopwatch_free(&sw);
                 return size - bytesRemaining;
             }
 
             const int32_t toRead = bytesRemaining < bytesUsed ? bytesRemaining : bytesUsed;
 
-            RingBuffer_read(rb->buffer, data + (size - bytesRemaining), toRead);
+            Rb_RingBuffer_read(rb->buffer, data + (size - bytesRemaining), toRead);
 
             bytesRemaining -= toRead;
 
@@ -277,15 +277,15 @@ int32_t CRingBuffer_readTimed(CRingBufferHandle handle, uint8_t* data, uint32_t 
 
         bytesRead = size - bytesRemaining;
     } else {
-        if(mode == eREAD_BLOCK_PARTIAL) {
+        if(mode == eRB_READ_BLOCK_PARTIAL) {
             // Wait at least some of the data we requires is available
-            while(RingBuffer_getBytesUsed(rb->buffer) == 0 && rb->base->enabled) {
-                if(!CRingBufferPriv_timedWait(&rb->base->writeCV, &rb->base->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE : timeoutMs - Stopwatch_elapsedMs(&sw))){
+            while(Rb_RingBuffer_getBytesUsed(rb->buffer) == 0 && rb->base->enabled) {
+                if(!CRingBufferPriv_timedWait(&rb->base->writeCV, &rb->base->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE : timeoutMs - Rb_Stopwatch_elapsedMs(&sw))){
                     LOCK_RELEASE
                     ;
                     READ_RELEASE
                     ;
-                    Stopwatch_free(&sw);
+                    Rb_Stopwatch_free(&sw);
                     return RB_TIMEOUT;
                 }
             }
@@ -296,22 +296,22 @@ int32_t CRingBuffer_readTimed(CRingBufferHandle handle, uint8_t* data, uint32_t 
                 ;
                 READ_RELEASE
                 ;
-                Stopwatch_free(&sw);
+                Rb_Stopwatch_free(&sw);
                 return 0;
             }
 
-            uint32_t available = RingBuffer_getBytesUsed(rb->buffer);
+            uint32_t available = Rb_RingBuffer_getBytesUsed(rb->buffer);
 
             size = size > available ? available : size;
-        } else if(mode == eREAD_BLOCK_NONE) {
+        } else if(mode == eRB_READ_BLOCK_NONE) {
             // Read whatever data is available at the moment (may be nothing)
-            uint32_t available = RingBuffer_getBytesUsed(rb->buffer);
+            uint32_t available = Rb_RingBuffer_getBytesUsed(rb->buffer);
 
             size = size > available ? available : size;
         }
 
         if(size) {
-            bytesRead = RingBuffer_read(rb->buffer, data, size);
+            bytesRead = Rb_RingBuffer_read(rb->buffer, data, size);
 
             pthread_cond_broadcast(&rb->base->readCV);
         }
@@ -321,44 +321,44 @@ int32_t CRingBuffer_readTimed(CRingBufferHandle handle, uint8_t* data, uint32_t 
     ;
     READ_RELEASE
     ;
-    Stopwatch_free(&sw);
+    Rb_Stopwatch_free(&sw);
     return bytesRead;
 }
 
-int32_t CRingBuffer_read(CRingBufferHandle handle, uint8_t* data, uint32_t size,
-        CRingBuffer_ReadMode mode) {
-    return CRingBuffer_readTimed(handle, data, size, mode, RB_WAIT_INFINITE);
+int32_t Rb_CRingBuffer_read(Rb_CRingBufferHandle handle, uint8_t* data, uint32_t size,
+        Rb_CRingBuffer_ReadMode mode) {
+    return Rb_CRingBuffer_readTimed(handle, data, size, mode, RB_WAIT_INFINITE);
 }
 
-int32_t CRingBuffer_writeTimed(CRingBufferHandle handle, const uint8_t* data,
-        uint32_t size, CRingBuffer_WriteMode mode, int64_t timeoutMs){
+int32_t Rb_CRingBuffer_writeTimed(Rb_CRingBufferHandle handle, const uint8_t* data,
+        uint32_t size, Rb_CRingBuffer_WriteMode mode, int64_t timeoutMs){
 
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
         return RB_INVALID_ARG;
     }
 
-    StopwatchHandle sw = Stopwatch_new();
-    Stopwatch_start(&sw);
+    Rb_StopwatchHandle sw = Rb_Stopwatch_new();
+    Rb_Stopwatch_start(&sw);
 
     // Total bytes written
     uint32_t bytesWritten = 0;
 
     // Checkpoint
     if(!rb->base->enabled) {
-        Stopwatch_free(&sw);
+        Rb_Stopwatch_free(&sw);
         return 0;
     }
 
     // Write lock
     if(!CRingBufferPriv_timedLock(&rb->base->writeMutex, timeoutMs)){
-        Stopwatch_free(&sw);
+        Rb_Stopwatch_free(&sw);
         return RB_TIMEOUT;
     }
 
     // Buffer lock
-    if(!CRingBufferPriv_timedLock(&rb->base->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE : timeoutMs - Stopwatch_elapsedMs(&sw))){
-        Stopwatch_free(&sw);
+    if(!CRingBufferPriv_timedLock(&rb->base->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE : timeoutMs - Rb_Stopwatch_elapsedMs(&sw))){
+        Rb_Stopwatch_free(&sw);
         return RB_TIMEOUT;
     }
 
@@ -368,24 +368,24 @@ int32_t CRingBuffer_writeTimed(CRingBufferHandle handle, const uint8_t* data,
         ;
         WRITE_RELEASE
         ;
-        Stopwatch_free(&sw);
+        Rb_Stopwatch_free(&sw);
         return 0;
     }
 
-    if(mode == eWRITE_BLOCK_FULL) {
+    if(mode == eRB_WRITE_BLOCK_FULL) {
         uint32_t bytesRemaining = size;
         uint32_t bytesFree = 0;
 
         while(bytesRemaining) {
             // Wait until some space is free
-            while((bytesFree = RingBuffer_getBytesFree(rb->buffer)) == 0
+            while((bytesFree = Rb_RingBuffer_getBytesFree(rb->buffer)) == 0
                     && rb->base->enabled) {
-                if(!CRingBufferPriv_timedWait(&rb->base->readCV, &rb->base->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE :  timeoutMs - Stopwatch_elapsedMs(&sw))){
+                if(!CRingBufferPriv_timedWait(&rb->base->readCV, &rb->base->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE :  timeoutMs - Rb_Stopwatch_elapsedMs(&sw))){
                    LOCK_RELEASE
                    ;
                    WRITE_RELEASE
                    ;
-                   Stopwatch_free(&sw);
+                   Rb_Stopwatch_free(&sw);
                    return RB_TIMEOUT;
                }
             }
@@ -396,14 +396,14 @@ int32_t CRingBuffer_writeTimed(CRingBufferHandle handle, const uint8_t* data,
                 ;
                 WRITE_RELEASE
                 ;
-                Stopwatch_free(&sw);
+                Rb_Stopwatch_free(&sw);
                 return size - bytesRemaining;
             }
 
             const uint32_t toWrite =
                     bytesRemaining < bytesFree ? bytesRemaining : bytesFree;
 
-            RingBuffer_write(rb->buffer, data + (size - bytesRemaining),
+            Rb_RingBuffer_write(rb->buffer, data + (size - bytesRemaining),
                     toWrite);
 
             bytesRemaining -= toWrite;
@@ -413,15 +413,15 @@ int32_t CRingBuffer_writeTimed(CRingBufferHandle handle, const uint8_t* data,
 
         bytesWritten = size - bytesRemaining;
     } else {
-        if(mode == eWRITE_WRITE_SOME) {
+        if(mode == eRB_WRITE_WRITE_SOME) {
             // Write as much data as we can without blocking
-            uint32_t free = RingBuffer_getBytesFree(rb->buffer);
+            uint32_t free = Rb_RingBuffer_getBytesFree(rb->buffer);
 
             size = size > free ? free : size;
         }
 
         if(size) {
-            bytesWritten = RingBuffer_write(rb->buffer, data, size);
+            bytesWritten = Rb_RingBuffer_write(rb->buffer, data, size);
 
             pthread_cond_broadcast(&rb->base->writeCV);
         }
@@ -431,16 +431,16 @@ int32_t CRingBuffer_writeTimed(CRingBufferHandle handle, const uint8_t* data,
     ;
     WRITE_RELEASE
     ;
-    Stopwatch_free(&sw);
+    Rb_Stopwatch_free(&sw);
     return bytesWritten;
 }
 
-int32_t CRingBuffer_write(CRingBufferHandle handle, const uint8_t* data,
-        uint32_t size, CRingBuffer_WriteMode mode) {
-    return CRingBuffer_writeTimed(handle, data, size, mode, RB_WAIT_INFINITE);
+int32_t Rb_CRingBuffer_write(Rb_CRingBufferHandle handle, const uint8_t* data,
+        uint32_t size, Rb_CRingBuffer_WriteMode mode) {
+    return Rb_CRingBuffer_writeTimed(handle, data, size, mode, RB_WAIT_INFINITE);
 }
 
-int32_t CRingBuffer_getBytesUsed(CRingBufferHandle handle) {
+int32_t Rb_CRingBuffer_getBytesUsed(Rb_CRingBufferHandle handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
         return RB_INVALID_ARG;
@@ -449,7 +449,7 @@ int32_t CRingBuffer_getBytesUsed(CRingBufferHandle handle) {
     LOCK_ACQUIRE
     ;
 
-    const int32_t res = RingBuffer_getBytesUsed(rb->buffer);
+    const int32_t res = Rb_RingBuffer_getBytesUsed(rb->buffer);
 
     LOCK_RELEASE
     ;
@@ -457,7 +457,7 @@ int32_t CRingBuffer_getBytesUsed(CRingBufferHandle handle) {
     return res;
 }
 
-int32_t CRingBuffer_getBytesFree(CRingBufferHandle handle) {
+int32_t Rb_CRingBuffer_getBytesFree(Rb_CRingBufferHandle handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
         return RB_INVALID_ARG;
@@ -466,7 +466,7 @@ int32_t CRingBuffer_getBytesFree(CRingBufferHandle handle) {
     LOCK_ACQUIRE
     ;
 
-    const int32_t res = RingBuffer_getBytesFree(rb->buffer);
+    const int32_t res = Rb_RingBuffer_getBytesFree(rb->buffer);
 
     LOCK_RELEASE
     ;
@@ -474,7 +474,7 @@ int32_t CRingBuffer_getBytesFree(CRingBufferHandle handle) {
     return res;
 }
 
-int32_t CRingBuffer_getCapacity(CRingBufferHandle handle) {
+int32_t Rb_CRingBuffer_getCapacity(Rb_CRingBufferHandle handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
         return RB_INVALID_ARG;
@@ -483,7 +483,7 @@ int32_t CRingBuffer_getCapacity(CRingBufferHandle handle) {
     LOCK_ACQUIRE
     ;
 
-    const int32_t res = RingBuffer_getCapacity(rb->buffer);
+    const int32_t res = Rb_RingBuffer_getCapacity(rb->buffer);
 
     LOCK_RELEASE
     ;
@@ -491,7 +491,7 @@ int32_t CRingBuffer_getCapacity(CRingBufferHandle handle) {
     return res;
 }
 
-int32_t CRingBuffer_disable(CRingBufferHandle handle) {
+int32_t Rb_CRingBuffer_disable(Rb_CRingBufferHandle handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
         return RB_INVALID_ARG;
@@ -511,7 +511,7 @@ int32_t CRingBuffer_disable(CRingBufferHandle handle) {
     return 0;
 }
 
-int32_t CRingBuffer_enable(CRingBufferHandle handle) {
+int32_t Rb_CRingBuffer_enable(Rb_CRingBufferHandle handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
         return RB_INVALID_ARG;
@@ -528,7 +528,7 @@ int32_t CRingBuffer_enable(CRingBufferHandle handle) {
     return 0;
 }
 
-int32_t CRingBuffer_isEnabled(CRingBufferHandle handle) {
+int32_t Rb_CRingBuffer_isEnabled(Rb_CRingBufferHandle handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
         return RB_INVALID_ARG;
@@ -545,7 +545,7 @@ int32_t CRingBuffer_isEnabled(CRingBufferHandle handle) {
     return res;
 }
 
-int32_t CRingBuffer_clear(CRingBufferHandle handle) {
+int32_t Rb_CRingBuffer_clear(Rb_CRingBufferHandle handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
         return RB_INVALID_ARG;
@@ -554,7 +554,7 @@ int32_t CRingBuffer_clear(CRingBufferHandle handle) {
     LOCK_ACQUIRE
     ;
 
-    RingBuffer_clear(rb->buffer);
+    Rb_RingBuffer_clear(rb->buffer);
 
     pthread_cond_broadcast(&rb->base->readCV);
 
@@ -564,7 +564,7 @@ int32_t CRingBuffer_clear(CRingBufferHandle handle) {
     return 0;
 }
 
-int32_t CRingBuffer_isFull(CRingBufferHandle handle) {
+int32_t Rb_CRingBuffer_isFull(Rb_CRingBufferHandle handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
         return RB_INVALID_ARG;
@@ -573,7 +573,7 @@ int32_t CRingBuffer_isFull(CRingBufferHandle handle) {
     LOCK_ACQUIRE
     ;
 
-    int32_t res = RingBuffer_isFull(rb->buffer);
+    int32_t res = Rb_RingBuffer_isFull(rb->buffer);
 
     LOCK_RELEASE
     ;
@@ -581,7 +581,7 @@ int32_t CRingBuffer_isFull(CRingBufferHandle handle) {
     return res;
 }
 
-int32_t CRingBuffer_isEmpty(CRingBufferHandle handle) {
+int32_t Rb_CRingBuffer_isEmpty(Rb_CRingBufferHandle handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
         return RB_INVALID_ARG;
@@ -590,7 +590,7 @@ int32_t CRingBuffer_isEmpty(CRingBufferHandle handle) {
     LOCK_ACQUIRE
     ;
 
-    int32_t res = RingBuffer_isEmpty(rb->buffer);
+    int32_t res = Rb_RingBuffer_isEmpty(rb->buffer);
 
     LOCK_RELEASE
     ;
@@ -598,7 +598,7 @@ int32_t CRingBuffer_isEmpty(CRingBufferHandle handle) {
     return res;
 }
 
-int32_t CRingBuffer_resize(CRingBufferHandle handle, uint32_t capacity){
+int32_t Rb_CRingBuffer_resize(Rb_CRingBufferHandle handle, uint32_t capacity){
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
         return RB_INVALID_ARG;
@@ -607,7 +607,7 @@ int32_t CRingBuffer_resize(CRingBufferHandle handle, uint32_t capacity){
     LOCK_ACQUIRE
     ;
 
-    int32_t res = RingBuffer_resize(rb->buffer, capacity);
+    int32_t res = Rb_RingBuffer_resize(rb->buffer, capacity);
 
     LOCK_RELEASE
     ;
@@ -615,7 +615,7 @@ int32_t CRingBuffer_resize(CRingBufferHandle handle, uint32_t capacity){
     return res;
 }
 
-CRingBufferContext* CRingBufferPriv_getContext(CRingBufferHandle handle) {
+CRingBufferContext* CRingBufferPriv_getContext(Rb_CRingBufferHandle handle) {
     if(handle == NULL) {
         return NULL;
     }

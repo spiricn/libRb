@@ -38,78 +38,78 @@ int testCBuffer() {
 		testData[i] = i;
 	}
 
-	CRingBufferHandle rb = CRingBuffer_new(kCAPACITY);
+	Rb_CRingBufferHandle rb = Rb_CRingBuffer_new(kCAPACITY);
 	if (rb == NULL) {
-		RBLE("RingBuffer_new CRingBuffer_new");
+		RBLE("Rb_RingBuffer_new Rb_CRingBuffer_new");
 		return -1;
 	}
 
-	if (CRingBuffer_getCapacity(rb) != kCAPACITY) {
-		RBLE("CRingBuffer_getCapacity failed");
+	if (Rb_CRingBuffer_getCapacity(rb) != kCAPACITY) {
+		RBLE("Rb_CRingBuffer_getCapacity failed");
 		return -1;
 	}
 
-	if (CRingBuffer_getBytesFree(rb) != kCAPACITY) {
-		RBLE("CRingBuffer_getBytesFree failed");
+	if (Rb_CRingBuffer_getBytesFree(rb) != kCAPACITY) {
+		RBLE("Rb_CRingBuffer_getBytesFree failed");
 		return -1;
 	}
 
-	if (CRingBuffer_getBytesUsed(rb) != 0) {
-		RBLE("CRingBuffer_getBytesUsed failed");
+	if (Rb_CRingBuffer_getBytesUsed(rb) != 0) {
+		RBLE("Rb_CRingBuffer_getBytesUsed failed");
 		return -1;
 	}
 
-	if(!CRingBuffer_isEmpty(rb) || CRingBuffer_isFull(rb)){
-		RBLE("CRingBuffer_isEmpty or CRingBuffer_isFull failed");
+	if(!Rb_CRingBuffer_isEmpty(rb) || Rb_CRingBuffer_isFull(rb)){
+		RBLE("Rb_CRingBuffer_isEmpty or Rb_CRingBuffer_isFull failed");
 		return -1;
 	}
 
 	// Timed read
-	rc = CRingBuffer_readTimed(rb, testOutData, kCAPACITY, eREAD_BLOCK_FULL, TIMEOUT_MS);
+	rc = Rb_CRingBuffer_readTimed(rb, testOutData, kCAPACITY, eRB_READ_BLOCK_FULL, TIMEOUT_MS);
 	if(rc != RB_TIMEOUT){
-		RBLE("CRingBuffer_readTimed");
+		RBLE("Rb_CRingBuffer_readTimed");
 		return -1;
 	}
 
 	// Write
-	rc = CRingBuffer_write(rb, testData, kCAPACITY, eWRITE_BLOCK_FULL);
+	rc = Rb_CRingBuffer_write(rb, testData, kCAPACITY, eRB_WRITE_BLOCK_FULL);
 	if(rc != kCAPACITY){
-		RBLE("CRingBuffer_write failed");
+		RBLE("Rb_CRingBuffer_write failed");
 		return -1;
 	}
 
 	// Make sure buffer is full
-	if(CRingBuffer_isEmpty(rb) || !CRingBuffer_isFull(rb)){
-		RBLE("CRingBuffer_isEmpty or CRingBuffer_isFull failed");
+	if(Rb_CRingBuffer_isEmpty(rb) || !Rb_CRingBuffer_isFull(rb)){
+		RBLE("Rb_CRingBuffer_isEmpty or Rb_CRingBuffer_isFull failed");
 		return -1;
 	}
 
-	if(CRingBuffer_getBytesFree(rb)){
-		RBLE("CRingBuffer_getBytesFree failed");
+	if(Rb_CRingBuffer_getBytesFree(rb)){
+		RBLE("Rb_CRingBuffer_getBytesFree failed");
 		return -1;
 	}
 
-	if(CRingBuffer_getBytesUsed(rb) != kCAPACITY){
-		RBLE("CRingBuffer_getBytesUsed failed");
+	if(Rb_CRingBuffer_getBytesUsed(rb) != kCAPACITY){
+		RBLE("Rb_CRingBuffer_getBytesUsed failed");
 		return -1;
 	}
 
 	// Write timeout test
-	rc = CRingBuffer_writeTimed(rb, testData, kCAPACITY, eWRITE_BLOCK_FULL, TIMEOUT_MS);
+	rc = Rb_CRingBuffer_writeTimed(rb, testData, kCAPACITY, eRB_WRITE_BLOCK_FULL, TIMEOUT_MS);
 	if(rc != RB_TIMEOUT){
-		RBLE("CRingBuffer_writeTimed failed");
+		RBLE("Rb_CRingBuffer_writeTimed failed");
 		return -1;
 	}
 
-	rc = CRingBuffer_read(rb, testOutData, kCAPACITY, eREAD_BLOCK_FULL);
+	rc = Rb_CRingBuffer_read(rb, testOutData, kCAPACITY, eRB_READ_BLOCK_FULL);
 	if(rc != kCAPACITY){
-		RBLE("CRingBuffer_read failed");
+		RBLE("Rb_CRingBuffer_read failed");
 		return -1;
 	}
 
 	// Make sure buffer is empty
-	if(!CRingBuffer_isEmpty(rb) || CRingBuffer_isFull(rb)){
-		RBLE("CRingBuffer_isEmpty or CRingBuffer_isFull failed");
+	if(!Rb_CRingBuffer_isEmpty(rb) || Rb_CRingBuffer_isFull(rb)){
+		RBLE("Rb_CRingBuffer_isEmpty or Rb_CRingBuffer_isFull failed");
 		return -1;
 	}
 
@@ -119,9 +119,9 @@ int testCBuffer() {
 		return -1;
 	}
 
-	rc = CRingBuffer_free(&rb);
+	rc = Rb_CRingBuffer_free(&rb);
 	if (rc != RB_OK || rb != NULL) {
-		RBLE("CRingBuffer_read failed");
+		RBLE("Rb_CRingBuffer_read failed");
 	}
 
 	return 0;

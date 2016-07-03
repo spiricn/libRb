@@ -29,7 +29,7 @@ typedef struct {
 /*              Functions Declarations                 */
 /*******************************************************/
 
-static ArrayContext* ArrayPriv_getContext(ArrayHandle handle);
+static ArrayContext* ArrayPriv_getContext(Rb_ArrayHandle handle);
 
 // Gets rid of the implicit declaration warning
 extern FILE *open_memstream(char **bufp, size_t *sizep);
@@ -38,7 +38,7 @@ extern FILE *open_memstream(char **bufp, size_t *sizep);
 /*              Functions Definitions                  */
 /*******************************************************/
 
-ArrayHandle Array_new() {
+Rb_ArrayHandle Rb_Array_new() {
     ArrayContext* array = (ArrayContext*)calloc(1, sizeof(ArrayContext));
 
     array->magic = ARRAY_MAGIC;
@@ -50,10 +50,10 @@ ArrayHandle Array_new() {
         return NULL;
     }
 
-    return (ArrayHandle)array;
+    return (Rb_ArrayHandle)array;
 }
 
-int32_t Array_free(ArrayHandle* handle) {
+int32_t Rb_Array_free(Rb_ArrayHandle* handle) {
     ArrayContext* array = ArrayPriv_getContext(*handle);
     if(array == NULL) {
         return RB_INVALID_ARG;
@@ -68,7 +68,7 @@ int32_t Array_free(ArrayHandle* handle) {
     return RB_OK;
 }
 
-uint8_t* Array_data(ArrayHandle handle) {
+uint8_t* Rb_Array_data(Rb_ArrayHandle handle) {
     ArrayContext* array = ArrayPriv_getContext(handle);
     if(array == NULL) {
         return NULL;
@@ -79,7 +79,7 @@ uint8_t* Array_data(ArrayHandle handle) {
     return (uint8_t*)array->buffer;
 }
 
-uint32_t Array_size(ArrayHandle handle) {
+uint32_t Rb_Array_size(Rb_ArrayHandle handle) {
     ArrayContext* array = ArrayPriv_getContext(handle);
     if(array == NULL) {
         return RB_INVALID_ARG;
@@ -90,7 +90,7 @@ uint32_t Array_size(ArrayHandle handle) {
     return array->len;
 }
 
-int32_t Array_tell(ArrayHandle handle) {
+int32_t Rb_Array_tell(Rb_ArrayHandle handle) {
     ArrayContext* array = ArrayPriv_getContext(handle);
     if(array == NULL) {
         return RB_INVALID_ARG;
@@ -99,7 +99,7 @@ int32_t Array_tell(ArrayHandle handle) {
     return ftell(array->stream);
 }
 
-int32_t Array_seek(ArrayHandle handle, uint32_t pos) {
+int32_t Rb_Array_seek(Rb_ArrayHandle handle, uint32_t pos) {
     ArrayContext* array = ArrayPriv_getContext(handle);
     if(array == NULL) {
         return RB_INVALID_ARG;
@@ -108,7 +108,7 @@ int32_t Array_seek(ArrayHandle handle, uint32_t pos) {
     return fseek(array->stream, pos, SEEK_SET);
 }
 
-int32_t Array_write(ArrayHandle handle, const void* ptr, uint32_t size) {
+int32_t Rb_Array_write(Rb_ArrayHandle handle, const void* ptr, uint32_t size) {
     ArrayContext* array = ArrayPriv_getContext(handle);
     if(array == NULL) {
         return RB_INVALID_ARG;
@@ -117,7 +117,7 @@ int32_t Array_write(ArrayHandle handle, const void* ptr, uint32_t size) {
     return fwrite(ptr, 1, size, array->stream);
 }
 
-ArrayContext* ArrayPriv_getContext(ArrayHandle handle) {
+ArrayContext* ArrayPriv_getContext(Rb_ArrayHandle handle) {
     if(handle == NULL) {
         return NULL;
     }

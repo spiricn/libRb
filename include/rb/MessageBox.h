@@ -16,7 +16,7 @@
 extern "C" {
 #endif
 
-typedef void* MessageBoxHandle;
+typedef void* Rb_MessageBoxHandle;
 
 /********************************************************/
 /*                 Functions Declarations               */
@@ -28,7 +28,7 @@ typedef void* MessageBoxHandle;
  * @param[in] messageSize Size of single message
  * @return MessageBox object on sucess, NULL on failure
  */
-MessageBoxHandle MessageBox_new(int32_t messageSize, int32_t capacity);
+Rb_MessageBoxHandle Rb_MessageBox_new(int32_t messageSize, int32_t capacity);
 
 /**
  * Deallocate a MessageBox, and, as a side effect, set the pointer to NULL.
@@ -36,7 +36,7 @@ MessageBoxHandle MessageBox_new(int32_t messageSize, int32_t capacity);
  * @param[in,out] handle Pointer to a message box handle.
  * @return Negative value on failure, RB_OK on success.
  */
-int32_t MessageBox_free(MessageBoxHandle* handle);
+int32_t Rb_MessageBox_free(Rb_MessageBoxHandle* handle);
 
 /**
  * Reads a single message.
@@ -45,7 +45,7 @@ int32_t MessageBox_free(MessageBoxHandle* handle);
  * @param[out] message Memory where read message will be stored
  * @return Negative value on failure, RB_OK on success
  */
-int32_t MessageBox_read(MessageBoxHandle handle, void* message);
+int32_t Rb_MessageBox_read(Rb_MessageBoxHandle handle, void* message);
 
 /**
  * Reads a single message.
@@ -55,7 +55,7 @@ int32_t MessageBox_read(MessageBoxHandle handle, void* message);
  * @param[out] message Memory where read message will be stored
  * @return Negative value on failure, RB_OK on success
  */
-int32_t MessageBox_readTimed(MessageBoxHandle handle, void* message, int32_t timeoutMs);
+int32_t Rb_MessageBox_readTimed(Rb_MessageBoxHandle handle, void* message, int32_t timeoutMs);
 
 /**
  * Writes a single message.
@@ -64,7 +64,7 @@ int32_t MessageBox_readTimed(MessageBoxHandle handle, void* message, int32_t tim
  * @param[in] message Message memory
  * @return Negative value on failure, RB_OK on success
  */
-int32_t MessageBox_write(MessageBoxHandle handle, const void* message);
+int32_t Rb_MessageBox_write(Rb_MessageBoxHandle handle, const void* message);
 
 /**
  * Writes a single message.
@@ -74,7 +74,7 @@ int32_t MessageBox_write(MessageBoxHandle handle, const void* message);
  * @param[in] timeoutMs Time in milliseconds after which the function times out and exists with a failure.
  * @return Negative value on failure, RB_OK on success
  */
-int32_t MessageBox_writeTimed(MessageBoxHandle handle, const void* message, int32_t timeoutMs);
+int32_t Rb_MessageBox_writeTimed(Rb_MessageBoxHandle handle, const void* message, int32_t timeoutMs);
 
 /**
  * Acquires the total number of available messages
@@ -82,7 +82,7 @@ int32_t MessageBox_writeTimed(MessageBoxHandle handle, const void* message, int3
  * @param[in] handle Valid message box handle
  * @return Negative value on failure, number of available messages otherwise
  */
-int32_t MessageBox_getNumMessages(MessageBoxHandle handle);
+int32_t Rb_MessageBox_getNumMessages(Rb_MessageBoxHandle handle);
 
 /**
  * Acquires message box capacity
@@ -90,7 +90,7 @@ int32_t MessageBox_getNumMessages(MessageBoxHandle handle);
  * @param[in] handle Valid message box handle
  * @return Negative value on failure, message box capacity otherwise
  */
-int32_t MessageBox_getCapacity(MessageBoxHandle handle);
+int32_t Rb_MessageBox_getCapacity(Rb_MessageBoxHandle handle);
 
 /**
  * Disables underyling buffers and unblocks all pending operations. All following calls to message box will fail without blocking.
@@ -98,7 +98,7 @@ int32_t MessageBox_getCapacity(MessageBoxHandle handle);
  * @param[in] handle Valid message box handle
  * @return Negative value on failure, RB_OK otherwise
  */
-int32_t MessageBox_disable(MessageBoxHandle handle);
+int32_t Rb_MessageBox_disable(Rb_MessageBoxHandle handle);
 
 /**
  * Enables a message box disabled via *MessageBox_disable*
@@ -106,7 +106,7 @@ int32_t MessageBox_disable(MessageBoxHandle handle);
  * @param[in] handle Valid message box handle
  * @return Negative value on failure, RB_OK otherwise
  */
-int32_t MessageBox_enable(MessageBoxHandle handle);
+int32_t Rb_MessageBox_enable(Rb_MessageBoxHandle handle);
 
 /**
  * Resizes the message box capacity.
@@ -115,7 +115,7 @@ int32_t MessageBox_enable(MessageBoxHandle handle);
  * @param[in] New message box capacity.
  * @return Negative value on failure, RB_OK otherwise
  */
-int32_t MessageBox_resize(MessageBoxHandle handle, uint32_t capacity);
+int32_t Rb_MessageBox_resize(Rb_MessageBoxHandle handle, uint32_t capacity);
 
 #ifdef __cplusplus
 }

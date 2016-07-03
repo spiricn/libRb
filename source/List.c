@@ -42,7 +42,8 @@ typedef struct {
 /*              Functions Declarations                 */
 /*******************************************************/
 
-static ListContext* ListPriv_getContext(ListHandle handle);
+static ListContext* ListPriv_getContext(Rb_ListHandle handle);
+
 static ListNode* ListPriv_getNode(ListContext* list, int32_t index);
 static int32_t ListPriv_insertLockless(ListContext* list, int32_t index, const void* element);
 
@@ -50,17 +51,17 @@ static int32_t ListPriv_insertLockless(ListContext* list, int32_t index, const v
 /*              Functions Definitions                  */
 /*******************************************************/
 
-ListHandle List_new(uint32_t elementSize){
+Rb_ListHandle Rb_List_new(uint32_t elementSize){
     ListContext* list = (ListContext*)calloc(1, sizeof(ListContext));
 
     list->magic = LIST_MAGIC;
     list->elementSize = elementSize;
     pthread_mutex_init(&list->mutex, NULL);
 
-    return (ListHandle)list;
+    return (Rb_ListHandle)list;
 }
 
-int32_t List_free(ListHandle* handle){
+int32_t Rb_List_free(Rb_ListHandle* handle){
     int32_t rc;
 
     ListContext* list = ListPriv_getContext(*handle);
@@ -69,7 +70,7 @@ int32_t List_free(ListHandle* handle){
     }
 
     while(list->size){
-        rc = List_remove(*handle, 0);
+        rc = Rb_List_remove(*handle, 0);
         if(rc != RB_OK){
             return rc;
         }
@@ -83,7 +84,7 @@ int32_t List_free(ListHandle* handle){
     return RB_OK;
 }
 
-int32_t List_add(ListHandle handle, const void* element){
+int32_t Rb_List_add(Rb_ListHandle handle, const void* element){
     ListContext* list = ListPriv_getContext(handle);
     if (list == NULL) {
         return RB_INVALID_ARG;
@@ -98,7 +99,7 @@ int32_t List_add(ListHandle handle, const void* element){
     return rc;
 }
 
-int32_t List_get(ListHandle handle, int32_t index, void* element){
+int32_t Rb_List_get(Rb_ListHandle handle, int32_t index, void* element){
     ListContext* list = ListPriv_getContext(handle);
     if (list == NULL || element == NULL) {
         return RB_INVALID_ARG;
@@ -120,7 +121,7 @@ int32_t List_get(ListHandle handle, int32_t index, void* element){
     return RB_OK;
 }
 
-int32_t List_remove(ListHandle handle, int32_t index){
+int32_t Rb_List_remove(Rb_ListHandle handle, int32_t index){
     ListContext* list = ListPriv_getContext(handle);
     if (list == NULL) {
         return RB_INVALID_ARG;
@@ -160,7 +161,7 @@ int32_t List_remove(ListHandle handle, int32_t index){
     return RB_OK;
 }
 
-int32_t List_insert(ListHandle handle, int32_t index, const void* element){
+int32_t Rb_List_insert(Rb_ListHandle handle, int32_t index, const void* element){
     ListContext* list = ListPriv_getContext(handle);
     if (list == NULL) {
         return RB_INVALID_ARG;
@@ -175,7 +176,7 @@ int32_t List_insert(ListHandle handle, int32_t index, const void* element){
     return rc;
 }
 
-int32_t List_getSize(ListHandle handle){
+int32_t Rb_List_getSize(Rb_ListHandle handle){
     ListContext* list = ListPriv_getContext(handle);
     if(list == NULL) {
         return RB_INVALID_ARG;
@@ -190,7 +191,7 @@ int32_t List_getSize(ListHandle handle){
     return res;
 }
 
-ListContext* ListPriv_getContext(ListHandle handle) {
+ListContext* ListPriv_getContext(Rb_ListHandle handle) {
     if(handle == NULL) {
         return NULL;
     }

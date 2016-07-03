@@ -18,7 +18,7 @@
 extern "C" {
 #endif
 
-typedef void* ArrayHandle;
+typedef void* Rb_ArrayHandle;
 
 /*******************************************************/
 /*              Functions Declarations                 */
@@ -29,7 +29,7 @@ typedef void* ArrayHandle;
  *
  * @return Array handle on success, negative value otherwise.
  */
-ArrayHandle Array_new();
+Rb_ArrayHandle Rb_Array_new();
 
 /**
  * Frees existing array.
@@ -37,7 +37,7 @@ ArrayHandle Array_new();
  * @param[in,out] handle Pointer to a valid array handle.
  * @return RB_OK on success, negative value otherwise.
  */
-int32_t Array_free(ArrayHandle* handle);
+int32_t Rb_Array_free(Rb_ArrayHandle* handle);
 
 /**
  * Acquires a pointer to the arrays data.
@@ -45,7 +45,7 @@ int32_t Array_free(ArrayHandle* handle);
  * @param[in] handle Valid array handle.
  * @return Pointer to the arrays data on success, NULL otherwise.
  */
-uint8_t* Array_data(ArrayHandle handle);
+uint8_t* Rb_Array_data(Rb_ArrayHandle handle);
 
 /**
  * Acquires array data size.
@@ -53,7 +53,7 @@ uint8_t* Array_data(ArrayHandle handle);
  * @param[in] handle Valid array handle.
  * @return Array data size on success, negative value otherwise.
  */
-uint32_t Array_size(ArrayHandle handle);
+uint32_t Rb_Array_size(Rb_ArrayHandle handle);
 
 /**
  * Acquires arrays current write position.
@@ -61,7 +61,7 @@ uint32_t Array_size(ArrayHandle handle);
  * @param[in] handle Valid array handle.
  * @return Arrays write position on success, negative value otherwise.
  */
-int32_t Array_tell(ArrayHandle handle);
+int32_t Rb_Array_tell(Rb_ArrayHandle handle);
 
 /**
  * Seeks to a new write position.
@@ -70,7 +70,7 @@ int32_t Array_tell(ArrayHandle handle);
  * @param[in] pos Write position in bytes.
  * @return RB_OK on success, negative value otherwise.
  */
-int32_t Array_seek(ArrayHandle handle, uint32_t pos);
+int32_t Rb_Array_seek(Rb_ArrayHandle handle, uint32_t pos);
 
 /**
  * Writes new data to the arrays write position.
@@ -79,7 +79,7 @@ int32_t Array_seek(ArrayHandle handle, uint32_t pos);
  * @param[in] size Data size.
  * @return RB_OK on success, negative value otherwijse.
  */
-int32_t Array_write(ArrayHandle handle, const void* ptr, uint32_t size);
+int32_t Rb_Array_write(Rb_ArrayHandle handle, const void* ptr, uint32_t size);
 
 #ifdef __cplusplus
 }

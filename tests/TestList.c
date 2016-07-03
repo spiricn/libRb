@@ -37,14 +37,14 @@ int testList() {
         return -1;
     }
 
-    ListHandle list = List_new(sizeof(ListElement));
+    Rb_ListHandle list = Rb_List_new(sizeof(ListElement));
     if(!list){
-        RBLE("List_new failed");
+        RBLE("Rb_List_new failed");
         return -1;
     }
 
-    if(List_getSize(list) != 0){
-        RBLE("List_getSize failed");
+    if(Rb_List_getSize(list) != 0){
+        RBLE("Rb_List_getSize failed");
         return -1;
     }
 
@@ -57,33 +57,33 @@ int testList() {
         e1.testData2 = i % 0xFF;
         memset(e1.testData3, 0xAA, sizeof(e1.testData3));
 
-        rc = List_add(list, &e1);
+        rc = Rb_List_add(list, &e1);
         if(rc != RB_OK){
-            RBLE("List_add failed");
+            RBLE("Rb_List_add failed");
             return -1;
         }
 
-        if(List_getSize(list) != i+1){
-            RBLE("List_getSize failed");
+        if(Rb_List_getSize(list) != i+1){
+            RBLE("Rb_List_getSize failed");
             return -1;
         }
 
         ListElement e2;
-        rc = List_get(list, i, &e2);
+        rc = Rb_List_get(list, i, &e2);
         if(rc != RB_OK){
-            RBLE("List_get failed");
+            RBLE("Rb_List_get failed");
             return -1;
         }
 
         if(memcmp(&e1, &e2, sizeof(ListElement))){
-            RBLE("List_get failed");
+            RBLE("Rb_List_get failed");
             return -1;
         }
     }
 
-    rc = List_free(&list);
+    rc = Rb_List_free(&list);
     if(rc != RB_OK || list){
-        RBLE("List_free failed");
+        RBLE("Rb_List_free failed");
         return -1;
     }
 

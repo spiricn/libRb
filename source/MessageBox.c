@@ -24,25 +24,25 @@ typedef struct {
     uint32_t magic;
     int32_t messageSize;
     int32_t capacity;
-    CRingBufferHandle buffer;
+    Rb_CRingBufferHandle buffer;
 } MessageBoxContext;
 
 /*******************************************************/
 /*              Functions Declarations                 */
 /*******************************************************/
 
-static MessageBoxContext* MessageBoxPriv_getContext(MessageBoxHandle handle);
+static MessageBoxContext* MessageBoxPriv_getContext(Rb_MessageBoxHandle handle);
 
 /*******************************************************/
 /*              Functions Definitions                  */
 /*******************************************************/
 
-MessageBoxHandle MessageBox_new(int32_t messageSize, int32_t capacity) {
+Rb_MessageBoxHandle Rb_MessageBox_new(int32_t messageSize, int32_t capacity) {
     MessageBoxContext* mb = (MessageBoxContext*) calloc(1,
             sizeof(MessageBoxContext));
 
     mb->magic = MESSAGE_BOX_MAGIC;
-    mb->buffer = CRingBuffer_new(capacity * messageSize);
+    mb->buffer = Rb_CRingBuffer_new(capacity * messageSize);
     mb->messageSize = messageSize;
     mb->capacity = capacity;
 
@@ -54,13 +54,13 @@ MessageBoxHandle MessageBox_new(int32_t messageSize, int32_t capacity) {
     return mb;
 }
 
-int32_t MessageBox_free(MessageBoxHandle* handle) {
+int32_t Rb_MessageBox_free(Rb_MessageBoxHandle* handle) {
     MessageBoxContext* mb = MessageBoxPriv_getContext(*handle);
     if(mb == NULL) {
         return RB_INVALID_ARG;
     }
 
-    int32_t rc = CRingBuffer_free(&mb->buffer);
+    int32_t rc = Rb_CRingBuffer_free(&mb->buffer);
     if(rc != RB_OK) {
         return rc;
     }
@@ -71,40 +71,39 @@ int32_t MessageBox_free(MessageBoxHandle* handle) {
     return RB_OK;
 }
 
-int32_t MessageBox_read(MessageBoxHandle handle, void* message) {
-    return MessageBox_readTimed(handle, message, RB_WAIT_INFINITE);
-
+int32_t Rb_MessageBox_read(Rb_MessageBoxHandle handle, void* message) {
+    return Rb_MessageBox_readTimed(handle, message, RB_WAIT_INFINITE);
 }
 
-int32_t MessageBox_readTimed(MessageBoxHandle handle, void* message, int32_t timeoutMs){
+int32_t Rb_MessageBox_readTimed(Rb_MessageBoxHandle handle, void* message, int32_t timeoutMs){
     MessageBoxContext* mb = MessageBoxPriv_getContext(handle);
     if(mb == NULL) {
         return RB_INVALID_ARG;
     }
 
-    int32_t res = CRingBuffer_readTimed(mb->buffer, (uint8_t*) message,
-            mb->messageSize, eREAD_BLOCK_FULL, timeoutMs);
+    int32_t res = Rb_CRingBuffer_readTimed(mb->buffer, (uint8_t*) message,
+            mb->messageSize, eRB_READ_BLOCK_FULL, timeoutMs);
 
-    if(res != mb->messageSize && CRingBuffer_isEnabled(mb->buffer) == RB_FALSE) {
+    if(res != mb->messageSize && Rb_CRingBuffer_isEnabled(mb->buffer) == RB_FALSE) {
         return RB_DISABLED;
     }
 
     return res == mb->messageSize ? RB_OK : RB_ERROR;
 }
 
-int32_t MessageBox_write(MessageBoxHandle handle, const void* message) {
-    return MessageBox_writeTimed(handle, message, RB_WAIT_INFINITE);
+int32_t Rb_MessageBox_write(Rb_MessageBoxHandle handle, const void* message) {
+    return Rb_MessageBox_writeTimed(handle, message, RB_WAIT_INFINITE);
 }
 
-int32_t MessageBox_writeTimed(MessageBoxHandle handle, const void* message, int32_t timeoutMs){
+int32_t Rb_MessageBox_writeTimed(Rb_MessageBoxHandle handle, const void* message, int32_t timeoutMs){
     MessageBoxContext* mb = MessageBoxPriv_getContext(handle);
     if(mb == NULL) {
         return RB_INVALID_ARG;
     }
-    int32_t res = CRingBuffer_writeTimed(mb->buffer, (const uint8_t*) message,
-            mb->messageSize, eWRITE_BLOCK_FULL, timeoutMs);
+    int32_t res = Rb_CRingBuffer_writeTimed(mb->buffer, (const uint8_t*) message,
+            mb->messageSize, eRB_WRITE_BLOCK_FULL, timeoutMs);
 
-    if(res != mb->messageSize && CRingBuffer_isEnabled(mb->buffer) == RB_FALSE) {
+    if(res != mb->messageSize && Rb_CRingBuffer_isEnabled(mb->buffer) == RB_FALSE) {
         return RB_DISABLED;
     }
 
@@ -112,13 +111,13 @@ int32_t MessageBox_writeTimed(MessageBoxHandle handle, const void* message, int3
 }
 
 
-int32_t MessageBox_getNumMessages(MessageBoxHandle handle) {
+int32_t Rb_MessageBox_getNumMessages(Rb_MessageBoxHandle handle) {
     MessageBoxContext* mb = MessageBoxPriv_getContext(handle);
     if(mb == NULL) {
         return RB_INVALID_ARG;
     }
 
-    int32_t res = CRingBuffer_getBytesUsed(mb->buffer);
+    int32_t res = Rb_CRingBuffer_getBytesUsed(mb->buffer);
 
     if(res < 0) {
         return RB_ERROR;
@@ -127,7 +126,7 @@ int32_t MessageBox_getNumMessages(MessageBoxHandle handle) {
     }
 }
 
-int32_t MessageBox_getCapacity(MessageBoxHandle handle){
+int32_t Rb_MessageBox_getCapacity(Rb_MessageBoxHandle handle){
     MessageBoxContext* mb = MessageBoxPriv_getContext(handle);
     if(mb == NULL) {
         return RB_INVALID_ARG;
@@ -137,25 +136,25 @@ int32_t MessageBox_getCapacity(MessageBoxHandle handle){
     return mb->capacity;
 }
 
-int32_t MessageBox_disable(MessageBoxHandle handle) {
+int32_t Rb_MessageBox_disable(Rb_MessageBoxHandle handle) {
     MessageBoxContext* mb = MessageBoxPriv_getContext(handle);
     if(mb == NULL) {
         return RB_INVALID_ARG;
     }
 
-    return CRingBuffer_disable(mb->buffer);
+    return Rb_CRingBuffer_disable(mb->buffer);
 }
 
-int32_t MessageBox_enable(MessageBoxHandle handle) {
+int32_t Rb_MessageBox_enable(Rb_MessageBoxHandle handle) {
     MessageBoxContext* mb = MessageBoxPriv_getContext(handle);
     if(mb == NULL) {
         return RB_INVALID_ARG;
     }
 
-    return CRingBuffer_enable(mb->buffer);
+    return Rb_CRingBuffer_enable(mb->buffer);
 }
 
-int32_t MessageBox_resize(MessageBoxHandle handle, uint32_t capacity){
+int32_t Rb_MessageBox_resize(Rb_MessageBoxHandle handle, uint32_t capacity){
     MessageBoxContext* mb = MessageBoxPriv_getContext(handle);
     if(mb == NULL) {
         return RB_INVALID_ARG;
@@ -163,10 +162,10 @@ int32_t MessageBox_resize(MessageBoxHandle handle, uint32_t capacity){
 
     mb->capacity = capacity;
 
-    return CRingBuffer_resize(mb->buffer, mb->capacity * mb->messageSize);
+    return Rb_CRingBuffer_resize(mb->buffer, mb->capacity * mb->messageSize);
 }
 
-MessageBoxContext* MessageBoxPriv_getContext(MessageBoxHandle handle) {
+MessageBoxContext* MessageBoxPriv_getContext(Rb_MessageBoxHandle handle) {
     if(handle == NULL) {
         return NULL;
     }

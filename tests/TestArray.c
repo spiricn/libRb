@@ -29,19 +29,19 @@ int testArray() {
 	static const int kBFR_SIZE = 64;
 	uint8_t bfr[kBFR_SIZE];
 
-	ArrayHandle ar = Array_new();
+	Rb_ArrayHandle ar = Rb_Array_new();
 	if(!ar){
-		RBLE("Array_new failed");
+		RBLE("Rb_Array_new failed");
 		return -1;
 	}
 
-	if(Array_size(ar) != 0){
-		RBLE("Array_size failed");
+	if(Rb_Array_size(ar) != 0){
+		RBLE("Rb_Array_size failed");
 		return -1;
 	}
 
-	if(Array_tell(ar) != 0){
-		RBLE("Array_tell failed");
+	if(Rb_Array_tell(ar) != 0){
+		RBLE("Rb_Array_tell failed");
 		return -1;
 	}
 
@@ -55,30 +55,30 @@ int testArray() {
 			bfr[j] = (i*kBFR_SIZE + j) % 0xFF;
 		}
 
-		rc = Array_write(ar, bfr, kBFR_SIZE);
+		rc = Rb_Array_write(ar, bfr, kBFR_SIZE);
 		if(rc != kBFR_SIZE){
-			RBLE("Array_write failed");
+			RBLE("Rb_Array_write failed");
 			return -1;
 		}
 	}
 
 	// Verify data
-	if(Array_size(ar) != kNUM_PASSES * kBFR_SIZE){
-		RBLE("Array_size failed");
+	if(Rb_Array_size(ar) != kNUM_PASSES * kBFR_SIZE){
+		RBLE("Rb_Array_size failed");
 		return -1;
 	}
 
-	uint8_t* data = Array_data(ar);
-	for(i=0; i<Array_size(ar); i++){
+	uint8_t* data = Rb_Array_data(ar);
+	for(i=0; i<Rb_Array_size(ar); i++){
 		if(i && data[i] != (data[i-1] + 1) % 0xFF){
 			RBLE("Invalid data");
 			return -1;
 		}
 	}
 
-	rc = Array_free(&ar);
+	rc = Rb_Array_free(&ar);
 	if(rc != RB_OK || ar){
-		RBLE("Array_free failed");
+		RBLE("Rb_Array_free failed");
 		return -1;
 	}
 
