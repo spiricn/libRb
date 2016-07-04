@@ -76,6 +76,15 @@ int32_t Rb_List_get(Rb_ListHandle handle, int32_t index, void* element);
 int32_t Rb_List_remove(Rb_ListHandle handle, int32_t index);
 
 /**
+ * Gets index of the lement in the list.
+ *
+ * @param[in] handle Valid list handle.
+ * @param[in] element POinter to a list element.
+ * @return index of the element on success, negative value otherwise
+ */
+int32_t Rb_List_indexOf(Rb_ListHandle handle, void* element);
+
+/**
  * Inserts a new element at the given index.
  *
  * @param[in] handle Valid list handle.

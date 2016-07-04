@@ -360,3 +360,29 @@ int32_t ListPriv_insertLockless(ListContext* list, int32_t index, const void* el
 
     return RB_OK;
 }
+
+int32_t Rb_List_indexOf(Rb_ListHandle handle, void* element){
+    ListContext* list = ListPriv_getContext(handle);
+    if(list == NULL) {
+        return RB_INVALID_ARG;
+    }
+
+    LOCK_ACQUIRE;
+
+    int32_t i;
+
+    int32_t index = -1;
+
+    for(i=0; i<(int32_t)list->size; i++){
+        ListNode* node = ListPriv_getNode(list, i);
+
+        if(memcmp(node->element, element, list->elementSize) == 0){
+            index = i;
+            break;
+        }
+    }
+
+    LOCK_RELEASE;
+
+    return index;
+}
