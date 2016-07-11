@@ -1,5 +1,5 @@
-#ifndef RBLOG_H_
-#define RBLOG_H_
+#ifndef RB_LOG_H_
+#define RB_LOG_H_
 
 /********************************************************/
 /*                 Includes                             */

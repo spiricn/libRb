@@ -32,6 +32,11 @@ set(SOURCES
 	${SOURCE_DIR}/Array.c
 	${SOURCE_DIR}/Common.c
 	${SOURCE_DIR}/List.c
+	${SOURCE_DIR}/Prefs.c
+	${SOURCE_DIR}/PrefsBackend.c
+	${SOURCE_DIR}/Utils.c
+	${SOURCE_DIR}/IOStream.c
+	${SOURCE_DIR}/FileStream.c	
 )
 
 set(HEADERS
@@ -42,6 +47,10 @@ set(HEADERS
 	${INCLUDE_DIR}/rb/RingBuffer.h
 	${INCLUDE_DIR}/rb/Array.h
 	${INCLUDE_DIR}/rb/List.h
+	${INCLUDE_DIR}/rb/Prefs.h
+	${INCLUDE_DIR}/rb/Utils.h
+	${INCLUDE_DIR}/rb/IOStream.h
+	${INCLUDE_DIR}/rb/FileStream.h
 )
 
 include_directories(${INCLUDE_DIR})
@@ -76,6 +85,7 @@ set(TEST_SOURCES
 	${TEST_DIR}/TestMessageBox.c
 	${TEST_DIR}/TestArray.c
 	${TEST_DIR}/TestList.c
+	${TEST_DIR}/TestPrefs.c
 	${TEST_DIR}/Tests.c
 )
 

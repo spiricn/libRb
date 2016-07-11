@@ -1,11 +1,12 @@
-#ifndef MESSAGEBOX_H_
-#define MESSAGEBOX_H_
+#ifndef RB_MESSAGEBOX_H_
+#define RB_MESSAGEBOX_H_
 
 /********************************************************/
 /*                 Includes                             */
 /********************************************************/
 
 #include "rb/Common.h"
+
 #include <stdint.h>
 
 /********************************************************/

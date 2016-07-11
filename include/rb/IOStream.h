@@ -12,10 +12,6 @@ extern "C" {
 #include <limits.h>
 #include <stdint.h>
 
-/*******************************************************/
-/*              Defines                                */
-/*******************************************************/
-
 
 /*******************************************************/
 /*              Typedefs                               */
@@ -31,7 +27,7 @@ typedef void* Rb_IOStreamHandle;
 
 typedef int32_t (*Rb_IOReadFnc)(Rb_IOStreamHandle handle, void* data, uint32_t size);
 typedef int32_t (*Rb_IOWriteFnc)(Rb_IOStreamHandle handle, const void* data, uint32_t size);
-typedef int32_t (*Rb_IOTellFnc)(Rb_IOStreamHandle handle, uint32_t* position);
+typedef int32_t (*Rb_IOTellFnc)(Rb_IOStreamHandle handle);
 typedef int32_t (*Rb_IOSeekFnc)(Rb_IOStreamHandle handle, uint32_t position);
 typedef int32_t (*Rb_IOOpenFnc)(const char* uri, Rb_IOMode mode, Rb_IOStreamHandle* handle);
 typedef int32_t (*Rb_IOCloseFnc)(Rb_IOStreamHandle* handle);
@@ -54,6 +50,14 @@ typedef struct {
 /*              Functions Declarations                 */
 /*******************************************************/
 
+/**
+ * Writes a formatted string to a stream.
+ *
+ * @param[in] stream Output stream.
+ * @param[in] fmt String format.
+ *
+ * @return RB_OK on success, negative value otherwise.
+ */
 int32_t Rb_IOStream_print(const Rb_IOStream* stream, const char* fmt, ...);
 
 #ifdef __cplusplus

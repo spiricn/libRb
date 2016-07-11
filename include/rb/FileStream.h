@@ -1,5 +1,5 @@
 #ifndef RB_FILESTREAM_H_
-#define RB_FILETREAM_H_
+#define RB_FILESTREAM_H_
 
 #ifdef __cplusplus
 extern "C" {

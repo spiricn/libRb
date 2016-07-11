@@ -13,7 +13,12 @@ LOCAL_SRC_FILES := \
 			$(SRC_DIR)/Stopwatch.c \
 			$(SRC_DIR)/Log.c \
             $(SRC_DIR)/Common.c \
-            $(SRC_DIR)/List.c
+            $(SRC_DIR)/List.c \
+			$(SRC_DIR)/IOStream.c \
+			$(SRC_DIR)/Prefs.c \
+			$(SRC_DIR)/PrefsBackend.c \
+			$(SRC_DIR)/Utils.c \
+			$(SRC_DIR)/FileStream.c
 					
 LOCAL_C_INCLUDES += \
 		$(INC_DIR) \
@@ -42,7 +47,8 @@ LOCAL_SRC_FILES := \
 			$(SRC_DIR)/TestCBuffer.c \
 			$(SRC_DIR)/TestConcurrency.c \
 			$(SRC_DIR)/TestMessageBox.c \
-			$(SRC_DIR)/TestList.c
+			$(SRC_DIR)/TestList.c \
+			$(SRC_DIR)/TestPrefs.c \
 
 LOCAL_C_INCLUDES += \
 		$(INC_DIR) \

@@ -34,7 +34,7 @@ static int32_t FStreamPriv_read(Rb_IOStreamHandle handle, void* data, uint32_t s
 
 static int32_t FStreamPriv_write(Rb_IOStreamHandle handle, const void* data, uint32_t size);
 
-static int32_t FStreamPriv_tell(Rb_IOStreamHandle handle, uint32_t* position);
+static int32_t FStreamPriv_tell(Rb_IOStreamHandle handle);
 
 static int32_t FStreamPriv_seek(Rb_IOStreamHandle handle, uint32_t position);
 
@@ -79,7 +79,7 @@ int32_t FStreamPriv_write(Rb_IOStreamHandle handle, const void* data, uint32_t s
     return fwrite(data, 1, size, stream->fd);
 }
 
-int32_t FStreamPriv_tell(Rb_IOStreamHandle handle, uint32_t* position) {
+int32_t FStreamPriv_tell(Rb_IOStreamHandle handle) {
     FileStreamContext* stream = FStreamPriv_getContext(handle);
     if (stream == NULL) {
         return RB_INVALID_ARG;
@@ -94,7 +94,7 @@ int32_t FStreamPriv_seek(Rb_IOStreamHandle handle, uint32_t position){
         return RB_INVALID_ARG;
     }
 
-    return fseek(stream->fd, 0, SEEK_SET);
+    return fseek(stream->fd, position, SEEK_SET);
 }
 
 int32_t FStreamPriv_open(const char* uri, Rb_IOMode mode, Rb_IOStreamHandle* handle){

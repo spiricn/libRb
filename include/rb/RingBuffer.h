@@ -1,5 +1,5 @@
-#ifndef RINGBUFFER_H_
-#define RINGBUFFER_H_
+#ifndef RB_RING_BUFFER_H_
+#define RB_RING_BUFFER_H_
 
 /********************************************************/
 /*                 Includes                             */

@@ -1,5 +1,5 @@
-#ifndef CONCURRENTRINGBUFFER_H_
-#define CONCURRENTRINGBUFFER_H_
+#ifndef RB_CONCURRENT_RING_BUFFER_H_
+#define RB_CONCURRENT_RING_BUFFER_H_
 
 #ifdef __cplusplus
 extern "C" {

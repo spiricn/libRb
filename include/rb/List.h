@@ -1,5 +1,5 @@
-#ifndef LIST_H_
-#define LIST_H_
+#ifndef RB_LIST_H_
+#define RB_LIST_H_
 
 /*******************************************************/
 /*              Includes                               */
