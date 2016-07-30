@@ -17,7 +17,7 @@ extern "C" {
 /*******************************************************/
 
 #define RB_VERSION_MAJOR ( 1 )
-#define RB_VERSION_MINOR ( 0 )
+#define RB_VERSION_MINOR ( 1 )
 #define RB_VERSION_PATCH ( 0 )
 #define RB_VERSION_NUMBER(major, minor, patch) ((uint64_t)(  ( ((uint64_t)(major) & 0xFFFF) << 48 ) | ( ((uint64_t)(minor) & 0xFFFF) << 32 ) | ((uint64_t)(patch) & 0xFFFFFFFF ) ) )
 #define RB_CHECK_VERSION ( Rb_getVersion() == RB_VERSION_NUMBER((uint64_t)RB_VERSION_MAJOR, (uint64_t)RB_VERSION_MINOR, (uint64_t)RB_VERSION_PATCH) )
