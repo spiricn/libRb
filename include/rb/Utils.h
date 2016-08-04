@@ -11,6 +11,7 @@ extern "C" {
 
 #include <stdint.h>
 #include <stdarg.h>
+#include <time.h>
 
 /*******************************************************/
 /*              Defines                                */
@@ -29,6 +30,8 @@ extern "C" {
 char* Rb_Utils_print(const char* fmt, ...);
 
 char* Rb_Utils_printv(const char* fmt, va_list vl);
+
+void Rb_Utils_getOffsetTime(struct timespec* time, int64_t offsetMs);
 
 #ifdef __cplusplus
 }

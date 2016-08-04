@@ -18,7 +18,8 @@ LOCAL_SRC_FILES := \
 			$(SRC_DIR)/Prefs.c \
 			$(SRC_DIR)/PrefsBackend.c \
 			$(SRC_DIR)/Utils.c \
-			$(SRC_DIR)/FileStream.c
+			$(SRC_DIR)/FileStream.c \
+			$(SRC_DIR)/Timer.c
 					
 LOCAL_C_INCLUDES += \
 		$(INC_DIR) \
@@ -49,6 +50,7 @@ LOCAL_SRC_FILES := \
 			$(SRC_DIR)/TestMessageBox.c \
 			$(SRC_DIR)/TestList.c \
 			$(SRC_DIR)/TestPrefs.c \
+			$(SRC_DIR)/TestTimer.c
 
 LOCAL_C_INCLUDES += \
 		$(INC_DIR) \

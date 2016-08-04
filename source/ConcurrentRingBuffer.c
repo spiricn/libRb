@@ -5,6 +5,7 @@
 #include "rb/ConcurrentRingBuffer.h"
 #include "rb/RingBuffer.h"
 #include "rb/Stopwatch.h"
+#include "rb/Utils.h"
 
 #include <pthread.h>
 #include <stdlib.h>
@@ -57,16 +58,6 @@ typedef struct {
 
 static CRingBufferContext* CRingBufferPriv_getContext(Rb_CRingBufferHandle handle);
 
-static void CRingBufferPriv_getOffsetTime(struct timespec* time, int64_t offsetMs){
-    clock_gettime(CLOCK_REALTIME , time);
-
-    int64_t offsetNs = offsetMs * 1000000L;
-    int64_t ns = time->tv_nsec + offsetNs;
-
-    time->tv_nsec = ns % 1000000000L;
-    time->tv_sec = time->tv_sec + (ns / 1000000000L);
-}
-
 static bool CRingBufferPriv_timedLock(pthread_mutex_t* mutex, int64_t ms){
     if(ms == RB_WAIT_INFINITE){
         pthread_mutex_lock(mutex);
@@ -79,7 +70,7 @@ static bool CRingBufferPriv_timedLock(pthread_mutex_t* mutex, int64_t ms){
         }
 
         struct timespec time;
-        CRingBufferPriv_getOffsetTime(&time, ms);
+        Rb_Utils_getOffsetTime(&time, ms);
 
         return pthread_mutex_timedlock(mutex, &time) == 0;
     }
@@ -97,7 +88,7 @@ static bool CRingBufferPriv_timedWait(pthread_cond_t* cv, pthread_mutex_t* mutex
         }
 
         struct timespec time;
-        CRingBufferPriv_getOffsetTime(&time, ms);
+        Rb_Utils_getOffsetTime(&time, ms);
 
         return pthread_cond_timedwait(cv, mutex, &time) == 0;
     }

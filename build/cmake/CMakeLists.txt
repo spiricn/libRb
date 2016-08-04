@@ -36,7 +36,8 @@ set(SOURCES
 	${SOURCE_DIR}/PrefsBackend.c
 	${SOURCE_DIR}/Utils.c
 	${SOURCE_DIR}/IOStream.c
-	${SOURCE_DIR}/FileStream.c	
+	${SOURCE_DIR}/FileStream.c
+	${SOURCE_DIR}/Timer.c
 )
 
 set(HEADERS
@@ -51,6 +52,7 @@ set(HEADERS
 	${INCLUDE_DIR}/rb/Utils.h
 	${INCLUDE_DIR}/rb/IOStream.h
 	${INCLUDE_DIR}/rb/FileStream.h
+	${INCLUDE_DIR}/rb/Timer.h
 )
 
 include_directories(${INCLUDE_DIR})
@@ -69,12 +71,15 @@ IF(UNIX AND NOT WIN32)
   ENDIF(CMAKE_UNAME)
 ENDIF(UNIX AND NOT WIN32)
 
+find_package (Threads)
+
 add_library(
 	RingBuffer SHARED
 	${SOURCES}
 	${HEADERS}
 )
 
+target_link_libraries (RingBuffer ${CMAKE_THREAD_LIBS_INIT})
 
 set(TEST_DIR "${LIB_ROOT}/tests")
 
@@ -86,6 +91,7 @@ set(TEST_SOURCES
 	${TEST_DIR}/TestArray.c
 	${TEST_DIR}/TestList.c
 	${TEST_DIR}/TestPrefs.c
+	${TEST_DIR}/TestTimer.c
 	${TEST_DIR}/Tests.c
 )
 

@@ -14,7 +14,7 @@
 #endif
 #define RB_LOG_TAG "TestBuffer"
 #define ADD_TEST(x) {x, #x},
-#define NUM_TESTS ( 7 )
+#define NUM_TESTS ( 8 )
 
 /*******************************************************/
 /*              Typedefs                               */
@@ -39,6 +39,7 @@ extern int testArray();
 extern int testMessageBox();
 extern int testList();
 extern int testPrefs();
+extern int testTimer();
 
 static int runTests();
 
@@ -54,6 +55,7 @@ static const TestEntry gTests[NUM_TESTS] = {
 		ADD_TEST(testMessageBox)
 		ADD_TEST(testList)
 		ADD_TEST(testPrefs)
+		ADD_TEST(testTimer)
 };
 
 /*******************************************************/

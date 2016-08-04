@@ -7,6 +7,9 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <limits.h>
+#include <pthread.h>
 
 /*******************************************************/
 /*              Functions Definitions                  */
@@ -41,4 +44,14 @@ char* Rb_Utils_printv(const char* fmt, va_list vl){
     va_end(vlPrint);
 
     return str;
+}
+
+void Rb_Utils_getOffsetTime(struct timespec* time, int64_t offsetMs){
+    clock_gettime(CLOCK_REALTIME , time);
+
+    int64_t offsetNs = offsetMs * 1000000L;
+    int64_t ns = time->tv_nsec + offsetNs;
+
+    time->tv_nsec = ns % 1000000000L;
+    time->tv_sec = time->tv_sec + (ns / 1000000000L);
 }
