@@ -28,7 +28,7 @@ extern "C" {
 
 #define RBL(fmt, LEVEL, TAG, ...) \
 	do {\
-		RB_log(LEVEL, TAG, RB_LOG_BASE_FMT fmt, RB_FILENAME, __FUNCTION__, __LINE__, ## __VA_ARGS__); \
+		Rb_log(LEVEL, TAG, RB_LOG_BASE_FMT fmt, RB_FILENAME, __FUNCTION__, __LINE__, ## __VA_ARGS__); \
 	} while(0)
 
 #define RBLV(fmt, ...) RBL(fmt, eRB_LOG_VERBOSE, RB_LOG_TAG, ## __VA_ARGS__)
@@ -62,11 +62,21 @@ typedef enum {
 	eRB_LOG_MAX,
  } RB_LogLevel;
 
+ typedef enum {
+     eRB_LOG_OUTPUT_STDOUT = 1 << 0,
+     eRB_LOG_OUTPUT_FILE = 1 << 1,
+#ifdef ANDROID
+     eRB_LOG_OUTPUT_LOGCAT = 1 << 2,
+#endif
+ } Rb_LogOutput;
+
 /********************************************************/
 /*                 Functions Declarations               */
 /********************************************************/
 
-int32_t RB_log(RB_LogLevel level, const char* tag, const char* fmt, ...);
+int32_t Rb_log(RB_LogLevel level, const char* tag, const char* fmt, ...);
+
+int32_t Rb_logAddOutput(Rb_LogOutput type, void* data);
 
 #ifdef __cplusplus
 }

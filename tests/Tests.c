@@ -3,7 +3,7 @@
 /*******************************************************/
 
 #include <rb/Log.h>
-
+#include <rb/Common.h>
 
 /*******************************************************/
 /*              Defines                                */
@@ -20,13 +20,13 @@
 /*              Typedefs                               */
 /*******************************************************/
 
-typedef int (*testFnc)();;
+typedef int (*testFnc)();
+;
 
 typedef struct {
     testFnc fnc;
     char* name;
 } TestEntry;
-
 
 /*******************************************************/
 /*              Functions Declarations                 */
@@ -48,15 +48,14 @@ static int runTests();
 /********************************************************/
 
 static const TestEntry gTests[NUM_TESTS] = {
-		ADD_TEST(testBuffer)
-		ADD_TEST(testCBuffer)
-		ADD_TEST(testConcurrency)
-		ADD_TEST(testArray)
-		ADD_TEST(testMessageBox)
-		ADD_TEST(testList)
-		ADD_TEST(testPrefs)
-		ADD_TEST(testTimer)
-};
+ADD_TEST(testBuffer)
+ADD_TEST(testCBuffer)
+ADD_TEST(testConcurrency)
+ADD_TEST(testArray)
+ADD_TEST(testMessageBox)
+ADD_TEST(testList)
+ADD_TEST(testPrefs)
+ADD_TEST(testTimer) };
 
 /*******************************************************/
 /*              Functions Definitions                  */
@@ -66,34 +65,63 @@ int main() {
     return runTests();
 }
 
-int runTests(){
+int runTests() {
     int32_t i;
+    int32_t rc;
     int32_t numFailed = 0;
     int32_t numPassed = 0;
 
+    rc = Rb_logAddOutput(eRB_LOG_OUTPUT_STDOUT, NULL);
+    if (rc != RB_OK) {
+        RBLE("Rb_logAddOutput failed");
+        return -1;
+    }
+#ifdef ANDROID
+    rc = Rb_logAddOutput(eRB_LOG_OUTPUT_LOGCAT, NULL);
+    if(rc != RB_OK) {
+        RBLE("Rb_logAddOutput failed");
+        return -1;
+    }
+#endif
+
+    const char* logFilePath =
+#ifdef ANDROID
+            "/data/rb_log.txt"
+#else
+            "rb_log.txt"
+#endif
+    ;
+
+    rc = Rb_logAddOutput(eRB_LOG_OUTPUT_FILE, "log.txt");
+    if (rc != RB_OK) {
+        RBLE("Rb_logAddOutput failed");
+        return -1;
+    }
+
     RBLI("Running %d test(s) ..", NUM_TESTS);
 
-    for(i=0; i<NUM_TESTS; i++){
+    for (i = 0; i < NUM_TESTS; i++) {
         const TestEntry* test = &gTests[i];
 
         RBLI("-------------------------------------");
-        RBLI("Running test '%s' (%d/%d)", test->name, i+1, NUM_TESTS);
+        RBLI("Running test '%s' (%d/%d)", test->name, i + 1, NUM_TESTS);
 
         int32_t rc = test->fnc();
 
-        if(rc){
+        if (rc) {
             RBLE("Test failed: %d", rc);
             ++numFailed;
-        }
-        else{
+        } else {
             RBLI("Test OK");
             ++numPassed;
         }
     }
 
     RBLI("-------------------------------------");
-    RBLE("Tests failed: %d ( %.2f%% )", numFailed, ((float)numFailed/(float)NUM_TESTS)*100.0f);
-    RBLI("Tests passed: %d ( %.2f%% )", numPassed, ((float)numPassed/(float)NUM_TESTS)*100.0f);
+    RBLE("Tests failed: %d ( %.2f%% )", numFailed,
+            ((float)numFailed/(float)NUM_TESTS)*100.0f);
+    RBLI("Tests passed: %d ( %.2f%% )", numPassed,
+            ((float)numPassed/(float)NUM_TESTS)*100.0f);
 
     return numFailed ? -1 : 0;
 }
