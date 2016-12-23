@@ -34,7 +34,12 @@
 
 #define NUM_TEST_VALUES ( 5 )
 
+#ifdef ANDROID
+#define TEST_FILE_PATH "/data/test_prefs_file.bin"
+#else
 #define TEST_FILE_PATH "test_prefs_file.bin"
+#endif
+
 
 /*******************************************************/
 /*              Functions Definitions                  */
