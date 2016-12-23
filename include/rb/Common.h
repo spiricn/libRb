@@ -36,6 +36,9 @@ extern "C" {
 
 #define RB_UNUSED(var) do{ (void*)&var; }while(0)
 
+#define RB_STRING_SMALL ( 256 )
+#define RB_STRING_LARGE ( 1024 )
+
 /*******************************************************/
 /*              Typedefs                               */
 /*******************************************************/

@@ -26,6 +26,7 @@ set(INCLUDE_DIR "${LIB_ROOT}/include")
 set(SOURCES
 	${SOURCE_DIR}/ConcurrentRingBuffer.c
 	${SOURCE_DIR}/Log.c
+	${SOURCE_DIR}/LogPriv.c
 	${SOURCE_DIR}/MessageBox.c
 	${SOURCE_DIR}/RingBuffer.c
 	${SOURCE_DIR}/Stopwatch.c
@@ -92,6 +93,7 @@ set(TEST_SOURCES
 	${TEST_DIR}/TestList.c
 	${TEST_DIR}/TestPrefs.c
 	${TEST_DIR}/TestTimer.c
+	${TEST_DIR}/TestLog.c
 	${TEST_DIR}/Tests.c
 )
 
