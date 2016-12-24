@@ -134,6 +134,8 @@ int32_t Rb_log(RB_LogLevel level, const char* fileName, const char* function,
     messageInfo.timestamp = time(NULL);
     messageInfo.tag = tag;
     messageInfo.level = level;
+    messageInfo.pid = getpid();
+    messageInfo.tid = pthread_self();
 
     int i;
     for (i = 0; i < eRB_LOG_OUTPUT_MAX; i++) {

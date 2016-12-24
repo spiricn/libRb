@@ -84,6 +84,8 @@ typedef struct {
     time_t timestamp;
     const char* tag;
     RB_LogLevel level;
+    uint32_t pid;
+    uint32_t tid;
 } Rb_MessageInfo;
 
 typedef void (*Rb_LogCustomCallbackFnc)(const Rb_MessageInfo* info,

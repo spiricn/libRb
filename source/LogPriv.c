@@ -22,6 +22,8 @@
 #define COMP_NAME_FILE "FILE"
 #define COMP_NAME_LINE "LINE"
 #define COMP_NAME_FUNCTION "FUNCTION"
+#define COMP_NAME_TID "TID"
+#define COMP_NAME_PID "PID"
 #define MAX_FORMAT_COMPONENTS ( 64 )
 
 /*******************************************************/
@@ -102,6 +104,10 @@ int32_t Rb_logPriv_compileFormat(const char* source,
                 logComponent->type = eRB_LOG_COMPONENT_LINE;
             } else if (strcmp(componentName, COMP_NAME_FUNCTION) == 0) {
                 logComponent->type = eRB_LOG_COMPONENT_FUNCTION;
+            } else if (strcmp(componentName, COMP_NAME_PID) == 0) {
+                logComponent->type = eRB_LOG_COMPONENT_PID;
+            } else if (strcmp(componentName, COMP_NAME_TID) == 0) {
+                logComponent->type = eRB_LOG_COMPONENT_TID;
             } else {
                 return RB_ERROR;
             }
@@ -110,7 +116,7 @@ int32_t Rb_logPriv_compileFormat(const char* source,
             currPos += compLen + 2;
 
             // Advance match
-            if (currFormatMatch == (int32_t)numFormatMatches - 1) {
+            if (currFormatMatch == (int32_t) numFormatMatches - 1) {
                 nextMatch = NULL;
             } else {
                 nextMatch = &formatMatches[++currFormatMatch];
@@ -269,6 +275,18 @@ char* Rb_logPriv_formatMessage(const Rb_MessageInfo* message,
         }
         case eRB_LOG_COMPONENT_LEVEL: {
             strcat(finalMessage, levelStr);
+            break;
+        }
+        case eRB_LOG_COMPONENT_TID: {
+            char tidStr[RB_STRING_SMALL];
+            sprintf(tidStr, "0x%x", message->tid);
+            strcat(finalMessage, tidStr);
+            break;
+        }
+        case eRB_LOG_COMPONENT_PID: {
+            char tidStr[RB_STRING_SMALL];
+            sprintf(tidStr, "%u", message->pid);
+            strcat(finalMessage, tidStr);
             break;
         }
         default:
