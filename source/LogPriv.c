@@ -237,56 +237,69 @@ char* Rb_logPriv_formatMessage(const Rb_MessageInfo* message,
         return NULL;
     }
 
-    char* finalMessage = calloc(1, 1024);
+    uint32_t finalMessageSize = 128;
+    char* finalMessage = calloc(1, finalMessageSize);
 
     uint32_t i;
     for (i = 0; i < format->numComponents; i++) {
         switch (format->components[i].type) {
         case eRB_LOG_COMPONENT_TEXT: {
-            strcat(finalMessage, format->components[i].value);
+            Rb_Utils_growAppend(&finalMessage, finalMessageSize,
+                    &finalMessageSize, format->components[i].value);
             break;
         }
         case eRB_LOG_COMPONENT_MESSAGE: {
-            strcat(finalMessage, message->message);
+            Rb_Utils_growAppend(&finalMessage, finalMessageSize,
+                    &finalMessageSize, message->message);
             break;
         }
         case eRB_LOG_COMPONENT_LINE: {
             char lineStr[RB_STRING_SMALL];
             sprintf(lineStr, "%llu", (long long unsigned int) message->line);
 
-            strcat(finalMessage, lineStr);
+            Rb_Utils_growAppend(&finalMessage, finalMessageSize,
+                    &finalMessageSize, lineStr);
             break;
         }
         case eRB_LOG_COMPONENT_FILE: {
-            strcat(finalMessage, message->fileName);
+            Rb_Utils_growAppend(&finalMessage, finalMessageSize,
+                    &finalMessageSize, message->fileName);
             break;
         }
         case eRB_LOG_COMPONENT_FUNCTION: {
-            strcat(finalMessage, message->function);
+            Rb_Utils_growAppend(&finalMessage, finalMessageSize,
+                    &finalMessageSize, message->function);
             break;
         }
         case eRB_LOG_COMPONENT_TIMESTAMP: {
-            strcat(finalMessage, timeStr);
+            Rb_Utils_growAppend(&finalMessage, finalMessageSize,
+                    &finalMessageSize, timeStr);
             break;
         }
         case eRB_LOG_COMPONENT_TAG: {
-            strcat(finalMessage, message->tag);
+            Rb_Utils_growAppend(&finalMessage, finalMessageSize,
+                    &finalMessageSize, message->tag);
             break;
         }
         case eRB_LOG_COMPONENT_LEVEL: {
-            strcat(finalMessage, levelStr);
+            Rb_Utils_growAppend(&finalMessage, finalMessageSize,
+                    &finalMessageSize, levelStr);
             break;
         }
         case eRB_LOG_COMPONENT_TID: {
             char tidStr[RB_STRING_SMALL];
             sprintf(tidStr, "0x%x", message->tid);
-            strcat(finalMessage, tidStr);
+
+            Rb_Utils_growAppend(&finalMessage, finalMessageSize,
+                    &finalMessageSize, tidStr);
             break;
         }
         case eRB_LOG_COMPONENT_PID: {
-            char tidStr[RB_STRING_SMALL];
-            sprintf(tidStr, "%u", message->pid);
-            strcat(finalMessage, tidStr);
+            char pidStr[RB_STRING_SMALL];
+            sprintf(pidStr, "%u", message->pid);
+
+            Rb_Utils_growAppend(&finalMessage, finalMessageSize,
+                    &finalMessageSize, pidStr);
             break;
         }
         default:
