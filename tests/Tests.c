@@ -5,6 +5,8 @@
 #include <rb/Log.h>
 #include <rb/Common.h>
 
+#include <stdlib.h>
+
 /*******************************************************/
 /*              Defines                                */
 /*******************************************************/
@@ -71,14 +73,14 @@ ADD_TEST(Utils) };
 /*******************************************************/
 
 int main(int argc, char* argv[]) {
-    int32_t i = 0;
-    int32_t j;
+    uint32_t i = 0;
+    uint32_t j;
 
     if (setupLogging()) {
         return -1;
     }
 
-    const int numTests = sizeof(gTests) / sizeof(TestEntry);
+    const uint32_t numTests = sizeof(gTests) / sizeof(TestEntry);
 
     TestEntry* entries = NULL;
     uint32_t numEntries = 0;
@@ -87,13 +89,13 @@ int main(int argc, char* argv[]) {
         numEntries = argc - 1;
         entries = (TestEntry*) calloc(argc - 1, sizeof(TestEntry));
 
-        for (i = 1; i < argc; i++) {
+        for (i = 1; i < (uint32_t)argc; i++) {
             TestEntry* entry = NULL;
             char* testName = argv[i];
 
             for (j = 0; j < numTests; j++) {
                 if (strcmp(gTests[j].name, testName) == 0) {
-                    entry = &gTests[j];
+                    entry = (TestEntry*)&gTests[j];
                     break;
                 }
             }
@@ -107,14 +109,14 @@ int main(int argc, char* argv[]) {
         }
     } else {
         numEntries = numTests;
-        entries = &gTests;
+        entries = (TestEntry*)&gTests;
     }
 
     return runTests(entries, numEntries);
 }
 
 int runTests(const TestEntry* entries, uint32_t numTests) {
-    int32_t i;
+    uint32_t i;
     int32_t rc;
     int32_t numFailed = 0;
     int32_t numPassed = 0;

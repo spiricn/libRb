@@ -5,6 +5,7 @@
 #include "rb/priv/LogPriv.h"
 #include "rb/Common.h"
 #include "rb/Log.h"
+#include "rb/Utils.h"
 
 #include <stdio.h>
 #include <regex.h>

@@ -33,7 +33,7 @@ int testUtils() {
 
     {
         // Test Rb_Utils_growAppend
-        int32_t baseSize = 1;
+        uint32_t baseSize = 1;
         char* base = (char*) malloc(baseSize);
         base[0] = 0;
         RBLI("base string '%s' [%d]", base, baseSize);

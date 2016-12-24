@@ -53,7 +53,7 @@ LOCAL_SRC_FILES := \
 			$(SRC_DIR)/TestPrefs.c \
 			$(SRC_DIR)/TestTimer.c \
 			$(SRC_DIR)/TestLog.c \
-			$(SRC_DIR)/TestUtils
+			$(SRC_DIR)/TestUtils.c
 
 LOCAL_C_INCLUDES += \
 		$(INC_DIR) \

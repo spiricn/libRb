@@ -16,7 +16,7 @@
 /*******************************************************/
 
 void Rb_Utils_growAppend(char** base, uint32_t baseSize, uint32_t* newSize,
-        char* str) {
+        const char* str) {
     if (strlen(*base) + strlen(str) + 1 > baseSize) {
         // Not big enough to fit
         *newSize = strlen(*base) + strlen(str) + 1;
