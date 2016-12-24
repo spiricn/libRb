@@ -13,8 +13,8 @@
 #undef RB_LOG_TAG
 #endif
 #define RB_LOG_TAG "TestBuffer"
-#define ADD_TEST(x) {x, #x},
-
+#define ADD_TEST(x) {test ## x, #x},
+#define DECLARE_TEST(x) extern int test ## x ()
 #ifdef ANDROID
 #define LOG_FILE "/data/rb_log.txt"
 #else
@@ -37,15 +37,16 @@ typedef struct {
 /*              Functions Declarations                 */
 /*******************************************************/
 
-extern int testBuffer();
-extern int testCBuffer();
-extern int testConcurrency();
-extern int testArray();
-extern int testMessageBox();
-extern int testList();
-extern int testPrefs();
-extern int testTimer();
-extern int testLog();
+DECLARE_TEST(Buffer);
+DECLARE_TEST(CBuffer);
+DECLARE_TEST(Concurrency);
+DECLARE_TEST(Array);
+DECLARE_TEST(MessageBox);
+DECLARE_TEST(List);
+DECLARE_TEST(Prefs);
+DECLARE_TEST(Timer);
+DECLARE_TEST(Log);
+DECLARE_TEST(Utils);
 
 static int runTests();
 static int setupLogging();
@@ -54,29 +55,24 @@ static int setupLogging();
 /********************************************************/
 
 static const TestEntry gTests[] = {
-ADD_TEST(testBuffer)
-ADD_TEST(testCBuffer)
-ADD_TEST(testConcurrency)
-ADD_TEST(testArray)
-ADD_TEST(testMessageBox)
-ADD_TEST(testList)
-ADD_TEST(testPrefs)
-ADD_TEST(testTimer)
-ADD_TEST(testLog) };
+ADD_TEST(Buffer)
+ADD_TEST(CBuffer)
+ADD_TEST(Concurrency)
+ADD_TEST(Array)
+ADD_TEST(MessageBox)
+ADD_TEST(List)
+ADD_TEST(Prefs)
+ADD_TEST(Timer)
+ADD_TEST(Log)
+ADD_TEST(Utils) };
 
 /*******************************************************/
 /*              Functions Definitions                  */
 /*******************************************************/
 
-int main() {
-    return runTests();
-}
-
-int runTests() {
-    int32_t i;
-    int32_t rc;
-    int32_t numFailed = 0;
-    int32_t numPassed = 0;
+int main(int argc, char* argv[]) {
+    int32_t i = 0;
+    int32_t j;
 
     if (setupLogging()) {
         return -1;
@@ -84,12 +80,50 @@ int runTests() {
 
     const int numTests = sizeof(gTests) / sizeof(TestEntry);
 
+    TestEntry* entries = NULL;
+    uint32_t numEntries = 0;
+
+    if (argc > 1) {
+        numEntries = argc - 1;
+        entries = (TestEntry*) calloc(argc - 1, sizeof(TestEntry));
+
+        for (i = 1; i < argc; i++) {
+            TestEntry* entry = NULL;
+            char* testName = argv[i];
+
+            for (j = 0; j < numTests; j++) {
+                if (strcmp(gTests[j].name, testName) == 0) {
+                    entry = &gTests[j];
+                    break;
+                }
+            }
+
+            if (entry == NULL) {
+                RBLE("No test named '%s'", testName);
+                return -1;
+            }
+
+            memcpy(&entries[i - 1], entry, sizeof(TestEntry));
+        }
+    } else {
+        numEntries = numTests;
+        entries = &gTests;
+    }
+
+    return runTests(entries, numEntries);
+}
+
+int runTests(const TestEntry* entries, uint32_t numTests) {
+    int32_t i;
+    int32_t rc;
+    int32_t numFailed = 0;
+    int32_t numPassed = 0;
+
     RBLI("Running %d test(s) ..", numTests);
     RBLI("Logging results to '" LOG_FILE "' ..");
 
-
     for (i = 0; i < numTests; i++) {
-        const TestEntry* test = &gTests[i];
+        const TestEntry* test = &entries[i];
 
         RBLI("-------------------------------------");
         RBLI("Running test '%s' (%d/%d)", test->name, i + 1, numTests);
@@ -117,13 +151,13 @@ int runTests() {
 int setupLogging() {
     Rb_LogOutputConfig logOutputConfig;
 
-    // Add log file output
+// Add log file output
     Rb_log_getOutputConfig(eRB_LOG_OUTPUT_FILE, &logOutputConfig);
     logOutputConfig.enabled = true;
     logOutputConfig.data.file.output = fopen(LOG_FILE, "wb");
     Rb_log_setOutputConfig(eRB_LOG_OUTPUT_FILE, &logOutputConfig);
 
-    // On Android enable STDOUT (disabled by default)
+// On Android enable STDOUT (disabled by default)
 #ifdef ANDROID
     Rb_log_getOutputConfig(eRB_LOG_OUTPUT_STDOUT, &logOutputConfig);
     logOutputConfig.enabled = true;

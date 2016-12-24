@@ -94,6 +94,7 @@ set(TEST_SOURCES
 	${TEST_DIR}/TestPrefs.c
 	${TEST_DIR}/TestTimer.c
 	${TEST_DIR}/TestLog.c
+	${TEST_DIR}/TestUtils.c
 	${TEST_DIR}/Tests.c
 )
 

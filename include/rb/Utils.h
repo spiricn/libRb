@@ -33,6 +33,9 @@ char* Rb_Utils_printv(const char* fmt, va_list vl);
 
 void Rb_Utils_getOffsetTime(struct timespec* time, int64_t offsetMs);
 
+void Rb_Utils_growAppend(char** base, uint32_t baseSize, uint32_t* newSize, char* str);
+
+
 #ifdef __cplusplus
 }
 #endif
