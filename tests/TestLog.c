@@ -60,6 +60,13 @@ int testLog() {
         return -1;
     }
 
+    RBLI("Test new line log:\n"
+            "Line1\n"
+            "\n\n\n"
+            "Line2\n"
+            "\n"
+            "Line3");
+
     return 0;
 }
 

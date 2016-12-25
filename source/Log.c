@@ -69,6 +69,9 @@ static int32_t Rb_logPriv_outputLogcat(const Rb_MessageInfo* info, const char* f
 static int32_t Rb_logPriv_outputFile(const Rb_MessageInfo* info,
         const char* finalMessage, FILE* file);
 
+static int32_t Rb_logPriv_logMessage(const Rb_MessageInfo* message,
+        const LogOutputContext* output);
+
 /*******************************************************/
 /*              Functions Definitions                  */
 /*******************************************************/
@@ -107,6 +110,66 @@ void Rb_logPriv_initialize() {
     gContextInitialized = true;
 }
 
+int32_t Rb_logPriv_logMessage(const Rb_MessageInfo* message,
+        const LogOutputContext* output) {
+    int rc;
+    char* finalMessage = NULL;
+
+    rc = RB_OK;
+
+    finalMessage = Rb_logPriv_formatMessage(message, &output->compiledFormat);
+
+    switch (output->type) {
+#ifdef ANDROID
+    case eRB_LOG_OUTPUT_LOGCAT: {
+        rc = Rb_logPriv_outputLogcat(&messageInfo, finalMessage);
+        if(rc != RB_OK) {
+            goto finish;
+        }
+
+        break;
+    }
+
+#endif
+    case eRB_LOG_OUTPUT_STDOUT:
+    case eRB_LOG_OUTPUT_FILE: {
+        FILE* fd =
+                output->type == eRB_LOG_OUTPUT_STDOUT ?
+                        stdout : output->config.data.file.output;
+        if (fd) {
+            rc = Rb_logPriv_outputFile(message, finalMessage, fd);
+            if (rc != RB_OK) {
+                goto finish;
+            }
+        }
+        break;
+    }
+
+    case eRB_LOG_OUTPUT_CUSTOM: {
+        if (output->config.data.custom.fnc) {
+            output->config.data.custom.fnc(message, finalMessage,
+                    output->config.data.custom.userData);
+        }
+        break;
+    }
+    default:
+        rc = RB_ERROR;
+        goto finish;
+    }
+
+    free(finalMessage);
+    finalMessage = NULL;
+
+    finish:
+
+    if (finalMessage) {
+        free(finalMessage);
+        finalMessage = NULL;
+    }
+
+    return rc;
+}
+
 int32_t Rb_log(RB_LogLevel level, const char* fileName, const char* function,
         uint64_t line, const char* tag, const char* fmt, ...) {
     LOCK
@@ -127,7 +190,6 @@ int32_t Rb_log(RB_LogLevel level, const char* fileName, const char* function,
 
     Rb_MessageInfo messageInfo;
     memset(&messageInfo, 0x00, sizeof(Rb_MessageInfo));
-    messageInfo.message = message;
     messageInfo.fileName = fileName;
     messageInfo.function = function;
     messageInfo.line = line;
@@ -137,62 +199,30 @@ int32_t Rb_log(RB_LogLevel level, const char* fileName, const char* function,
     messageInfo.pid = getpid();
     messageInfo.tid = pthread_self();
 
-    int i;
-    for (i = 0; i < eRB_LOG_OUTPUT_MAX; i++) {
-        LogOutputContext* output = &gLogContext.outputs[i];
-        if (!output->config.enabled) {
+    char* pch = strtok(message, "\n");
+    while (pch != NULL) {
+        if (!strlen(pch)) {
             continue;
         }
 
-        finalMessage = Rb_logPriv_formatMessage(&messageInfo,
-                &output->compiledFormat);
+        messageInfo.message = pch;
 
-        switch (output->type) {
-#ifdef ANDROID
-        case eRB_LOG_OUTPUT_LOGCAT: {
-            rc = Rb_logPriv_outputLogcat(&messageInfo, finalMessage);
-            if(rc != RB_OK) {
-                goto finish;
+        int i;
+        for (i = 0; i < eRB_LOG_OUTPUT_MAX; i++) {
+            LogOutputContext* output = &gLogContext.outputs[i];
+            if (!output->config.enabled) {
+                continue;
             }
 
-            break;
-        }
-
-#endif
-        case eRB_LOG_OUTPUT_STDOUT:
-        case eRB_LOG_OUTPUT_FILE: {
-            FILE* fd =
-                    output->type == eRB_LOG_OUTPUT_STDOUT ?
-                            stdout : output->config.data.file.output;
-            if (fd) {
-                rc = Rb_logPriv_outputFile(&messageInfo, finalMessage, fd);
-                if (rc != RB_OK) {
-                    goto finish;
-                }
+            rc = Rb_logPriv_logMessage(&messageInfo, output);
+            if (rc != RB_OK) {
+                break;
             }
-            break;
         }
 
-        case eRB_LOG_OUTPUT_CUSTOM: {
-            if (output->config.data.custom.fnc) {
-                output->config.data.custom.fnc(&messageInfo, finalMessage,
-                        output->config.data.custom.userData);
-            }
-            break;
-        }
-        default:
-            rc = RB_ERROR;
-            goto finish;
-        }
-
-        free(finalMessage);
-        finalMessage = NULL;
+        pch = strtok(NULL, "\n");
     }
 
-    finish: if (finalMessage) {
-        free(finalMessage);
-        finalMessage = NULL;
-    }
     if (message) {
         free(message);
         message = NULL;
