@@ -37,6 +37,7 @@ extern "C" {
 		Rb_log(LEVEL, RB_FILENAME, RB_FUNCTION, RB_LINE, TAG, fmt, ## __VA_ARGS__); \
 	} while(0)
 
+#define RBLT(fmt, ...) RBL(fmt, eRB_LOG_TRACE, RB_LOG_TAG, ## __VA_ARGS__)
 #define RBLV(fmt, ...) RBL(fmt, eRB_LOG_VERBOSE, RB_LOG_TAG, ## __VA_ARGS__)
 #define RBLD(fmt, ...) RBL(fmt, eRB_LOG_DEBUG, RB_LOG_TAG, ## __VA_ARGS__)
 #define RBLI(fmt, ...) RBL(fmt, eRB_LOG_INFO, RB_LOG_TAG, ## __VA_ARGS__)
@@ -44,11 +45,14 @@ extern "C" {
 #define RBLE(fmt, ...) RBL(fmt, eRB_LOG_ERROR, RB_LOG_TAG, ## __VA_ARGS__)
 #define RBLF(fmt, ...) RBL(fmt, eRB_LOG_FATAL, RB_LOG_TAG, ## __VA_ARGS__)
 
+#define RBL_FN_ENTER do{ RBLT("%s () {", __FUNCTION__); }while(0)
+#define RBL_RETURN(x) do{ RBLT("} // %s", __FUNCTION__); return x; }while(0);
+
 #define RB_ASSERT(condition) \
     do{\
         if(!(condition)) \
         { \
-            TRACEE("Assertion failure [ %s ]", # condition); \
+            RBLF("Assertion failure [ %s ]", # condition); \
             raise(SIGSEGV); \
         } \
     }while(0)
@@ -59,6 +63,7 @@ extern "C" {
 
 typedef enum {
     eRB_LOG_INVALID,
+    eRB_LOG_TRACE,
     eRB_LOG_VERBOSE,
     eRB_LOG_DEBUG,
     eRB_LOG_INFO,

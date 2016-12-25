@@ -292,6 +292,7 @@ int32_t Rb_logPriv_outputLogcat(const Rb_MessageInfo* info,
 
     switch (info->level) {
         case eRB_LOG_VERBOSE:
+        case eRB_LOG_TRACE:
         androidLevel = ANDROID_LOG_VERBOSE;
         break;
         case eRB_LOG_DEBUG:

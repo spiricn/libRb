@@ -27,10 +27,13 @@ static void testLogCallback(const Rb_MessageInfo* info,
 /*******************************************************/
 
 int testLog() {
+    RBL_FN_ENTER
+    ;
+
     int rc;
     if (!RB_CHECK_VERSION) {
         RBLE("Invalid binary version");
-        return -1;
+        RBL_RETURN(-1);
     }
 
     Rb_LogOutputConfig config;
@@ -38,7 +41,7 @@ int testLog() {
     rc = Rb_log_getOutputConfig(eRB_LOG_OUTPUT_CUSTOM, &config);
     if (rc != RB_OK) {
         RBLE("Rb_log_getOutputConfig failed");
-        return -1;
+        RBL_RETURN(-1);
     }
 
     config.enabled = true;
@@ -48,7 +51,7 @@ int testLog() {
     rc = Rb_log_setOutputConfig(eRB_LOG_OUTPUT_CUSTOM, &config);
     if (rc != RB_OK) {
         RBLE("Rb_log_setOutputConfig failed");
-        return -1;
+        RBL_RETURN(-1);
     }
 
     RBLI("Test log !");
@@ -57,7 +60,7 @@ int testLog() {
     rc = Rb_log_setOutputConfig(eRB_LOG_OUTPUT_CUSTOM, &config);
     if (rc != RB_OK) {
         RBLE("Rb_log_setOutputConfig failed");
-        return -1;
+        RBL_RETURN(-1);
     }
 
     RBLI("Test new line log:\n"
@@ -67,7 +70,7 @@ int testLog() {
             "\n"
             "Line3");
 
-    return 0;
+    RBL_RETURN(0);
 }
 
 void testLogCallback(const Rb_MessageInfo* info, const char* finalMessage,

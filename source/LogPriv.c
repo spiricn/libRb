@@ -204,6 +204,9 @@ char* Rb_logPriv_formatMessage(const Rb_MessageInfo* message,
     // Convert level to string
     char levelStr[2] = "?";
     switch (message->level) {
+    case eRB_LOG_TRACE:
+        levelStr[0] = 'T';
+        break;
     case eRB_LOG_VERBOSE:
         levelStr[0] = 'V';
         break;
