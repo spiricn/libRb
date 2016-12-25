@@ -52,6 +52,8 @@ DECLARE_TEST(Utils);
 
 static int runTests();
 static int setupLogging();
+static void* testRunner(void* arg);
+
 /********************************************************/
 /*                 Local Module Variables (MODULE)      */
 /********************************************************/
@@ -89,13 +91,13 @@ int main(int argc, char* argv[]) {
         numEntries = argc - 1;
         entries = (TestEntry*) calloc(argc - 1, sizeof(TestEntry));
 
-        for (i = 1; i < (uint32_t)argc; i++) {
+        for (i = 1; i < (uint32_t) argc; i++) {
             TestEntry* entry = NULL;
             char* testName = argv[i];
 
             for (j = 0; j < numTests; j++) {
                 if (strcmp(gTests[j].name, testName) == 0) {
-                    entry = (TestEntry*)&gTests[j];
+                    entry = (TestEntry*) &gTests[j];
                     break;
                 }
             }
@@ -109,7 +111,7 @@ int main(int argc, char* argv[]) {
         }
     } else {
         numEntries = numTests;
-        entries = (TestEntry*)&gTests;
+        entries = (TestEntry*) &gTests;
     }
 
     return runTests(entries, numEntries);
@@ -123,23 +125,26 @@ int runTests(const TestEntry* entries, uint32_t numTests) {
 
     RBLI("Running %d test(s) ..", numTests);
     RBLI("Logging results to '" LOG_FILE "' ..");
+    RBLI("-------------------------------------");
+
+    pthread_t* testThreads = (pthread_t*) malloc(numTests * sizeof(pthread_t));
 
     for (i = 0; i < numTests; i++) {
-        const TestEntry* test = &entries[i];
+        pthread_create(&testThreads[i], NULL, testRunner, &entries[i]);
+    }
 
-        RBLI("-------------------------------------");
-        RBLI("Running test '%s' (%d/%d)", test->name, i + 1, numTests);
+    for (i = 0; i < numTests; i++) {
+        void* res = NULL;
+        pthread_join(testThreads[i], &res);
 
-        int32_t rc = test->fnc();
-
-        if (rc) {
-            RBLE("Test failed: %d", rc);
+        if ((int) res) {
             ++numFailed;
         } else {
-            RBLI("Test OK");
             ++numPassed;
         }
     }
+
+    free(testThreads);
 
     RBLI("-------------------------------------");
     RBLE("Tests failed: %d ( %.2f%% )", numFailed,
@@ -148,6 +153,22 @@ int runTests(const TestEntry* entries, uint32_t numTests) {
             ((float )numPassed / (float )numTests) * 100.0f);
 
     return numFailed ? -1 : 0;
+}
+
+void* testRunner(void* arg) {
+    const TestEntry* test = (const TestEntry*) arg;
+
+    RBLI("Running test '%s'", test->name);
+
+    int rc = test->fnc();
+
+    if (rc) {
+        RBLE("Test '%s' failed");
+    } else {
+        RBLI("Test '%s' passed");
+    }
+
+    return (void*) rc;
 }
 
 int setupLogging() {
