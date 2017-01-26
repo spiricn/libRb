@@ -145,24 +145,9 @@ int testPrefs() {
         return -1;
     }
 
-    Rb_IOStream stream;
-    Rb_FileStream_getApi(&stream.api);
-
-    rc = stream.api.open(TEST_FILE_PATH, eRB_IO_MODE_WRITE, &stream.handle);
-    if(rc != RB_OK){
-        RBLE("file open failed");
-        return -1;
-    }
-
-    rc = Rb_Prefs_save(prefs, &stream);
+    rc = Rb_Prefs_saveFile(prefs, TEST_FILE_PATH);
     if(rc != RB_OK){
         RBLE("Rb_Prefs_save failed");
-        return -1;
-    }
-
-    rc = stream.api.close(&stream.handle);
-    if(rc != RB_OK){
-        RBLE("file close failed");
         return -1;
     }
 
@@ -178,21 +163,9 @@ int testPrefs() {
         return -1;
     }
 
-    rc = stream.api.open(TEST_FILE_PATH, eRB_IO_MODE_READ, &stream.handle);
-    if(rc != RB_OK){
-        RBLE("file open failed");
-        return -1;
-    }
-
-    rc = Rb_Prefs_load(prefs, &stream);
+    rc = Rb_Prefs_loadFile(prefs, TEST_FILE_PATH);
     if(rc != RB_OK){
         RBLE("Rb_Prefs_load failed");
-        return -1;
-    }
-
-    rc = stream.api.close(&stream.handle);
-    if(rc != RB_OK){
-        RBLE("file close failed");
         return -1;
     }
 

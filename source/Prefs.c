@@ -7,6 +7,7 @@
 #include "rb/List.h"
 #include "rb/priv/PrefsPriv.h"
 #include "rb/priv/PrefsBackend.h"
+#include "rb/FileStream.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -455,4 +456,58 @@ PrefsContext* PrefsPriv_getContext(Rb_PrefsHandle handle){
     }
 
     return prefs;
+}
+
+int32_t Rb_Prefs_loadFile(Rb_PrefsHandle handle, const char* filePath) {
+    int32_t rc = RB_OK;
+    Rb_IOStream stream;
+
+    rc = Rb_FileStream_getApi(&stream.api);
+    if (rc != RB_OK) {
+        return rc;
+    }
+
+    rc = stream.api.open(filePath, eRB_IO_MODE_READ, &stream.handle);
+    if (rc != RB_OK) {
+        return rc;
+    }
+
+    rc = Rb_Prefs_load(handle, &stream);
+    if (rc != RB_OK) {
+        return rc;
+    }
+
+    rc = stream.api.close(&stream.handle);
+    if (rc != RB_OK) {
+        return rc;
+    }
+
+    return rc;
+}
+
+int32_t Rb_Prefs_saveFile(Rb_PrefsHandle handle, const char* filePath) {
+    int32_t rc = RB_OK;
+    Rb_IOStream stream;
+
+    rc = Rb_FileStream_getApi(&stream.api);
+    if (rc != RB_OK) {
+        return rc;
+    }
+
+    rc = stream.api.open(filePath, eRB_IO_MODE_WRITE, &stream.handle);
+    if (rc != RB_OK) {
+        return rc;
+    }
+
+    rc = Rb_Prefs_save(handle, &stream);
+    if (rc != RB_OK) {
+        return rc;
+    }
+
+    rc = stream.api.close(&stream.handle);
+    if (rc != RB_OK) {
+        return rc;
+    }
+
+    return rc;
 }

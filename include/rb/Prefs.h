@@ -223,6 +223,24 @@ int32_t Rb_Prefs_load(Rb_PrefsHandle handle, const Rb_IOStream* stream);
  */
 int32_t Rb_Prefs_save(Rb_PrefsHandle handle, const Rb_IOStream* stream);
 
+/**
+ * Loads entries from given file location. Clears all existing entries.
+ *
+ * @param[in] handle Valid preferences handle.
+ * @param[in] stream Input stream.
+ * @return RB_OK on success, negative value otherwise.
+ */
+int32_t Rb_Prefs_loadFile(Rb_PrefsHandle handle, const char* filePath);
+
+/**
+ * Saves entries to given file location.
+ *
+ * @param[in] handle Valid preferences handle.
+ * @param[in] stream Output stream.
+ * @return RB_OK on success, negative value otherwise.
+ */
+int32_t Rb_Prefs_saveFile(Rb_PrefsHandle handle, const char* filePath);
+
 #ifdef __cplusplus
 }
 #endif
