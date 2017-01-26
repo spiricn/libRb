@@ -15,6 +15,8 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <regex.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 /********************************************************/
 /*                 Defines                              */
@@ -122,7 +124,7 @@ int32_t Rb_logPriv_logMessage(const Rb_MessageInfo* message,
     switch (output->type) {
 #ifdef ANDROID
     case eRB_LOG_OUTPUT_LOGCAT: {
-        rc = Rb_logPriv_outputLogcat(&messageInfo, finalMessage);
+        rc = Rb_logPriv_outputLogcat(message, finalMessage);
         if(rc != RB_OK) {
             goto finish;
         }
@@ -180,7 +182,7 @@ int32_t Rb_log(RB_LogLevel level, const char* fileName, const char* function,
     }
 
     char* finalMessage = NULL;
-    int32_t rc;
+    int32_t rc = RB_OK;
 
     // Format message
     va_list vl;

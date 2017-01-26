@@ -6,6 +6,7 @@
 #include <rb/Common.h>
 
 #include <stdlib.h>
+#include <pthread.h>
 
 /*******************************************************/
 /*              Defines                                */
@@ -130,14 +131,14 @@ int runTests(const TestEntry* entries, uint32_t numTests) {
     pthread_t* testThreads = (pthread_t*) malloc(numTests * sizeof(pthread_t));
 
     for (i = 0; i < numTests; i++) {
-        pthread_create(&testThreads[i], NULL, testRunner, &entries[i]);
+        pthread_create(&testThreads[i], NULL, testRunner, (TestEntry*)&entries[i]);
     }
 
     for (i = 0; i < numTests; i++) {
         void* res = NULL;
         pthread_join(testThreads[i], &res);
 
-        if ((int) res) {
+        if ((intptr_t) res) {
             ++numFailed;
         } else {
             ++numPassed;
@@ -168,7 +169,7 @@ void* testRunner(void* arg) {
         RBLI("Test '%s' passed");
     }
 
-    return (void*) rc;
+    return (void*) (intptr_t)rc;
 }
 
 int setupLogging() {
