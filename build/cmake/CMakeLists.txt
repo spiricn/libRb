@@ -80,6 +80,12 @@ add_library(
 	${HEADERS}
 )
 
+add_library(
+	RingBufferStatic STATIC
+	${SOURCES}
+	${HEADERS}
+)
+
 target_link_libraries (RingBuffer ${CMAKE_THREAD_LIBS_INIT})
 
 set(TEST_DIR "${LIB_ROOT}/tests")
@@ -101,6 +107,6 @@ set(TEST_SOURCES
 add_executable(libRingBuffer_tests ${TEST_SOURCES})
 
 TARGET_LINK_LIBRARIES(libRingBuffer_tests
-	RingBuffer
+	RingBufferStatic
 	pthread
 )
