@@ -106,13 +106,13 @@ int32_t FStreamPriv_open(const char* uri, Rb_IOMode mode, Rb_IOStreamHandle* han
 
     switch(mode){
     case eRB_IO_MODE_READ:
-        strcpy(strMode, "r");
+        strcpy(strMode, "rb");
         break;
     case eRB_IO_MODE_WRITE:
-        strcpy(strMode, "w");
+        strcpy(strMode, "wb");
         break;
     case eRB_IO_MODE_READ_WRITE:
-        strcpy(strMode, "rw");
+        strcpy(strMode, "rwb");
         break;
     default:
         free(stream);

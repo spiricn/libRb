@@ -99,6 +99,7 @@ typedef void (*Rb_LogCustomCallbackFnc)(const Rb_MessageInfo* info,
 typedef struct {
     char format[RB_STRING_SMALL];
     bool enabled;
+    RB_LogLevel logLevel;
 
     union {
         struct {

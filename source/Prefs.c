@@ -61,7 +61,6 @@ Rb_PrefsHandle Rb_Prefs_new(const Rb_PrefsBackend* backend){
 }
 
 int32_t Rb_Prefs_free(Rb_PrefsHandle* handle){
-    // TODO
     int32_t rc;
 
     PrefsContext* prefs = PrefsPriv_getContext(*handle);

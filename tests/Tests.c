@@ -164,9 +164,9 @@ void* testRunner(void* arg) {
     int rc = test->fnc();
 
     if (rc) {
-        RBLE("Test '%s' failed");
+        RBLE("Test '%s' failed", test->name);
     } else {
-        RBLI("Test '%s' passed");
+        RBLI("Test '%s' passed", test->name);
     }
 
     return (void*) (intptr_t)rc;
