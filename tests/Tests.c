@@ -50,6 +50,7 @@ DECLARE_TEST(Prefs);
 DECLARE_TEST(Timer);
 DECLARE_TEST(Log);
 DECLARE_TEST(Utils);
+DECLARE_TEST(Stopwatch);
 
 static int runTests();
 static int setupLogging();
@@ -69,7 +70,9 @@ ADD_TEST(List)
 ADD_TEST(Prefs)
 ADD_TEST(Timer)
 ADD_TEST(Log)
-ADD_TEST(Utils) };
+ADD_TEST(Utils)
+ADD_TEST(Stopwatch)
+};
 
 /*******************************************************/
 /*              Functions Definitions                  */

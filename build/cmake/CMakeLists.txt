@@ -101,6 +101,7 @@ set(TEST_SOURCES
 	${TEST_DIR}/TestTimer.c
 	${TEST_DIR}/TestLog.c
 	${TEST_DIR}/TestUtils.c
+	${TEST_DIR}/TestStopwatch.c
 	${TEST_DIR}/Tests.c
 )
 

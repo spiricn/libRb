@@ -13,6 +13,8 @@
 /*******************************************************/
 
 #define STOPWATCH_MAGIC ( 0x1111AB34 )
+#define MS_IN_S ( 1000 )
+#define NS_IN_S ( 1000000 )
 
 /*******************************************************/
 /*              Typedefs                               */
@@ -76,8 +78,8 @@ int64_t Rb_Stopwatch_elapsedMs(Rb_StopwatchHandle handle){
 
     int64_t elapsedMs = 0;
 
-    elapsedMs += ( currTime.tv_sec - sw->time.tv_sec ) * 1000;
-    elapsedMs += ( currTime.tv_nsec - sw->time.tv_nsec ) / 1000000;
+    elapsedMs += ( currTime.tv_sec - sw->time.tv_sec ) * MS_IN_S;
+    elapsedMs += ( currTime.tv_nsec - sw->time.tv_nsec ) / NS_IN_S;
 
     return elapsedMs;
 }
