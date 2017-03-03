@@ -23,7 +23,7 @@
 /********************************************************/
 
 #ifdef ANDROID
-#include <utils/Log.h>
+#include <android/log.h>
 #endif
 
 #define LOCK do { pthread_mutex_lock(&gMutex); } while(0)
@@ -321,7 +321,7 @@ int32_t Rb_logPriv_outputLogcat(const Rb_MessageInfo* info,
         androidLevel = ANDROID_LOG_DEFAULT;
     }
 
-    android_printLog(androidLevel, info->tag, finalMessage);
+    __android_log_write(androidLevel, info->tag, finalMessage);
 
     return RB_OK;
 }
