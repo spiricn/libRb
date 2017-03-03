@@ -1,5 +1,5 @@
-#ifndef RB_ARRAY_H_
-#define RB_ARRAY_H_
+#ifndef RB_STOPWATCH_H_
+#define RB_STOPWATCH_H_
 
 /********************************************************/
 /*                 Includes                             */
