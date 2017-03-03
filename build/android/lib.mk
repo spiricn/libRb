@@ -27,8 +27,6 @@ LOCAL_SHARED_LIBRARIES := \
 		libcutils \
 		libutils \
 		
-LOCAL_MODULE := libRingBuffer
-
 LOCAL_CFLAGS:= -DANDROID
 
 LOCAL_MODULE_TAGS := optional
