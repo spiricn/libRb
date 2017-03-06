@@ -23,9 +23,7 @@ LOCAL_C_INCLUDES += \
 		$(INC_DIR) \
 
 LOCAL_SHARED_LIBRARIES := \
-		liblog \
-		libcutils \
-		libutils \
+		liblog
 		
 LOCAL_CFLAGS:= -DANDROID
 

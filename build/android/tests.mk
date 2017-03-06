@@ -20,9 +20,15 @@ LOCAL_SRC_FILES := \
 			$(SRC_DIR)/TestUtils.c \
 			$(SRC_DIR)/TestStopwatch.c
 
-LOCAL_WHOLE_STATIC_LIBRARIES += libRingBuffer liblog
+LOCAL_WHOLE_STATIC_LIBRARIES += libRingBuffer-static
+
+LOCAL_SHARED_LIBRARIES := \
+		liblog
+
+LOCAL_LDLIBS += -llog
 
 LOCAL_MODULE := libRingBuffer_tests
 
 include $(BUILD_EXECUTABLE)
 include $(CLEAR_VARS)
+
