@@ -63,6 +63,7 @@ extern "C" {
 
 typedef enum {
     eRB_LOG_INVALID,
+    eRB_LOG_ALL,
     eRB_LOG_TRACE,
     eRB_LOG_VERBOSE,
     eRB_LOG_DEBUG,

@@ -70,6 +70,20 @@ int testLog() {
             "\n"
             "Line3");
 
+
+    config.enabled = true;
+    config.logLevel = eRB_LOG_DEBUG;
+    rc = Rb_log_setOutputConfig(eRB_LOG_OUTPUT_CUSTOM, &config);
+    if (rc != RB_OK) {
+        RBLE("Rb_log_setOutputConfig failed");
+        RBL_RETURN(-1);
+    }
+
+    RBLT("Test trace, should not be seen");
+    RBLV("Test verbose, should not be seen");
+    RBLD("Test debug, should be seen");
+    RBLI("Test info, should be seen");
+
     RBL_RETURN(0);
 }
 

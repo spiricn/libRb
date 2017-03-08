@@ -89,7 +89,7 @@ void Rb_logPriv_initialize() {
 
         output->type = i;
         output->config.enabled = false;
-        output->config.logLevel = eRB_LOG_MAX;
+        output->config.logLevel = eRB_LOG_ALL;
         strcpy(output->config.format, DEFAULT_FORMAT);
 
 #if ANDROID
@@ -115,7 +115,7 @@ void Rb_logPriv_initialize() {
 
 int32_t Rb_logPriv_logMessage(const Rb_MessageInfo* message,
         const LogOutputContext* output) {
-    if(message->level > output->config.logLevel){
+    if(message->level < output->config.logLevel){
         return RB_OK;
     }
 
