@@ -8,6 +8,7 @@
 #include "rb/priv/PrefsPriv.h"
 #include "rb/priv/PrefsBackend.h"
 #include "rb/FileStream.h"
+#include "rb/Utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,7 +39,7 @@ static int32_t PrefsPriv_remove(PrefsContext* prefs, const char* key);
 /*******************************************************/
 
 Rb_PrefsHandle Rb_Prefs_new(const Rb_PrefsBackend* backend){
-    PrefsContext* prefs = (PrefsContext*)calloc(1, sizeof(PrefsContext));
+    PrefsContext* prefs = (PrefsContext*)RB_CALLOC(sizeof(PrefsContext));
 
     prefs->magic = PREFS_MAGIC;
 
@@ -73,7 +74,7 @@ int32_t Rb_Prefs_free(Rb_PrefsHandle* handle){
         return rc;
     }
 
-    free(prefs);
+    RB_FREE(&prefs);
     *handle = NULL;
 
     return RB_OK;
@@ -138,7 +139,7 @@ int32_t Rb_Prefs_putString(Rb_PrefsHandle handle, const char* key, const char* v
     Variant var;
 
     var.type = eRB_VAR_TYPE_STRING;
-    var.val.stringVal = (char*)malloc(strlen(value) + 1);
+    var.val.stringVal = (char*)RB_MALLOC(strlen(value) + 1);
     strcpy(var.val.stringVal, value);
 
     return PrefsPriv_add(prefs, key, &var);
@@ -156,7 +157,7 @@ int32_t Rb_Prefs_putBlob(Rb_PrefsHandle handle, const char* key, const void* dat
 
     var.type = eRB_VAR_TYPE_BLOB;
     var.val.blobVal.size = size;
-    var.val.blobVal.data = malloc(size);
+    var.val.blobVal.data = RB_MALLOC(size);
     memcpy(var.val.blobVal.data, data, size);
 
     return PrefsPriv_add(prefs, key, &var);
@@ -237,7 +238,7 @@ int32_t Rb_Prefs_getString(Rb_PrefsHandle handle, const char* key, char** value)
         return RB_INVALID_ARG;
     }
 
-    *value = (char*)malloc(strlen(entry->value.val.stringVal) + 1);
+    *value = (char*)RB_MALLOC(strlen(entry->value.val.stringVal) + 1);
     strcpy(*value, entry->value.val.stringVal);
 
     return RB_OK;
@@ -259,7 +260,7 @@ int32_t Rb_Prefs_getBlob(Rb_PrefsHandle handle, const char* key, void** data, ui
     }
 
     *size = entry->value.val.blobVal.size;
-    *data = malloc(*size);
+    *data = RB_MALLOC(*size);
     memcpy(*data, entry->value.val.blobVal.data, *size);
 
     return RB_OK;
@@ -363,9 +364,9 @@ int32_t PrefsPriv_add(PrefsContext* prefs, const char* key, const Variant* var){
         return RB_INVALID_ARG;
     }
 
-    PrefEntry* entry = (PrefEntry*)calloc(1, sizeof(PrefEntry));
+    PrefEntry* entry = (PrefEntry*)RB_CALLOC(sizeof(PrefEntry));
 
-    entry->key = (char*)malloc(strlen(key) + 1);
+    entry->key = (char*)RB_MALLOC(strlen(key) + 1);
     strcpy(entry->key, key);
 
     memcpy(&entry->value, var, sizeof(Variant));
@@ -411,14 +412,14 @@ int32_t PrefsPriv_remove(PrefsContext* prefs, const char* key){
             }
 
             if(entry->value.type == eRB_VAR_TYPE_BLOB){
-                free(entry->value.val.blobVal.data);
+                RB_FREE(&entry->value.val.blobVal.data);
             }
             else if(entry->value.type == eRB_VAR_TYPE_STRING){
-                free(entry->value.val.stringVal);
+                RB_FREE(&entry->value.val.stringVal);
             }
 
-            free(entry->key);
-            free(entry);
+            RB_FREE(&entry->key);
+            RB_FREE(&entry);
         }
     }
 

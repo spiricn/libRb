@@ -164,13 +164,13 @@ int32_t Rb_logPriv_logMessage(const Rb_MessageInfo* message,
         goto finish;
     }
 
-    free(finalMessage);
+    RB_FREE(&finalMessage);
     finalMessage = NULL;
 
     finish:
 
     if (finalMessage) {
-        free(finalMessage);
+        RB_FREE(&finalMessage);
         finalMessage = NULL;
     }
 
@@ -231,7 +231,7 @@ int32_t Rb_log(RB_LogLevel level, const char* fileName, const char* function,
     }
 
     if (message) {
-        free(message);
+        RB_FREE(&message);
         message = NULL;
     }
 
@@ -272,7 +272,7 @@ int32_t Rb_log_setOutputConfig(Rb_LogOutput type,
 
     // Compile format
     if (ctx->compiledFormat.components) {
-        free(ctx->compiledFormat.components);
+        RB_FREE(&ctx->compiledFormat.components);
         ctx->compiledFormat.components = NULL;
         ctx->compiledFormat.numComponents = 0;
     }

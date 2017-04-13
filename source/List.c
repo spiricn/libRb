@@ -4,6 +4,7 @@
 
 #include "rb/Common.h"
 #include "rb/List.h"
+#include "rb/Utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,7 +55,7 @@ static int32_t ListPriv_remove(ListContext* list, int32_t index);
 /*******************************************************/
 
 Rb_ListHandle Rb_List_new(uint32_t elementSize){
-    ListContext* list = (ListContext*)calloc(1, sizeof(ListContext));
+    ListContext* list = (ListContext*)RB_CALLOC(sizeof(ListContext));
 
     list->magic = LIST_MAGIC;
     list->elementSize = elementSize;
@@ -78,7 +79,7 @@ int32_t Rb_List_free(Rb_ListHandle* handle){
 
     pthread_mutex_destroy(&list->mutex);
 
-    free(list);
+    RB_FREE(&list);
     *handle = NULL;
 
     return RB_OK;
@@ -279,8 +280,8 @@ int32_t ListPriv_remove(ListContext* list, int32_t index){
         list->head = NULL;
     }
 
-    free(node->element);
-    free(node);
+    RB_FREE(&node->element);
+    RB_FREE(&node);
 
     return RB_OK;
 }
@@ -293,14 +294,14 @@ int32_t ListPriv_swapLockless(ListContext* list, int32_t index1, int32_t index2)
     ListNode* node1 = ListPriv_getNode(list, index1);
     ListNode* node2 = ListPriv_getNode(list, index2);
 
-    void* tmp = (void*)malloc(list->elementSize);
+    void* tmp = RB_MALLOC(list->elementSize);
 
     memcpy(tmp, node1->element, list->elementSize);
 
     memcpy(node1->element, node2->element, list->elementSize);
     memcpy(node2->element, tmp, list->elementSize);
 
-    free(tmp);
+    RB_FREE(&tmp);
 
     return RB_OK;
 }
@@ -344,8 +345,8 @@ int32_t ListPriv_insertLockless(ListContext* list, int32_t index, const void* el
         return RB_INVALID_ARG;
     }
 
-    ListNode* node = (ListNode*)calloc(1, sizeof(ListNode));
-    node->element = (void*)calloc(1, list->elementSize);
+    ListNode* node = (ListNode*)RB_CALLOC(sizeof(ListNode));
+    node->element = RB_CALLOC(list->elementSize);
     memcpy(node->element, element, list->elementSize);
     if(!list->size){
         list->head = node;

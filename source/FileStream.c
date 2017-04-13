@@ -4,6 +4,7 @@
 
 #include "rb/FileStream.h"
 #include "rb/Common.h"
+#include "rb/Utils.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -98,7 +99,7 @@ int32_t FStreamPriv_seek(Rb_IOStreamHandle handle, uint32_t position){
 }
 
 int32_t FStreamPriv_open(const char* uri, Rb_IOMode mode, Rb_IOStreamHandle* handle){
-    FileStreamContext* stream = (FileStreamContext*)calloc(1, sizeof(FileStreamContext));
+    FileStreamContext* stream = (FileStreamContext*)RB_CALLOC(sizeof(FileStreamContext));
 
     stream->magic = FILE_STREAM_MAGIC;
 
@@ -115,13 +116,13 @@ int32_t FStreamPriv_open(const char* uri, Rb_IOMode mode, Rb_IOStreamHandle* han
         strcpy(strMode, "rwb");
         break;
     default:
-        free(stream);
+        RB_FREE(&stream);
         return RB_INVALID_ARG;
     }
 
     stream->fd = fopen(uri, strMode);
     if(stream->fd == NULL){
-        free(stream);
+        RB_FREE(&stream);
         return RB_ERROR;
     }
 
@@ -140,14 +141,14 @@ int32_t FStreamPriv_close(Rb_IOStreamHandle* handle){
     }
 
     if(stream->uri){
-        free(stream->uri);
+        RB_FREE(&stream->uri);
     }
 
     if(stream->fd){
         fclose(stream->fd);
     }
 
-    free(stream);
+    RB_FREE(&stream);
     *handle = NULL;
 
     return RB_OK;

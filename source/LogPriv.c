@@ -70,7 +70,7 @@ int32_t Rb_logPriv_compileFormat(const char* source,
             // Text between next component
             int32_t componentLen = end - currPos;
 
-            char* componentText = malloc(componentLen + 1);
+            char* componentText = (char*)RB_MALLOC(componentLen + 1);
 
             strncpy(componentText, source + currPos, componentLen);
             componentText[componentLen] = 0;
@@ -84,7 +84,7 @@ int32_t Rb_logPriv_compileFormat(const char* source,
 
         if (nextMatch) {
             int32_t compLen = nextMatch->end - nextMatch->start - 2;
-            char* componentName = malloc(compLen + 1);
+            char* componentName = (char*)RB_MALLOC(compLen + 1);
 
             strncpy(componentName, source + nextMatch->start + 1, compLen);
             componentName[compLen] = 0;
@@ -123,19 +123,19 @@ int32_t Rb_logPriv_compileFormat(const char* source,
                 nextMatch = &formatMatches[++currFormatMatch];
             }
 
-            free(componentName);
+            RB_FREE(&componentName);
         }
     }
 
     memset(compiledFormat, 0x00, sizeof(Rb_CompiledFormat));
     compiledFormat->numComponents = numLogComponents;
 
-    compiledFormat->components = (Rb_LogComponent*) malloc(
+    compiledFormat->components = (Rb_LogComponent*) RB_MALLOC(
             sizeof(Rb_LogComponent) * compiledFormat->numComponents);
     memcpy(compiledFormat->components, &logComponents,
             sizeof(Rb_LogComponent) * compiledFormat->numComponents);
 
-    free(formatMatches);
+    RB_FREE(&formatMatches);
     formatMatches = 0;
 
     return RB_OK;
@@ -191,7 +191,7 @@ int32_t Rb_logPriv_parseFormat(const char* source, Rb_FormatMatch** outMatches,
     }
 
     *outNumMatches = numMatches;
-    *outMatches = malloc(sizeof(Rb_FormatMatch) * numMatches);
+    *outMatches = RB_MALLOC(sizeof(Rb_FormatMatch) * numMatches);
     memcpy(*outMatches, matches, numMatches * sizeof(Rb_FormatMatch));
 
     regfree(&regexCompiled);
@@ -242,7 +242,7 @@ char* Rb_logPriv_formatMessage(const Rb_MessageInfo* message,
     }
 
     uint32_t finalMessageSize = 128;
-    char* finalMessage = calloc(1, finalMessageSize);
+    char* finalMessage = (char*)RB_CALLOC(finalMessageSize);
 
     uint32_t i;
     for (i = 0; i < format->numComponents; i++) {
@@ -307,7 +307,7 @@ char* Rb_logPriv_formatMessage(const Rb_MessageInfo* message,
             break;
         }
         default:
-            free(finalMessage);
+            RB_FREE(&finalMessage);
             return NULL;
         }
     }

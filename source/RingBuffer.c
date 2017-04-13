@@ -3,6 +3,7 @@
 /*******************************************************/
 
 #include "rb/RingBuffer.h"
+#include "rb/Utils.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -51,8 +52,7 @@ static RingBufferContext* RingBufferPriv_getContext(Rb_RingBufferHandle handle);
 
 Rb_RingBufferHandle Rb_RingBuffer_fromSharedMemory(void* vptr, uint32_t size,
         int init) {
-    RingBufferContext* rb = (RingBufferContext*) malloc(
-            sizeof(RingBufferContext));
+    RingBufferContext* rb = (RingBufferContext*) RB_MALLOC(sizeof(RingBufferContext));
     memset(rb, 0x00, sizeof(RingBufferContext));
 
     uint8_t* data = (uint8_t*) vptr;
@@ -71,12 +71,12 @@ Rb_RingBufferHandle Rb_RingBuffer_fromSharedMemory(void* vptr, uint32_t size,
 }
 
 Rb_RingBufferHandle Rb_RingBuffer_new(uint32_t capacity) {
-    RingBufferContext* rb = (RingBufferContext*) calloc(1,
-            sizeof(RingBufferContext));
+    RingBufferContext* rb = (RingBufferContext*) RB_CALLOC(sizeof(RingBufferContext));
 
-    rb->base = (RingBufferBase*) calloc(1, sizeof(RingBufferBase));
-    rb->base->size = capacity + 1 /* One byte is used for detecting the full condition. */;
-    rb->buffer = (uint8_t*) malloc(rb->base->size);
+    rb->base = (RingBufferBase*) RB_CALLOC(sizeof(RingBufferBase));
+    // One byte is used for detecting the full condition.
+    rb->base->size = capacity + 1;
+    rb->buffer = (uint8_t*) RB_MALLOC(rb->base->size);
     rb->magic = RING_BUFFER_MAGIC;
     rb->sharedMemory = 0;
 
@@ -92,11 +92,11 @@ int32_t Rb_RingBuffer_free(Rb_RingBufferHandle* handle) {
     }
 
     if(!rb->sharedMemory) {
-        free(rb->buffer);
-        free(rb->base);
+        RB_FREE(&rb->buffer);
+        RB_FREE(&rb->base);
     }
 
-    free(rb);
+    RB_FREE(&rb);
     *handle = NULL;
 
     return RB_OK;
@@ -245,50 +245,48 @@ int32_t Rb_RingBuffer_read(Rb_RingBufferHandle handle, void *dst, uint32_t count
 }
 
 int32_t Rb_RingBuffer_resize(Rb_RingBufferHandle handle, uint32_t capacity) {
-	RingBufferContext* rb = RingBufferPriv_getContext(handle);
-	if (rb == NULL) {
-		return RB_INVALID_ARG;
-	}
+    RingBufferContext* rb = RingBufferPriv_getContext(handle);
+    if (rb == NULL) {
+        return RB_INVALID_ARG;
+    }
 
-	if (rb->sharedMemory) {
-		// Not yet implemented
-		return RB_INVALID_ARG;
-	}
+    if (rb->sharedMemory) {
+        // Not yet implemented
+        return RB_INVALID_ARG;
+    }
 
-	if (capacity < rb->base->size) {
-		// Shrinking not yet implemented
-		return RB_INVALID_ARG;
-	}
+    if (capacity < rb->base->size) {
+        // Shrinking not yet implemented
+        return RB_INVALID_ARG;
+    }
 
-	uint32_t previousBufferSize = rb->base->size;
-	rb->base->size = capacity + 1;
+    uint32_t previousBufferSize = rb->base->size;
+    rb->base->size = capacity + 1;
 
-	if(rb->base->tail > rb->base->head)
-	{
-	    //allocate new buffer
-	    uint8_t *newBuffer = (uint8_t*) malloc(rb->base->size);
+    if (rb->base->tail > rb->base->head) {
+        // Allocate new buffer
+        uint8_t *newBuffer = (uint8_t*) RB_MALLOC(rb->base->size);
 
-	    uint32_t startPtr = previousBufferSize - rb->base->tail;
+        uint32_t startPtr = previousBufferSize - rb->base->tail;
 
-	    //copy data
-	    memcpy(newBuffer, rb->buffer + rb->base->tail, startPtr);
-	    memcpy(newBuffer + startPtr, rb->buffer, rb->base->head);
+        // Copy data
+        memcpy(newBuffer, rb->buffer + rb->base->tail, startPtr);
+        memcpy(newBuffer + startPtr, rb->buffer, rb->base->head);
 
-	    startPtr = startPtr + rb->base->head;
-	    rb->base->head = startPtr;
-	    rb->base->tail = 0;
+        startPtr = startPtr + rb->base->head;
+        rb->base->head = startPtr;
+        rb->base->tail = 0;
 
-	    //free old buffer
-	    free(rb->buffer);
-	    //assign new one
-	    rb->buffer = newBuffer;
-	}
-	else
-	{
-	    rb->buffer = (uint8_t*) realloc(rb->buffer, rb->base->size);
-	}
+        // Free old buffer
+        RB_FREE(&rb->buffer);
 
-	return RB_OK;
+        // Assign new one
+        rb->buffer = newBuffer;
+    } else {
+        rb->buffer = (uint8_t*) RB_REALLOC(rb->buffer, rb->base->size);
+    }
+
+    return RB_OK;
 }
 
 RingBufferContext* RingBufferPriv_getContext(Rb_RingBufferHandle handle) {

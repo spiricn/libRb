@@ -4,6 +4,7 @@
 
 #include <rb/Log.h>
 #include <rb/Common.h>
+#include <rb/Utils.h>
 
 #include <stdlib.h>
 #include <pthread.h>
@@ -93,7 +94,7 @@ int main(int argc, char* argv[]) {
 
     if (argc > 1) {
         numEntries = argc - 1;
-        entries = (TestEntry*) calloc(argc - 1, sizeof(TestEntry));
+        entries = (TestEntry*) RB_CALLOC((argc - 1) * sizeof(TestEntry));
 
         for (i = 1; i < (uint32_t) argc; i++) {
             TestEntry* entry = NULL;
@@ -131,7 +132,7 @@ int runTests(const TestEntry* entries, uint32_t numTests) {
     RBLI("Logging results to '" LOG_FILE "' ..");
     RBLI("-------------------------------------");
 
-    pthread_t* testThreads = (pthread_t*) malloc(numTests * sizeof(pthread_t));
+    pthread_t* testThreads = (pthread_t*) RB_MALLOC(numTests * sizeof(pthread_t));
 
     for (i = 0; i < numTests; i++) {
         pthread_create(&testThreads[i], NULL, testRunner, (TestEntry*)&entries[i]);
@@ -148,7 +149,7 @@ int runTests(const TestEntry* entries, uint32_t numTests) {
         }
     }
 
-    free(testThreads);
+    RB_FREE(&testThreads);
 
     RBLI("-------------------------------------");
     RBLE("Tests failed: %d ( %.2f%% )", numFailed,

@@ -3,6 +3,7 @@
 /*******************************************************/
 
 #include "rb/priv/PrefsBackend.h"
+#include "rb/Utils.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -192,7 +193,7 @@ int32_t PrefsBackendPriv_writeVar(Rb_PrefsHandle handle, const Rb_IOStream* stre
             return rc;
         }
 
-        free(val);
+        RB_FREE(&val);
 
         break;
     }
@@ -213,7 +214,7 @@ int32_t PrefsBackendPriv_writeVar(Rb_PrefsHandle handle, const Rb_IOStream* stre
             return RB_ERROR;
         }
 
-        free(val);
+        RB_FREE(&val);
         break;
     }
     default:
@@ -234,7 +235,7 @@ int32_t PrefsBackendPriv_readVar(Rb_PrefsHandle handle, const Rb_IOStream* strea
         return RB_ERROR;
     }
 
-    char* key = (char*)calloc(1, size);
+    char* key = (char*)RB_CALLOC(size);
     if(stream->api.read(stream->handle, key, size) != size){
         return RB_ERROR;
     }
@@ -288,19 +289,19 @@ int32_t PrefsBackendPriv_readVar(Rb_PrefsHandle handle, const Rb_IOStream* strea
             return RB_ERROR;
         }
 
-        char* val = (char*)calloc(1, size);
+        char* val = (char*)RB_CALLOC(size);
         if(stream->api.read(stream->handle, val, size) != size){
-            free(val);
+            RB_FREE(&val);
             return RB_ERROR;
         }
 
         rc = Rb_Prefs_putString(handle, key, val);
         if(rc != RB_OK){
-            free(val);
+            RB_FREE(&val);
             return rc;
         }
 
-        free(val);
+        RB_FREE(&val);
         break;
     }
     case eRB_VAR_TYPE_BLOB: {
@@ -308,20 +309,20 @@ int32_t PrefsBackendPriv_readVar(Rb_PrefsHandle handle, const Rb_IOStream* strea
             return RB_ERROR;
         }
 
-        void* data = calloc(1, size);
+        void* data = RB_CALLOC(size);
 
         if(stream->api.read(stream->handle, data, size) != size){
-            free(data);
+            RB_FREE(&data);
             return RB_ERROR;
         }
 
         rc = Rb_Prefs_putBlob(handle, key, data, size);
         if(rc != RB_OK){
-            free(data);
+            RB_FREE(&data);
             return rc;
         }
 
-        free(data);
+        RB_FREE(&data);
 
         break;
     }
@@ -329,7 +330,7 @@ int32_t PrefsBackendPriv_readVar(Rb_PrefsHandle handle, const Rb_IOStream* strea
         return RB_INVALID_ARG;
     }
 
-    free(key);
+    RB_FREE(&key);
 
     return RB_OK;
 }

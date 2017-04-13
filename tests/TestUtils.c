@@ -34,7 +34,7 @@ int testUtils() {
     {
         // Test Rb_Utils_growAppend
         uint32_t baseSize = 1;
-        char* base = (char*) malloc(baseSize);
+        char* base = (char*) RB_MALLOC(baseSize);
         base[0] = 0;
         RBLI("base string '%s' [%d]", base, baseSize);
 
@@ -52,7 +52,7 @@ int testUtils() {
             return -1;
         }
 
-        free(base);
+        RB_FREE(&base);
         base = NULL;
         baseSize = 0;
     }
@@ -64,7 +64,7 @@ int testUtils() {
 
         RBLI("Printed string: '%s'", str);
 
-        free(str);
+        RB_FREE(&str);
         str = NULL;
     }
 

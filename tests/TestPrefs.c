@@ -5,6 +5,7 @@
 #include <rb/Prefs.h>
 #include <rb/Log.h>
 #include <rb/FileStream.h>
+#include <rb/Utils.h>
 
 #include <stdlib.h>
 
@@ -115,7 +116,7 @@ int testPrefs() {
         return -1;
     }
 
-    free(stringVal);
+    RB_FREE(&stringVal);
 
     // Blob test
     int32_t i;
@@ -138,7 +139,7 @@ int testPrefs() {
         return -1;
     }
 
-    free(outBlob);
+    RB_FREE(&outBlob);
 
     if(Rb_Prefs_getNumEntries(prefs) != NUM_TEST_VALUES){
         RBLE("Rb_Prefs_getNumEntries failed");
@@ -198,7 +199,7 @@ int testPrefs() {
         RBLE("Rb_Prefs_getBlob failed");
         return -1;
     }
-    free(outBlob);
+    RB_FREE(&outBlob);
 
     rc = Rb_Prefs_getString(prefs, STRING_KEY, &stringVal);
     if (rc != RB_OK || strcmp(stringVal, STRING_VAL) != 0) {
@@ -206,7 +207,7 @@ int testPrefs() {
         return -1;
     }
 
-    free(stringVal);
+    RB_FREE(&stringVal);
 
     rc = Rb_Prefs_free(&prefs);
     if (rc != RB_OK || prefs) {

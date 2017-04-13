@@ -5,6 +5,7 @@
 #include "rb/MessageBox.h"
 #include "rb/ConcurrentRingBuffer.h"
 #include "rb/Common.h"
+#include "rb/Utils.h"
 
 #include <pthread.h>
 #include <stdlib.h>
@@ -38,8 +39,7 @@ static MessageBoxContext* MessageBoxPriv_getContext(Rb_MessageBoxHandle handle);
 /*******************************************************/
 
 Rb_MessageBoxHandle Rb_MessageBox_new(int32_t messageSize, int32_t capacity) {
-    MessageBoxContext* mb = (MessageBoxContext*) calloc(1,
-            sizeof(MessageBoxContext));
+    MessageBoxContext* mb = (MessageBoxContext*) RB_CALLOC(sizeof(MessageBoxContext));
 
     mb->magic = MESSAGE_BOX_MAGIC;
     mb->buffer = Rb_CRingBuffer_new(capacity * messageSize);
@@ -47,7 +47,7 @@ Rb_MessageBoxHandle Rb_MessageBox_new(int32_t messageSize, int32_t capacity) {
     mb->capacity = capacity;
 
     if(mb->buffer == NULL) {
-        free(mb);
+        RB_FREE(&mb);
         return NULL;
     }
 
@@ -65,7 +65,7 @@ int32_t Rb_MessageBox_free(Rb_MessageBoxHandle* handle) {
         return rc;
     }
 
-    free(mb);
+    RB_FREE(&mb);
     *handle = NULL;
 
     return RB_OK;

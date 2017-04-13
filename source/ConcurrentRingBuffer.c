@@ -104,8 +104,7 @@ Rb_CRingBufferHandle Rb_CRingBuffer_fromSharedMemory(void* memory, uint32_t size
         return NULL;
     }
 
-    CRingBufferContext* rb = (CRingBufferContext*) calloc(1,
-            sizeof(CRingBufferContext));
+    CRingBufferContext* rb = (CRingBufferContext*) RB_CALLOC(sizeof(CRingBufferContext));
     rb->base = (CRingBufferBase*) memory;
 
     rb->magic = CONCURRENT_RING_BUFFER_MAGIC;
@@ -145,10 +144,9 @@ Rb_CRingBufferHandle Rb_CRingBuffer_new(uint32_t size) {
         return NULL;
     }
 
-    CRingBufferContext* rb = (CRingBufferContext*) calloc(1,
-            sizeof(CRingBufferContext));
+    CRingBufferContext* rb = (CRingBufferContext*) RB_CALLOC(sizeof(CRingBufferContext));
 
-    rb->base = (CRingBufferBase*) malloc(sizeof(CRingBufferBase));
+    rb->base = (CRingBufferBase*) RB_MALLOC(sizeof(CRingBufferBase));
     rb->magic = CONCURRENT_RING_BUFFER_MAGIC;
 
     pthread_mutex_init(&rb->base->mutex, NULL);
@@ -182,10 +180,10 @@ int32_t Rb_CRingBuffer_free(Rb_CRingBufferHandle* handle) {
     const int32_t res = Rb_RingBuffer_free(&rb->buffer);
 
     if(!rb->sharedMemory) {
-        free(rb->base);
+        RB_FREE(&rb->base);
     }
 
-    free(rb);
+    RB_FREE(&rb);
     *handle = NULL;
 
     return res;

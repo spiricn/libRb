@@ -24,12 +24,12 @@ int32_t Rb_IOStream_print(const Rb_IOStream* stream, const char* fmt, ...){
     va_end(vl);
 
     if(stream->api.write(stream->handle, str, strlen(str) + 1) != (int32_t)strlen(str) + 1){
-        free(str);
+        RB_FREE(&str);
 
         return RB_ERROR;
     }
 
-    free(str);
+    RB_FREE(&str);
 
     return RB_OK;
 }

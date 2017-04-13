@@ -20,7 +20,7 @@ void Rb_Utils_growAppend(char** base, uint32_t baseSize, uint32_t* newSize,
     if (strlen(*base) + strlen(str) + 1 > baseSize) {
         // Not big enough to fit
         *newSize = strlen(*base) + strlen(str) + 1;
-        *base = realloc(*base, *newSize);
+        *base = RB_REALLOC(*base, *newSize);
     }
     strcat(*base, str);
 }
@@ -47,7 +47,7 @@ char* Rb_Utils_printv(const char* fmt, va_list vl) {
     va_list vlPrint;
 
     va_copy(vlPrint, vl);
-    char* str = (char*) calloc(1, size);
+    char* str = (char*) RB_CALLOC(size);
 
     vsnprintf(str, size, fmt, vl);
     va_end(vlPrint);
@@ -63,4 +63,27 @@ void Rb_Utils_getOffsetTime(struct timespec* time, int64_t offsetMs) {
 
     time->tv_nsec = ns % 1000000000L;
     time->tv_sec = time->tv_sec + (ns / 1000000000L);
+}
+
+void* Rb_malloc(int32_t size){
+    return malloc(size);
+}
+
+int32_t Rb_free(void** ptr){
+    if(ptr == NULL){
+        return RB_ERROR;
+    }
+
+    free(*ptr);
+    *ptr = NULL;
+
+    return RB_OK;
+}
+
+void* Rb_calloc(int32_t size){
+    return calloc(1, size);
+}
+
+void* Rb_realloc(void* ptr, int32_t size){
+    return realloc(ptr, size);
 }

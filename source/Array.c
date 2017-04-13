@@ -4,6 +4,7 @@
 
 #include "rb/Array.h"
 #include "rb/Common.h"
+#include "rb/Utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,14 +46,14 @@ extern FILE *open_memstream(char **bufp, size_t *sizep);
 /*******************************************************/
 
 Rb_ArrayHandle Rb_Array_new() {
-    ArrayContext* array = (ArrayContext*)calloc(1, sizeof(ArrayContext));
+    ArrayContext* array = (ArrayContext*)RB_CALLOC(sizeof(ArrayContext));
 
     array->magic = ARRAY_MAGIC;
 
     array->stream = open_memstream(&array->buffer, &array->len);
 
     if(array->stream == NULL) {
-        free(array);
+        RB_FREE(&array);
         return NULL;
     }
 
@@ -68,11 +69,11 @@ int32_t Rb_Array_free(Rb_ArrayHandle* handle) {
     }
 
     fclose(array->stream);
-    free(array->buffer);
+    RB_FREE(&array->buffer);
 
     pthread_mutex_destroy(&array->mutex);
 
-    free(array);
+    RB_FREE(&array);
     *handle = NULL;
 
     return RB_OK;

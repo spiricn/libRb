@@ -3,6 +3,7 @@
 /*******************************************************/
 
 #include "rb/Stopwatch.h"
+#include "rb/Utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,7 +38,7 @@ static StopwatchContext* StopwatchPriv_getContext(Rb_StopwatchHandle handle);
 
 
 Rb_StopwatchHandle Rb_Stopwatch_new(){
-    StopwatchContext* sw = (StopwatchContext*)calloc(1, sizeof(StopwatchContext));
+    StopwatchContext* sw = (StopwatchContext*)RB_CALLOC(sizeof(StopwatchContext));
 
     sw->magic = STOPWATCH_MAGIC;
 
@@ -50,7 +51,7 @@ int32_t Rb_Stopwatch_free(Rb_StopwatchHandle* handle){
         return RB_INVALID_ARG;
     }
 
-    free(sw);
+    RB_FREE(&sw);
     *handle = NULL;
 
     return RB_OK;

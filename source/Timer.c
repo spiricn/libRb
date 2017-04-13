@@ -47,7 +47,7 @@ static void* TimerPriv_waitThread(void* arg);
 /*******************************************************/
 
 Rb_TimerHandle Rb_Timer_new() {
-    TimerContext* timer = (TimerContext*) calloc(1, sizeof(TimerContext));
+    TimerContext* timer = (TimerContext*) RB_CALLOC(sizeof(TimerContext));
 
     timer->magic = TIMER_MAGIC;
 
@@ -70,7 +70,7 @@ int32_t Rb_Timer_free(Rb_TimerHandle* handle) {
     pthread_mutex_destroy(&timer->mutex);
     pthread_cond_destroy(&timer->cv);
 
-    free(timer);
+    RB_FREE(&timer);
     *handle = NULL;
 
     return RB_OK;
