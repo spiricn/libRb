@@ -618,3 +618,24 @@ CRingBufferContext* CRingBufferPriv_getContext(Rb_CRingBufferHandle handle) {
 
     return rb;
 }
+
+float Rb_CRingBuffer_usedSpacePercentage(Rb_CRingBufferHandle handle) {
+
+    CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
+    if(rb == NULL) {
+        return RB_INVALID_ARG;
+    }
+
+    LOCK_ACQUIRE
+    ;
+
+    int32_t bytesUsed = Rb_RingBuffer_getBytesUsed(rb->buffer);
+    int32_t capacity = Rb_RingBuffer_getCapacity(rb->buffer);
+
+    float res = 100 * (float) bytesUsed / (float) capacity;
+
+    LOCK_RELEASE
+    ;
+
+    return res;
+}

@@ -217,6 +217,13 @@ int32_t Rb_CRingBuffer_isEmpty(Rb_CRingBufferHandle handle);
  */
 int32_t Rb_CRingBuffer_resize(Rb_CRingBufferHandle handle, uint32_t capacity);
 
+/**
+ * Gets currently used space in percentage.
+ *
+ * @param[in] handle Valid ring buffer handle.
+ * @return Negative value on failure, number of bytes free otherwise.
+ */
+float Rb_CRingBuffer_usedSpacePercentage(Rb_CRingBufferHandle handle);
 #ifdef __cplusplus
 }
 #endif
