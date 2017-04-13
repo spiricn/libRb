@@ -260,8 +260,33 @@ int32_t Rb_RingBuffer_resize(Rb_RingBufferHandle handle, uint32_t capacity) {
 		return RB_INVALID_ARG;
 	}
 
+	uint32_t previousBufferSize = rb->base->size;
 	rb->base->size = capacity + 1;
-	rb->buffer = (uint8_t*) realloc(rb->buffer, rb->base->size);
+
+	if(rb->base->tail > rb->base->head)
+	{
+	    //allocate new buffer
+	    uint8_t *newBuffer = (uint8_t*) malloc(rb->base->size);
+
+	    uint32_t startPtr = previousBufferSize - rb->base->tail;
+
+	    //copy data
+	    memcpy(newBuffer, rb->buffer + rb->base->tail, startPtr);
+	    memcpy(newBuffer + startPtr, rb->buffer, rb->base->head);
+
+	    startPtr = startPtr + rb->base->head;
+	    rb->base->head = startPtr;
+	    rb->base->tail = 0;
+
+	    //free old buffer
+	    free(rb->buffer);
+	    //assign new one
+	    rb->buffer = newBuffer;
+	}
+	else
+	{
+	    rb->buffer = (uint8_t*) realloc(rb->buffer, rb->base->size);
+	}
 
 	return RB_OK;
 }
