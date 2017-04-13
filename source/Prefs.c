@@ -69,6 +69,11 @@ int32_t Rb_Prefs_free(Rb_PrefsHandle* handle){
         return RB_INVALID_ARG;
     }
 
+    rc = Rb_Prefs_clear(*handle);
+    if(rc != RB_OK){
+        return rc;
+    }
+
     rc = Rb_List_free(&prefs->entries);
     if(rc != RB_OK){
         return rc;
