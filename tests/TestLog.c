@@ -36,6 +36,14 @@ int testLog() {
         RBL_RETURN(-1);
     }
 
+    RBLT("Test trace");
+    RBLV("Test verbose");
+    RBLD("Test debug");
+    RBLI("Test info");
+    RBLW("Test warning");
+    RBLE("Test error");
+    RBLF("Test fatal");
+
     Rb_LogOutputConfig config;
 
     rc = Rb_log_getOutputConfig(eRB_LOG_OUTPUT_CUSTOM, &config);
