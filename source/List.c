@@ -5,6 +5,7 @@
 #include "rb/Common.h"
 #include "rb/List.h"
 #include "rb/Utils.h"
+#include "rb/priv/ErrorPriv.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,6 +56,11 @@ static int32_t ListPriv_remove(ListContext* list, int32_t index);
 /*******************************************************/
 
 Rb_ListHandle Rb_List_new(uint32_t elementSize){
+    if (elementSize == 0) {
+        RB_ERR("Invalid element size");
+        return NULL;
+    }
+
     ListContext* list = (ListContext*)RB_CALLOC(sizeof(ListContext));
 
     list->magic = LIST_MAGIC;
@@ -69,7 +75,7 @@ int32_t Rb_List_free(Rb_ListHandle* handle){
 
     ListContext* list = ListPriv_getContext(*handle);
     if(list == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     rc = ListPriv_clear(list);
@@ -88,7 +94,7 @@ int32_t Rb_List_free(Rb_ListHandle* handle){
 int32_t Rb_List_add(Rb_ListHandle handle, const void* element){
     ListContext* list = ListPriv_getContext(handle);
     if (list == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE;
@@ -103,7 +109,7 @@ int32_t Rb_List_add(Rb_ListHandle handle, const void* element){
 int32_t Rb_List_get(Rb_ListHandle handle, int32_t index, void* element){
     ListContext* list = ListPriv_getContext(handle);
     if (list == NULL || element == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE;
@@ -112,7 +118,7 @@ int32_t Rb_List_get(Rb_ListHandle handle, int32_t index, void* element){
 
     if(!node){
         LOCK_RELEASE;
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Index out of bounds");
     }
 
     memcpy(element, node->element, list->elementSize);
@@ -125,7 +131,7 @@ int32_t Rb_List_get(Rb_ListHandle handle, int32_t index, void* element){
 int32_t Rb_List_remove(Rb_ListHandle handle, int32_t index){
     ListContext* list = ListPriv_getContext(handle);
     if (list == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE;
@@ -134,13 +140,17 @@ int32_t Rb_List_remove(Rb_ListHandle handle, int32_t index){
 
     LOCK_RELEASE;
 
+    if(rc != RB_OK){
+        RB_ERRC(rc, "Index out of bounds");
+    }
+
     return rc;
 }
 
 int32_t Rb_List_insert(Rb_ListHandle handle, int32_t index, const void* element){
     ListContext* list = ListPriv_getContext(handle);
     if (list == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE;
@@ -149,13 +159,17 @@ int32_t Rb_List_insert(Rb_ListHandle handle, int32_t index, const void* element)
 
     LOCK_RELEASE;
 
+    if(rc != RB_OK){
+        RB_ERRC(rc, "Index out of bounds");
+    }
+
     return rc;
 }
 
 int32_t Rb_List_getSize(Rb_ListHandle handle){
     ListContext* list = ListPriv_getContext(handle);
     if(list == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE;
@@ -170,7 +184,7 @@ int32_t Rb_List_getSize(Rb_ListHandle handle){
 int32_t Rb_List_sort(Rb_ListHandle handle, Rb_List_compareFnc compareFnc, Rb_SortMode mode){
     ListContext* list = ListPriv_getContext(handle);
     if(list == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE;
@@ -205,7 +219,6 @@ int32_t Rb_List_sort(Rb_ListHandle handle, Rb_List_compareFnc compareFnc, Rb_Sor
         }
     }
 
-
     LOCK_RELEASE;
 
     return RB_OK;
@@ -214,7 +227,7 @@ int32_t Rb_List_sort(Rb_ListHandle handle, Rb_List_compareFnc compareFnc, Rb_Sor
 int32_t Rb_List_swap(Rb_ListHandle handle, int32_t index1, int32_t index2){
     ListContext* list = ListPriv_getContext(handle);
     if(list == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE;
@@ -223,13 +236,17 @@ int32_t Rb_List_swap(Rb_ListHandle handle, int32_t index1, int32_t index2){
 
     LOCK_RELEASE;
 
+    if(res != RB_OK){
+        RB_ERRC(res, "Invalid element index");
+    }
+
     return res;
 }
 
 int32_t Rb_List_clear(Rb_ListHandle handle){
     ListContext* list = ListPriv_getContext(handle);
     if(list == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE;
@@ -247,6 +264,7 @@ int32_t ListPriv_clear(ListContext* list){
     while(list->size){
         rc = ListPriv_remove(list, 0);
         if(rc != RB_OK){
+            // Should never happen
             return rc;
         }
     }
@@ -254,11 +272,9 @@ int32_t ListPriv_clear(ListContext* list){
     return RB_OK;
 }
 
-
 int32_t ListPriv_remove(ListContext* list, int32_t index){
     ListNode* node = ListPriv_getNode(list, index);
     if (!node) {
-        LOCK_RELEASE;
         return RB_INVALID_ARG;
     }
 
@@ -365,7 +381,7 @@ int32_t ListPriv_insertLockless(ListContext* list, int32_t index, const void* el
 int32_t Rb_List_indexOf(Rb_ListHandle handle, void* element){
     ListContext* list = ListPriv_getContext(handle);
     if(list == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE;

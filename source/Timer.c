@@ -5,6 +5,7 @@
 #include "rb/Timer.h"
 #include "rb/Common.h"
 #include "rb/Utils.h"
+#include "rb/priv/ErrorPriv.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -84,7 +85,7 @@ int32_t Rb_Timer_start(Rb_TimerHandle handle, uint64_t periodMs,
     }
 
     if(timer->running){
-        return RB_ERROR;
+        RB_ERRC(RB_ERROR, "Timer already running");
     }
 
     timer->running = true;
@@ -105,7 +106,7 @@ int32_t Rb_Timer_stop(Rb_TimerHandle handle) {
     }
 
     if(!timer->running){
-        return RB_ERROR;
+        RB_ERRC(RB_ERROR, "Timer not running");
     }
 
     pthread_mutex_lock(&timer->mutex);

@@ -4,6 +4,7 @@
 
 #include "rb/RingBuffer.h"
 #include "rb/Utils.h"
+#include "rb/priv/ErrorPriv.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -52,6 +53,11 @@ static RingBufferContext* RingBufferPriv_getContext(Rb_RingBufferHandle handle);
 
 Rb_RingBufferHandle Rb_RingBuffer_fromSharedMemory(void* vptr, uint32_t size,
         int init) {
+    if(size == 0){
+        RB_ERR("Invalid size");
+        return NULL;
+    }
+
     RingBufferContext* rb = (RingBufferContext*) RB_MALLOC(sizeof(RingBufferContext));
     memset(rb, 0x00, sizeof(RingBufferContext));
 
@@ -70,12 +76,17 @@ Rb_RingBufferHandle Rb_RingBuffer_fromSharedMemory(void* vptr, uint32_t size,
     return (Rb_RingBufferHandle) rb;
 }
 
-Rb_RingBufferHandle Rb_RingBuffer_new(uint32_t capacity) {
+Rb_RingBufferHandle Rb_RingBuffer_new(uint32_t size) {
+    if(size == 0){
+        RB_ERR("Invalid size");
+        return NULL;
+    }
+
     RingBufferContext* rb = (RingBufferContext*) RB_CALLOC(sizeof(RingBufferContext));
 
     rb->base = (RingBufferBase*) RB_CALLOC(sizeof(RingBufferBase));
     // One byte is used for detecting the full condition.
-    rb->base->size = capacity + 1;
+    rb->base->size = size + 1;
     rb->buffer = (uint8_t*) RB_MALLOC(rb->base->size);
     rb->magic = RING_BUFFER_MAGIC;
     rb->sharedMemory = 0;
@@ -88,7 +99,7 @@ Rb_RingBufferHandle Rb_RingBuffer_new(uint32_t capacity) {
 int32_t Rb_RingBuffer_free(Rb_RingBufferHandle* handle) {
     RingBufferContext* rb = RingBufferPriv_getContext(*handle);
     if(rb == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     if(!rb->sharedMemory) {
@@ -105,7 +116,7 @@ int32_t Rb_RingBuffer_free(Rb_RingBufferHandle* handle) {
 int32_t Rb_RingBuffer_clear(Rb_RingBufferHandle handle) {
     RingBufferContext* rb = RingBufferPriv_getContext(handle);
     if(rb == NULL) {
-        return -1;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     rb->base->head = rb->base->tail = 0;
@@ -116,7 +127,7 @@ int32_t Rb_RingBuffer_clear(Rb_RingBufferHandle handle) {
 int32_t Rb_RingBuffer_getCapacity(Rb_RingBufferHandle handle) {
     RingBufferContext* rb = RingBufferPriv_getContext(handle);
     if(rb == NULL) {
-        return -1;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     return rb->base->size - 1;
@@ -134,7 +145,7 @@ const uint8_t* RingBufferPriv_getEnd(Rb_RingBufferHandle handle) {
 int32_t Rb_RingBuffer_getBytesFree(Rb_RingBufferHandle handle) {
     RingBufferContext* rb = RingBufferPriv_getContext(handle);
     if(rb == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     if(rb->base->head >= rb->base->tail) {
@@ -147,7 +158,7 @@ int32_t Rb_RingBuffer_getBytesFree(Rb_RingBufferHandle handle) {
 int32_t Rb_RingBuffer_getBytesUsed(Rb_RingBufferHandle handle) {
     RingBufferContext* rb = RingBufferPriv_getContext(handle);
     if(rb == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     return Rb_RingBuffer_getCapacity(rb) - Rb_RingBuffer_getBytesFree(rb);
@@ -156,7 +167,7 @@ int32_t Rb_RingBuffer_getBytesUsed(Rb_RingBufferHandle handle) {
 int32_t Rb_RingBuffer_isFull(Rb_RingBufferHandle handle) {
     RingBufferContext* rb = RingBufferPriv_getContext(handle);
     if(rb == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     return Rb_RingBuffer_getBytesFree(rb) == 0;
@@ -165,7 +176,7 @@ int32_t Rb_RingBuffer_isFull(Rb_RingBufferHandle handle) {
 int32_t Rb_RingBuffer_isEmpty(Rb_RingBufferHandle handle) {
     RingBufferContext* rb = RingBufferPriv_getContext(handle);
     if(rb == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     return Rb_RingBuffer_getBytesFree(rb) == Rb_RingBuffer_getCapacity(rb);
@@ -184,7 +195,7 @@ int32_t Rb_RingBuffer_write(Rb_RingBufferHandle handle, const void *src,
         uint32_t count) {
     RingBufferContext* rb = RingBufferPriv_getContext(handle);
     if(rb == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     const uint8_t* u8src = (const uint8_t *) src;
@@ -216,12 +227,12 @@ int32_t Rb_RingBuffer_write(Rb_RingBufferHandle handle, const void *src,
 int32_t Rb_RingBuffer_read(Rb_RingBufferHandle handle, void *dst, uint32_t count) {
     RingBufferContext* rb = RingBufferPriv_getContext(handle);
     if(rb == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     uint32_t bytes_used = Rb_RingBuffer_getBytesUsed(rb);
     if(count > bytes_used) {
-        return RB_ERROR;
+        RB_ERRC(RB_INVALID_ARG, "Not enough data");
     }
 
     uint8_t *u8dst = (uint8_t *) dst;
@@ -247,17 +258,17 @@ int32_t Rb_RingBuffer_read(Rb_RingBufferHandle handle, void *dst, uint32_t count
 int32_t Rb_RingBuffer_resize(Rb_RingBufferHandle handle, uint32_t capacity) {
     RingBufferContext* rb = RingBufferPriv_getContext(handle);
     if (rb == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     if (rb->sharedMemory) {
         // Not yet implemented
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_NOT_IMPLEMENTED, "Not implemented");
     }
 
     if (capacity < rb->base->size) {
         // Shrinking not yet implemented
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_NOT_IMPLEMENTED, "Not implemented");
     }
 
     uint32_t previousBufferSize = rb->base->size;

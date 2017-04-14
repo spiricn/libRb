@@ -5,6 +5,7 @@
 #include "rb/Array.h"
 #include "rb/Common.h"
 #include "rb/Utils.h"
+#include "rb/priv/ErrorPriv.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,6 +54,7 @@ Rb_ArrayHandle Rb_Array_new() {
     array->stream = open_memstream(&array->buffer, &array->len);
 
     if(array->stream == NULL) {
+        RB_ERR("open_memstream failed");
         RB_FREE(&array);
         return NULL;
     }
@@ -65,7 +67,7 @@ Rb_ArrayHandle Rb_Array_new() {
 int32_t Rb_Array_free(Rb_ArrayHandle* handle) {
     ArrayContext* array = ArrayPriv_getContext(*handle);
     if(array == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     fclose(array->stream);
@@ -82,6 +84,7 @@ int32_t Rb_Array_free(Rb_ArrayHandle* handle) {
 uint8_t* Rb_Array_data(Rb_ArrayHandle handle) {
     ArrayContext* array = ArrayPriv_getContext(handle);
     if(array == NULL) {
+        RB_ERR("Invalid handle");
         return NULL;
     }
 
@@ -99,7 +102,7 @@ uint8_t* Rb_Array_data(Rb_ArrayHandle handle) {
 uint32_t Rb_Array_size(Rb_ArrayHandle handle) {
     ArrayContext* array = ArrayPriv_getContext(handle);
     if(array == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE;
@@ -116,7 +119,7 @@ uint32_t Rb_Array_size(Rb_ArrayHandle handle) {
 int32_t Rb_Array_tell(Rb_ArrayHandle handle) {
     ArrayContext* array = ArrayPriv_getContext(handle);
     if(array == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE;
@@ -131,7 +134,7 @@ int32_t Rb_Array_tell(Rb_ArrayHandle handle) {
 int32_t Rb_Array_seek(Rb_ArrayHandle handle, uint32_t pos) {
     ArrayContext* array = ArrayPriv_getContext(handle);
     if(array == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE;
@@ -146,7 +149,7 @@ int32_t Rb_Array_seek(Rb_ArrayHandle handle, uint32_t pos) {
 int32_t Rb_Array_write(Rb_ArrayHandle handle, const void* ptr, uint32_t size) {
     ArrayContext* array = ArrayPriv_getContext(handle);
     if(array == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE;

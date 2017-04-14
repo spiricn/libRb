@@ -6,6 +6,7 @@
 #include "rb/RingBuffer.h"
 #include "rb/Stopwatch.h"
 #include "rb/Utils.h"
+#include "rb/priv/ErrorPriv.h"
 
 #include <pthread.h>
 #include <stdlib.h>
@@ -101,6 +102,7 @@ static bool CRingBufferPriv_timedWait(pthread_cond_t* cv, pthread_mutex_t* mutex
 Rb_CRingBufferHandle Rb_CRingBuffer_fromSharedMemory(void* memory, uint32_t size,
         int init) {
     if(size == 0) {
+        RB_ERR("Invalid size");
         return NULL;
     }
 
@@ -141,6 +143,7 @@ Rb_CRingBufferHandle Rb_CRingBuffer_fromSharedMemory(void* memory, uint32_t size
 
 Rb_CRingBufferHandle Rb_CRingBuffer_new(uint32_t size) {
     if(size == 0) {
+        RB_ERR("Invalid size");
         return NULL;
     }
 
@@ -166,7 +169,7 @@ Rb_CRingBufferHandle Rb_CRingBuffer_new(uint32_t size) {
 int32_t Rb_CRingBuffer_free(Rb_CRingBufferHandle* handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(*handle);
     if(rb == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     if(rb->owned) {
@@ -192,7 +195,7 @@ int32_t Rb_CRingBuffer_free(Rb_CRingBufferHandle* handle) {
 int32_t Rb_CRingBuffer_readTimed(Rb_CRingBufferHandle handle, uint8_t* data, uint32_t size, Rb_CRingBuffer_ReadMode mode, int64_t timeoutMs){
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     Rb_StopwatchHandle sw = Rb_Stopwatch_new();
@@ -324,7 +327,7 @@ int32_t Rb_CRingBuffer_writeTimed(Rb_CRingBufferHandle handle, const uint8_t* da
 
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     Rb_StopwatchHandle sw = Rb_Stopwatch_new();
@@ -432,7 +435,7 @@ int32_t Rb_CRingBuffer_write(Rb_CRingBufferHandle handle, const uint8_t* data,
 int32_t Rb_CRingBuffer_getBytesUsed(Rb_CRingBufferHandle handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE
@@ -449,7 +452,7 @@ int32_t Rb_CRingBuffer_getBytesUsed(Rb_CRingBufferHandle handle) {
 int32_t Rb_CRingBuffer_getBytesFree(Rb_CRingBufferHandle handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE
@@ -466,7 +469,7 @@ int32_t Rb_CRingBuffer_getBytesFree(Rb_CRingBufferHandle handle) {
 int32_t Rb_CRingBuffer_getCapacity(Rb_CRingBufferHandle handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE
@@ -483,7 +486,7 @@ int32_t Rb_CRingBuffer_getCapacity(Rb_CRingBufferHandle handle) {
 int32_t Rb_CRingBuffer_disable(Rb_CRingBufferHandle handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE
@@ -503,7 +506,7 @@ int32_t Rb_CRingBuffer_disable(Rb_CRingBufferHandle handle) {
 int32_t Rb_CRingBuffer_enable(Rb_CRingBufferHandle handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE
@@ -520,7 +523,7 @@ int32_t Rb_CRingBuffer_enable(Rb_CRingBufferHandle handle) {
 int32_t Rb_CRingBuffer_isEnabled(Rb_CRingBufferHandle handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE
@@ -537,7 +540,7 @@ int32_t Rb_CRingBuffer_isEnabled(Rb_CRingBufferHandle handle) {
 int32_t Rb_CRingBuffer_clear(Rb_CRingBufferHandle handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE
@@ -556,7 +559,7 @@ int32_t Rb_CRingBuffer_clear(Rb_CRingBufferHandle handle) {
 int32_t Rb_CRingBuffer_isFull(Rb_CRingBufferHandle handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE
@@ -573,7 +576,7 @@ int32_t Rb_CRingBuffer_isFull(Rb_CRingBufferHandle handle) {
 int32_t Rb_CRingBuffer_isEmpty(Rb_CRingBufferHandle handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE
@@ -590,7 +593,7 @@ int32_t Rb_CRingBuffer_isEmpty(Rb_CRingBufferHandle handle) {
 int32_t Rb_CRingBuffer_resize(Rb_CRingBufferHandle handle, uint32_t capacity){
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE
@@ -618,10 +621,9 @@ CRingBufferContext* CRingBufferPriv_getContext(Rb_CRingBufferHandle handle) {
 }
 
 float Rb_CRingBuffer_usedSpacePercentage(Rb_CRingBufferHandle handle) {
-
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     LOCK_ACQUIRE

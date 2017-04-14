@@ -49,6 +49,10 @@ void* Rb_calloc(int32_t size);
 
 void* Rb_realloc(void* ptr, int32_t size);
 
+const char* Rb_getLastErrorMessage();
+
+int32_t Rb_getLastErrorCode();
+
 #ifdef __cplusplus
 }
 #endif

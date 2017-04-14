@@ -39,6 +39,7 @@ set(SOURCES
 	${SOURCE_DIR}/IOStream.c
 	${SOURCE_DIR}/FileStream.c
 	${SOURCE_DIR}/Timer.c
+	${SOURCE_DIR}/ErrorPriv.c
 )
 
 set(HEADERS

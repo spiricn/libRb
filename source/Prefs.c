@@ -9,6 +9,7 @@
 #include "rb/priv/PrefsBackend.h"
 #include "rb/FileStream.h"
 #include "rb/Utils.h"
+#include "rb/priv/ErrorPriv.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,6 +56,7 @@ Rb_PrefsHandle Rb_Prefs_new(const Rb_PrefsBackend* backend){
 
     prefs->entries = Rb_List_new(sizeof(PrefEntry*));
     if(prefs->entries == NULL){
+        RB_ERR("Error allocating internal list");
         return NULL;
     }
 
@@ -66,16 +68,18 @@ int32_t Rb_Prefs_free(Rb_PrefsHandle* handle){
 
     PrefsContext* prefs = PrefsPriv_getContext(*handle);
     if(prefs == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     rc = Rb_Prefs_clear(*handle);
     if(rc != RB_OK){
+        RB_ERRC(rc, "Error clearing preferences");
         return rc;
     }
 
     rc = Rb_List_free(&prefs->entries);
     if(rc != RB_OK){
+        RB_ERRC(rc, "Error freeing internal list");
         return rc;
     }
 
@@ -88,7 +92,7 @@ int32_t Rb_Prefs_free(Rb_PrefsHandle* handle){
 int32_t Rb_Prefs_putInt32(Rb_PrefsHandle handle, const char* key, int32_t value){
     PrefsContext* prefs = PrefsPriv_getContext(handle);
     if(prefs == NULL){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     int32_t rc;
@@ -104,7 +108,7 @@ int32_t Rb_Prefs_putInt32(Rb_PrefsHandle handle, const char* key, int32_t value)
 int32_t Rb_Prefs_putInt64(Rb_PrefsHandle handle, const char* key, int64_t value){
     PrefsContext* prefs = PrefsPriv_getContext(handle);
     if (prefs == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     int32_t rc;
@@ -120,7 +124,7 @@ int32_t Rb_Prefs_putInt64(Rb_PrefsHandle handle, const char* key, int64_t value)
 int32_t Rb_Prefs_putFloat(Rb_PrefsHandle handle, const char* key, float value){
     PrefsContext* prefs = PrefsPriv_getContext(handle);
     if (prefs == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     int32_t rc;
@@ -136,7 +140,7 @@ int32_t Rb_Prefs_putFloat(Rb_PrefsHandle handle, const char* key, float value){
 int32_t Rb_Prefs_putString(Rb_PrefsHandle handle, const char* key, const char* value){
     PrefsContext* prefs = PrefsPriv_getContext(handle);
     if (prefs == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     int32_t rc;
@@ -153,7 +157,7 @@ int32_t Rb_Prefs_putString(Rb_PrefsHandle handle, const char* key, const char* v
 int32_t Rb_Prefs_putBlob(Rb_PrefsHandle handle, const char* key, const void* data, uint32_t size){
     PrefsContext* prefs = PrefsPriv_getContext(handle);
     if (prefs == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     int32_t rc;
@@ -171,12 +175,12 @@ int32_t Rb_Prefs_putBlob(Rb_PrefsHandle handle, const char* key, const void* dat
 int32_t Rb_Prefs_getInt32(Rb_PrefsHandle handle, const char* key, int32_t* value){
     PrefsContext* prefs = PrefsPriv_getContext(handle);
     if(prefs == NULL || value == NULL){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     PrefEntry* entry = PrefsPriv_get(prefs, key);
     if(entry == NULL){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid key");
     }
 
     if(entry->value.type != eRB_VAR_TYPE_INT32){
@@ -191,16 +195,16 @@ int32_t Rb_Prefs_getInt32(Rb_PrefsHandle handle, const char* key, int32_t* value
 int32_t Rb_Prefs_getInt64(Rb_PrefsHandle handle, const char* key, int64_t* value){
     PrefsContext* prefs = PrefsPriv_getContext(handle);
     if(prefs == NULL || value == NULL){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     PrefEntry* entry = PrefsPriv_get(prefs, key);
     if(entry == NULL){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid key");
     }
 
     if(entry->value.type != eRB_VAR_TYPE_INT64){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid type (expected %d but got %d)", eRB_VAR_TYPE_INT64, entry->value->type);
     }
 
     *value = entry->value.val.int64Val;
@@ -211,16 +215,16 @@ int32_t Rb_Prefs_getInt64(Rb_PrefsHandle handle, const char* key, int64_t* value
 int32_t Rb_Prefs_getFloat(Rb_PrefsHandle handle, const char* key, float* value){
     PrefsContext* prefs = PrefsPriv_getContext(handle);
     if(prefs == NULL || value == NULL){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     PrefEntry* entry = PrefsPriv_get(prefs, key);
     if(entry == NULL){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid key");
     }
 
     if(entry->value.type != eRB_VAR_TYPE_FLOAT){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid type (expected %d but got %d)", eRB_VAR_TYPE_FLOAT, entry->value->type);
     }
 
     *value = entry->value.val.floatVal;
@@ -231,16 +235,16 @@ int32_t Rb_Prefs_getFloat(Rb_PrefsHandle handle, const char* key, float* value){
 int32_t Rb_Prefs_getString(Rb_PrefsHandle handle, const char* key, char** value){
     PrefsContext* prefs = PrefsPriv_getContext(handle);
     if(prefs == NULL || value == NULL){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     PrefEntry* entry = PrefsPriv_get(prefs, key);
     if(entry == NULL){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid key");
     }
 
     if(entry->value.type != eRB_VAR_TYPE_STRING){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid type (expected %d but got %d)", eRB_VAR_TYPE_STRING, entry->value->type);
     }
 
     *value = (char*)RB_MALLOC(strlen(entry->value.val.stringVal) + 1);
@@ -252,16 +256,16 @@ int32_t Rb_Prefs_getString(Rb_PrefsHandle handle, const char* key, char** value)
 int32_t Rb_Prefs_getBlob(Rb_PrefsHandle handle, const char* key, void** data, uint32_t* size){
     PrefsContext* prefs = PrefsPriv_getContext(handle);
     if(prefs == NULL || data == NULL || size == NULL){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     PrefEntry* entry = PrefsPriv_get(prefs, key);
     if(entry == NULL){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid key");
     }
 
     if(entry->value.type != eRB_VAR_TYPE_BLOB){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid type (expected %d but got %d)", eRB_VAR_TYPE_BLOB, entry->value->type);
     }
 
     *size = entry->value.val.blobVal.size;
@@ -274,7 +278,7 @@ int32_t Rb_Prefs_getBlob(Rb_PrefsHandle handle, const char* key, void** data, ui
 int32_t Rb_Prefs_clear(Rb_PrefsHandle handle){
     PrefsContext* prefs = PrefsPriv_getContext(handle);
     if(prefs == NULL){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     int32_t rc;
@@ -299,7 +303,7 @@ int32_t Rb_Prefs_clear(Rb_PrefsHandle handle){
 int32_t Rb_Prefs_getNumEntries(Rb_PrefsHandle handle){
     PrefsContext* prefs = PrefsPriv_getContext(handle);
     if(prefs == NULL){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     return Rb_List_getSize(prefs->entries);
@@ -310,17 +314,13 @@ int32_t Rb_Prefs_getKey(Rb_PrefsHandle handle, uint32_t index, const char** key)
 
     PrefsContext* prefs = PrefsPriv_getContext(handle);
     if(prefs == NULL){
-        return RB_INVALID_ARG;
-    }
-
-    if((int32_t)index >= Rb_List_getSize(prefs->entries)){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     PrefEntry* entry = NULL;
     rc = Rb_List_get(prefs->entries, index, &entry);
     if (rc != RB_OK) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Index out of bounds");
     }
 
     *key = entry->key;
@@ -333,12 +333,12 @@ int32_t Rb_Prefs_getEntryType(Rb_PrefsHandle handle, const char* key, Rb_Variant
 
     PrefsContext* prefs = PrefsPriv_getContext(handle);
     if (prefs == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     PrefEntry* entry = PrefsPriv_get(prefs, key);
     if(entry == NULL){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid key");
     }
 
     *type = entry->value.type;
@@ -349,7 +349,7 @@ int32_t Rb_Prefs_getEntryType(Rb_PrefsHandle handle, const char* key, Rb_Variant
 int32_t Rb_Prefs_contains(Rb_PrefsHandle handle, const char* key){
     PrefsContext* prefs = PrefsPriv_getContext(handle);
     if(prefs == NULL){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     return PrefsPriv_get(prefs, key) != NULL;
@@ -358,15 +358,21 @@ int32_t Rb_Prefs_contains(Rb_PrefsHandle handle, const char* key){
 int32_t Rb_Prefs_remove(Rb_PrefsHandle handle, const char* key){
     PrefsContext* prefs = PrefsPriv_getContext(handle);
     if(prefs == NULL){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    return PrefsPriv_remove(prefs, key);
+    int32_t res = PrefsPriv_remove(prefs, key);
+
+    if(res != RB_OK){
+        RB_ERRC(res, "Invalid key");
+    }
+
+    return res;
 }
 
 int32_t PrefsPriv_add(PrefsContext* prefs, const char* key, const Variant* var){
     if(PrefsPriv_get(prefs, key)){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     PrefEntry* entry = (PrefEntry*)RB_CALLOC(sizeof(PrefEntry));
@@ -435,7 +441,7 @@ int32_t PrefsPriv_remove(PrefsContext* prefs, const char* key){
 int32_t Rb_Prefs_save(Rb_PrefsHandle handle, const Rb_IOStream* stream){
     PrefsContext* prefs = PrefsPriv_getContext(handle);
     if(prefs == NULL){
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     return prefs->backend.save(handle, stream);
@@ -444,7 +450,7 @@ int32_t Rb_Prefs_save(Rb_PrefsHandle handle, const Rb_IOStream* stream){
 int32_t Rb_Prefs_load(Rb_PrefsHandle handle, const Rb_IOStream* stream){
     PrefsContext* prefs = PrefsPriv_getContext(handle);
     if (prefs == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     return prefs->backend.load(handle, stream);
@@ -469,12 +475,12 @@ int32_t Rb_Prefs_loadFile(Rb_PrefsHandle handle, const char* filePath) {
 
     rc = Rb_FileStream_getApi(&stream.api);
     if (rc != RB_OK) {
-        return rc;
+        RB_ERRC(RB_ERROR, "Error acquiring file API");
     }
 
     rc = stream.api.open(filePath, eRB_IO_MODE_READ, &stream.handle);
     if (rc != RB_OK) {
-        return rc;
+        RB_ERRC(rc, "Error opening file");
     }
 
     rc = Rb_Prefs_load(handle, &stream);
@@ -484,7 +490,7 @@ int32_t Rb_Prefs_loadFile(Rb_PrefsHandle handle, const char* filePath) {
 
     rc = stream.api.close(&stream.handle);
     if (rc != RB_OK) {
-        return rc;
+        RB_ERRC(rc, "Error closing file");
     }
 
     return rc;
@@ -496,12 +502,12 @@ int32_t Rb_Prefs_saveFile(Rb_PrefsHandle handle, const char* filePath) {
 
     rc = Rb_FileStream_getApi(&stream.api);
     if (rc != RB_OK) {
-        return rc;
+        RB_ERRC(RB_ERROR, "Error acquiring file API");
     }
 
     rc = stream.api.open(filePath, eRB_IO_MODE_WRITE, &stream.handle);
     if (rc != RB_OK) {
-        return rc;
+        RB_ERRC(rc, "Error opening file");
     }
 
     rc = Rb_Prefs_save(handle, &stream);
@@ -511,7 +517,7 @@ int32_t Rb_Prefs_saveFile(Rb_PrefsHandle handle, const char* filePath) {
 
     rc = stream.api.close(&stream.handle);
     if (rc != RB_OK) {
-        return rc;
+        RB_ERRC(rc, "Error closing file");
     }
 
     return rc;

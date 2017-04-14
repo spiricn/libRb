@@ -4,6 +4,7 @@
 
 #include "rb/Stopwatch.h"
 #include "rb/Utils.h"
+#include "rb/priv/ErrorPriv.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,7 +49,7 @@ Rb_StopwatchHandle Rb_Stopwatch_new(){
 int32_t Rb_Stopwatch_free(Rb_StopwatchHandle* handle){
     StopwatchContext* sw = StopwatchPriv_getContext(*handle);
     if(sw == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     RB_FREE(&sw);
@@ -60,7 +61,7 @@ int32_t Rb_Stopwatch_free(Rb_StopwatchHandle* handle){
 int32_t Rb_Stopwatch_start(Rb_StopwatchHandle handle){
     StopwatchContext* sw = StopwatchPriv_getContext(handle);
     if(sw == NULL) {
-        return -1;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     clock_gettime(CLOCK_REALTIME, &sw->time);
@@ -71,7 +72,7 @@ int32_t Rb_Stopwatch_start(Rb_StopwatchHandle handle){
 int64_t Rb_Stopwatch_elapsedMs(Rb_StopwatchHandle handle){
     StopwatchContext* sw = StopwatchPriv_getContext(handle);
     if(sw == NULL) {
-        return -1;
+        RB_ERRC(-1, "Invalid handle");
     }
 
     struct timespec currTime;

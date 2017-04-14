@@ -4,6 +4,7 @@
 
 #include "rb/priv/PrefsBackend.h"
 #include "rb/Utils.h"
+#include "rb/priv/ErrorPriv.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -69,7 +70,7 @@ int32_t Rb_PrefsBackendSave(Rb_PrefsHandle handle, const Rb_IOStream* stream){
 
         rc = PrefsBackendPriv_writeVar(handle, stream, key);
         if(rc != RB_OK){
-            return rc;
+            RB_ERRC(rc, "Error writing value");
         }
     }
 
@@ -83,11 +84,11 @@ int32_t Rb_PrefsBackendLoad(Rb_PrefsHandle handle, const Rb_IOStream* stream){
     }
 
     if(header.magic != PREFS_BACKEND_MAGIC){
-        return RB_ERROR;
+        RB_ERRC(RB_ERROR, "Invalid data header");
     }
 
     if(header.syntaxVersion != SYNTAX_VERSION){
-        return RB_ERROR;
+        RB_ERRC(RB_ERROR, "Invalid syntax version");
     }
 
     int32_t i;
@@ -101,7 +102,7 @@ int32_t Rb_PrefsBackendLoad(Rb_PrefsHandle handle, const Rb_IOStream* stream){
     for(i=0; i<header.numEntries; i++){
         rc = PrefsBackendPriv_readVar(handle, stream);
         if(rc != RB_OK){
-            return rc;
+            RB_ERRC(rc, "Error reading value");
         }
     }
 
