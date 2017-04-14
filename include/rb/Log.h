@@ -126,6 +126,8 @@ int32_t Rb_log_getOutputConfig(Rb_LogOutput type, Rb_LogOutputConfig* config);
 int32_t Rb_log_setOutputConfig(Rb_LogOutput type,
         const Rb_LogOutputConfig* config);
 
+int32_t Rb_log_terminate();
+
 #ifdef __cplusplus
 }
 #endif

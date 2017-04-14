@@ -342,3 +342,27 @@ int32_t Rb_logPriv_outputFile(const Rb_MessageInfo* info,
     }
     return RB_OK;
 }
+
+int32_t Rb_log_terminate(){
+    if(!gContextInitialized){
+        return RB_OK;
+    }
+
+    int32_t i;
+    int32_t j;
+
+    for (i = 0; i < eRB_LOG_OUTPUT_MAX; i++) {
+        LogOutputContext* output = &gLogContext.outputs[i];
+
+        for(j =0; j<output->compiledFormat.numComponents; j++){
+            RB_FREE(&output->compiledFormat.components[j].value);
+        }
+
+        RB_FREE(&output->compiledFormat.components);
+        output->compiledFormat.numComponents = 0;
+    }
+
+    gContextInitialized = false;
+
+    return RB_OK;
+}

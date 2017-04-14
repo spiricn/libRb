@@ -119,7 +119,15 @@ int main(int argc, char* argv[]) {
         entries = (TestEntry*) &gTests;
     }
 
-    return runTests(entries, numEntries);
+    int32_t res = runTests(entries, numEntries);
+
+    Rb_log_terminate();
+
+    if(argc > 1){
+        RB_FREE(&entries);
+    }
+
+    return res;
 }
 
 int runTests(const TestEntry* entries, uint32_t numTests) {

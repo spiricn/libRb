@@ -110,6 +110,7 @@ int32_t Rb_logPriv_compileFormat(const char* source,
             } else if (strcmp(componentName, COMP_NAME_TID) == 0) {
                 logComponent->type = eRB_LOG_COMPONENT_TID;
             } else {
+                RB_FREE(&componentName);
                 return RB_ERROR;
             }
 
@@ -136,14 +137,13 @@ int32_t Rb_logPriv_compileFormat(const char* source,
             sizeof(Rb_LogComponent) * compiledFormat->numComponents);
 
     RB_FREE(&formatMatches);
-    formatMatches = 0;
 
     return RB_OK;
 }
 
 int32_t Rb_logPriv_parseFormat(const char* source, Rb_FormatMatch** outMatches,
         uint32_t* outNumMatches) {
-// List of matches found
+    // List of matches found
     Rb_FormatMatch matches[MAX_FORMAT_COMPONENTS];
     uint32_t numMatches = 0;
 
