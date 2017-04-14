@@ -92,6 +92,13 @@ int testLog() {
     RBLD("Test debug, should be seen");
     RBLI("Test info, should be seen");
 
+    config.enabled = false;
+    rc = Rb_log_setOutputConfig(eRB_LOG_OUTPUT_CUSTOM, &config);
+    if (rc != RB_OK) {
+        RBLE("Rb_log_setOutputConfig failed");
+        RBL_RETURN(-1);
+    }
+
     RBL_RETURN(0);
 }
 
