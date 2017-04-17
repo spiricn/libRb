@@ -16,16 +16,14 @@
 /********************************************************/
 
 static __thread const char* gLastMessage = NULL;
-static int32_t gLastErrorCode = RB_OK;
+static __thread int32_t gLastErrorCode = RB_OK;
 
 /*******************************************************/
 /*              Functions Definitions                  */
 /*******************************************************/
 
 void Rb_errorPriv_setLastError(int32_t code, const char* fmt, ...){
-    if(gLastMessage){
-        RB_FREE(&gLastMessage);
-    }
+    const char* lastMessage = gLastMessage;
 
     va_list vl;
     va_start(vl, fmt);
@@ -35,6 +33,10 @@ void Rb_errorPriv_setLastError(int32_t code, const char* fmt, ...){
     va_end(vl);
 
     gLastErrorCode = code;
+
+    if (lastMessage) {
+        RB_FREE(&lastMessage);
+    }
 }
 
 const char* Rb_getLastErrorMessage(){
