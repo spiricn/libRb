@@ -61,11 +61,11 @@ Rb_TimerHandle Rb_Timer_new() {
 int32_t Rb_Timer_free(Rb_TimerHandle* handle) {
     TimerContext* timer = TimerPriv_getContext(*handle);
     if(timer == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     if(timer->running){
-        return RB_ERROR;
+        RB_ERRC(RB_ERROR, "Timer running, call stop first");
     }
 
     pthread_mutex_destroy(&timer->mutex);
@@ -81,7 +81,7 @@ int32_t Rb_Timer_start(Rb_TimerHandle handle, uint64_t periodMs,
         Rb_TimerMode mode, Rb_TimerCallbackFnc fnc, void* userData) {
     TimerContext* timer = TimerPriv_getContext(handle);
     if(timer == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     if(timer->running){
@@ -102,7 +102,7 @@ int32_t Rb_Timer_start(Rb_TimerHandle handle, uint64_t periodMs,
 int32_t Rb_Timer_stop(Rb_TimerHandle handle) {
     TimerContext* timer = TimerPriv_getContext(handle);
     if(timer == NULL) {
-        return RB_INVALID_ARG;
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
     if(!timer->running){
