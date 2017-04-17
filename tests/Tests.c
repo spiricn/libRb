@@ -52,6 +52,7 @@ DECLARE_TEST(Timer);
 DECLARE_TEST(Log);
 DECLARE_TEST(Utils);
 DECLARE_TEST(Stopwatch);
+DECLARE_TEST(Error);
 
 static int runTests();
 static int setupLogging();
@@ -73,6 +74,7 @@ ADD_TEST(Timer)
 ADD_TEST(Log)
 ADD_TEST(Utils)
 ADD_TEST(Stopwatch)
+ADD_TEST(Error)
 };
 
 /*******************************************************/

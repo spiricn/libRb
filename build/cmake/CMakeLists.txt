@@ -55,6 +55,7 @@ set(HEADERS
 	${INCLUDE_DIR}/rb/IOStream.h
 	${INCLUDE_DIR}/rb/FileStream.h
 	${INCLUDE_DIR}/rb/Timer.h
+	${INCLUDE_DIR}/rb/Stopwatch.h
 )
 
 include_directories(${INCLUDE_DIR})
@@ -103,6 +104,7 @@ set(TEST_SOURCES
 	${TEST_DIR}/TestLog.c
 	${TEST_DIR}/TestUtils.c
 	${TEST_DIR}/TestStopwatch.c
+	${TEST_DIR}/TestError.c
 	${TEST_DIR}/Tests.c
 )
 
