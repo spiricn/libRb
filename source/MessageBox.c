@@ -99,8 +99,11 @@ int32_t Rb_MessageBox_readTimed(Rb_MessageBoxHandle handle, void* message, int32
     if(res != mb->messageSize && Rb_CRingBuffer_isEnabled(mb->buffer) == RB_FALSE) {
         return RB_DISABLED;
     }
-
-    return res == mb->messageSize ? RB_OK : RB_ERROR;
+    else if(res == RB_TIMEOUT) {
+        return res;
+    } else {
+        return res == mb->messageSize ? RB_OK : RB_ERROR;\
+    }
 }
 
 int32_t Rb_MessageBox_write(Rb_MessageBoxHandle handle, const void* message) {
@@ -118,8 +121,11 @@ int32_t Rb_MessageBox_writeTimed(Rb_MessageBoxHandle handle, const void* message
     if(res != mb->messageSize && Rb_CRingBuffer_isEnabled(mb->buffer) == RB_FALSE) {
         return RB_DISABLED;
     }
-
-    return res == mb->messageSize ? RB_OK : RB_ERROR;
+    else if(res == RB_TIMEOUT) {
+        return res;
+    } else {
+        return res == mb->messageSize ? RB_OK : RB_ERROR;\
+    }
 }
 
 int32_t Rb_MessageBox_getNumMessages(Rb_MessageBoxHandle handle) {
