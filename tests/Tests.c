@@ -53,6 +53,7 @@ DECLARE_TEST(Log);
 DECLARE_TEST(Utils);
 DECLARE_TEST(Stopwatch);
 DECLARE_TEST(Error);
+DECLARE_TEST(Vector);
 
 static int runTests();
 static int setupLogging();
@@ -75,6 +76,7 @@ ADD_TEST(Log)
 ADD_TEST(Utils)
 ADD_TEST(Stopwatch)
 ADD_TEST(Error)
+ADD_TEST(Vector)
 };
 
 /*******************************************************/

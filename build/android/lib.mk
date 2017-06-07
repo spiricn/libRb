@@ -19,6 +19,7 @@ LOCAL_SRC_FILES := \
 			$(SRC_DIR)/LogPriv.c \
 			$(SRC_DIR)/Timer.c \
 			$(SRC_DIR)/ErrorPriv.c \
+			$(SRC_DIR)/Vector.c \
 			
 LOCAL_C_INCLUDES += \
 		$(INC_DIR) \

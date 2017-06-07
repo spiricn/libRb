@@ -40,6 +40,7 @@ set(SOURCES
 	${SOURCE_DIR}/FileStream.c
 	${SOURCE_DIR}/Timer.c
 	${SOURCE_DIR}/ErrorPriv.c
+	${SOURCE_DIR}/Vector.c
 )
 
 set(HEADERS
@@ -56,6 +57,7 @@ set(HEADERS
 	${INCLUDE_DIR}/rb/FileStream.h
 	${INCLUDE_DIR}/rb/Timer.h
 	${INCLUDE_DIR}/rb/Stopwatch.h
+	${INCLUDE_DIR}/rb/Vector.h
 )
 
 include_directories(${INCLUDE_DIR})
@@ -105,6 +107,7 @@ set(TEST_SOURCES
 	${TEST_DIR}/TestUtils.c
 	${TEST_DIR}/TestStopwatch.c
 	${TEST_DIR}/TestError.c
+	${TEST_DIR}/TestVector.c
 	${TEST_DIR}/Tests.c
 )
 
