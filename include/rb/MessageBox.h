@@ -118,6 +118,14 @@ int32_t Rb_MessageBox_enable(Rb_MessageBoxHandle handle);
  */
 int32_t Rb_MessageBox_resize(Rb_MessageBoxHandle handle, uint32_t capacity);
 
+/**
+ * Clears the message box.
+ *
+ * @param[in] handle Valid message box handle
+ * @return Negative value on failure, RB_OK otherwise
+ */
+int32_t Rb_MessageBox_clear(Rb_MessageBoxHandle handle);
+
 #ifdef __cplusplus
 }
 #endif

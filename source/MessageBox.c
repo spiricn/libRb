@@ -193,3 +193,12 @@ MessageBoxContext* MessageBoxPriv_getContext(Rb_MessageBoxHandle handle) {
 
     return mb;
 }
+
+int32_t Rb_MessageBox_clear(Rb_MessageBoxHandle handle) {
+    MessageBoxContext* mb = MessageBoxPriv_getContext(handle);
+    if(mb == NULL) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
+    }
+
+    return Rb_CRingBuffer_clear(mb->buffer);
+}
