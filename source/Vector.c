@@ -43,6 +43,9 @@ typedef struct {
 
 static VectorContext* VectorPriv_getContext(Rb_VectorHandle handle);
 
+static int32_t Rb_VectorPriv_addRange(VectorContext* vec, const void* elements,
+        int32_t numElements);
+
 /*******************************************************/
 /*              Functions Definitions                  */
 /*******************************************************/
@@ -84,6 +87,49 @@ int32_t Rb_Vector_free(Rb_VectorHandle* handle) {
     return RB_OK;
 }
 
+int32_t Rb_Vector_addRange(Rb_VectorHandle handle, const void* elements,
+        int32_t numElements) {
+    VectorContext* vec = VectorPriv_getContext(handle);
+    if (vec == NULL) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
+    }
+
+    if (elements == NULL || numElements <= 0) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid argument");
+    }
+
+    LOCK_ACQUIRE
+    ;
+
+    int32_t res = Rb_VectorPriv_addRange(vec, elements, numElements);
+
+    LOCK_RELEASE
+    ;
+
+    return res;
+}
+
+int32_t Rb_VectorPriv_addRange(VectorContext* vec, const void* elements,
+        int32_t numElements) {
+    if ((vec->numElements + numElements) * vec->elementSize > vec->size) {
+        // TODO Resize exponentially
+        // Resize
+        vec->size += vec->elementSize * numElements;
+
+        if (vec->data) {
+            vec->data = RB_REALLOC(vec->data, vec->size);
+        } else {
+            vec->data = RB_MALLOC(vec->size);
+        }
+    }
+
+    memcpy(vec->data + (vec->numElements * vec->elementSize), elements,
+            vec->elementSize * numElements);
+    vec->numElements += numElements;
+
+    return RB_OK;
+}
+
 int32_t Rb_Vector_add(Rb_VectorHandle handle, const void* element) {
     VectorContext* vec = VectorPriv_getContext(handle);
     if (vec == NULL) {
@@ -93,25 +139,12 @@ int32_t Rb_Vector_add(Rb_VectorHandle handle, const void* element) {
     LOCK_ACQUIRE
     ;
 
-    if ((vec->numElements + 1) * vec->elementSize > vec->size) {
-        // Resize
-        vec->size += vec->elementSize * SIZE_INCREASE_STEP;
-
-        if (vec->data) {
-            vec->data = RB_REALLOC(vec->data, vec->size);
-        } else {
-            vec->data = RB_MALLOC(vec->size);
-        }
-    }
-
-    memcpy(vec->data + (vec->numElements * vec->elementSize), element,
-            vec->elementSize);
-    vec->numElements++;
+    int32_t rc = Rb_VectorPriv_addRange(vec, element, 1);
 
     LOCK_RELEASE
     ;
 
-    return RB_OK;
+    return rc;
 }
 
 int32_t Rb_Vector_getNumElements(Rb_VectorHandle handle) {

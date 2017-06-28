@@ -49,6 +49,16 @@ int32_t Rb_Vector_free(Rb_VectorHandle* handle);
 int32_t Rb_Vector_add(Rb_VectorHandle handle, const void* element);
 
 /**
+ * Adds multiple elements at the end of the vector
+ *
+ * @param[in] handle Valid vector handle.
+ * @param[in] element Pointer to a vector element array.
+ * @param[in] numElements Number of elements in the array.
+ * @return RB_OK on success, negative value otherwise.
+ */
+int32_t Rb_Vector_addRange(Rb_VectorHandle handle, const void* elements, int32_t numElements);
+
+/**
  * Gets the number of elements stored in the vector.
  *
  * @param[in] handle Valid vector handle.
