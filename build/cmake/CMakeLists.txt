@@ -30,7 +30,6 @@ set(SOURCES
 	${SOURCE_DIR}/MessageBox.c
 	${SOURCE_DIR}/RingBuffer.c
 	${SOURCE_DIR}/Stopwatch.c
-	${SOURCE_DIR}/Array.c
 	${SOURCE_DIR}/Common.c
 	${SOURCE_DIR}/List.c
 	${SOURCE_DIR}/Prefs.c
@@ -49,7 +48,6 @@ set(HEADERS
 	${INCLUDE_DIR}/rb/Log.h
 	${INCLUDE_DIR}/rb/MessageBox.h
 	${INCLUDE_DIR}/rb/RingBuffer.h
-	${INCLUDE_DIR}/rb/Array.h
 	${INCLUDE_DIR}/rb/List.h
 	${INCLUDE_DIR}/rb/Prefs.h
 	${INCLUDE_DIR}/rb/Utils.h
@@ -99,7 +97,6 @@ set(TEST_SOURCES
 	${TEST_DIR}/TestCBuffer.c
 	${TEST_DIR}/TestConcurrency.c
 	${TEST_DIR}/TestMessageBox.c
-	${TEST_DIR}/TestArray.c
 	${TEST_DIR}/TestList.c
 	${TEST_DIR}/TestPrefs.c
 	${TEST_DIR}/TestTimer.c
