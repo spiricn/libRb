@@ -180,6 +180,26 @@ int testVector() {
         }
     }
 
+    int32_t numElems = Rb_Vector_getNumElements(vec);
+
+    // Test insert
+    VectorElement el = { 42, TEST_STR };
+    if(Rb_Vector_insert(vec, 1, &el) != RB_OK){
+        RBLE("Rb_Vector_insert failed");
+        return -1;
+    }
+
+    if(Rb_Vector_getNumElements(vec) != numElems + 1) {
+        RBLE("Rb_Vector_insert failed");
+        return -1;
+    }
+
+    VectorElement* insertedEl = Rb_Vector_get(vec, 1);
+    if(!insertedEl || insertedEl->num != 42 || strcmp(insertedEl->string, TEST_STR)){
+        RBLE("Rb_Vector_insert failed");
+        return -1;
+    }
+
     // Test clear
     if (Rb_Vector_clear(vec) != RB_OK || Rb_Vector_getNumElements(vec) > 0) {
         RBLE("Rb_Vector_clear failed");
