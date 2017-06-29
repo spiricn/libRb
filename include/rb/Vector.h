@@ -59,6 +59,26 @@ int32_t Rb_Vector_add(Rb_VectorHandle handle, const void* element);
 int32_t Rb_Vector_addRange(Rb_VectorHandle handle, const void* elements, int32_t numElements);
 
 /**
+ * Remove single element from the vector. May not change the size of the underlying buffer.
+ *
+ * @param[in] handle Valid vector handle.
+ * @param[in] index Index of the element to remove.
+ * @return RB_OK on success, negative value otherwise.
+ */
+int32_t Rb_Vector_remove(Rb_VectorHandle handle, int32_t index);
+
+/**
+ * Remove multiple elements from the vector. May not change the size of the underlying buffer.
+ *
+ * @param[in] handle Valid vector handle.
+ * @param[in] index Index of the element to remove.
+ * @param[in] numElements Number of elements to remove starting with index.
+ * @return RB_OK on success, negative value otherwise.
+ */
+int32_t Rb_Vector_removeRange(Rb_VectorHandle handle, int32_t startIndex, int32_t numElements);
+
+
+/**
  * Gets the number of elements stored in the vector.
  *
  * @param[in] handle Valid vector handle.

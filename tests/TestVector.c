@@ -113,6 +113,73 @@ int testVector() {
         }
     }
 
+    // Test remove range
+    if(Rb_Vector_removeRange(vec, 1, 3) != RB_OK){
+        RBLE("Rb_Vector_removeRange failed");
+        return -1;
+    }
+
+    if(Rb_Vector_getNumElements(vec) != NUM_TEST_ELEMENTS - 3){
+        RBLE("Rb_Vector_removeRange failed");
+        return -1;
+    }
+
+    // Verify elements
+    for(i = 0; i < NUM_TEST_ELEMENTS - 3; i++) {
+        VectorElement* el = Rb_Vector_get(vec, i);
+        if(el == NULL) {
+            RBLE("Rb_Vector_get failed");
+            return -1;
+        }
+
+        if(strcmp(el->string, TEST_STR) != 0) {
+            RBLE("Rb_Vector_removeRange failed");
+            return -1;
+        }
+
+        if(i < 1) {
+            if(el->num != i) {
+                RBLE("Rb_Vector_removeRange failed");
+                return -1;
+            }
+        } else {
+            if(el->num != i + 3) {
+                RBLE("Rb_Vector_removeRange failed");
+                return -1;
+            }
+        }
+    }
+
+    // Test single remove
+    if(Rb_Vector_remove(vec, 0) != RB_OK) {
+        RBLE("Rb_Vetor_remove failed");
+        return -1;
+    }
+
+    if(Rb_Vector_getNumElements(vec) != (NUM_TEST_ELEMENTS - 3 - 1)) {
+        RBLE("Rb_Vetor_remove failed");
+        return -1;
+    }
+
+    // Verify elements
+    for(i = 0; i < NUM_TEST_ELEMENTS - 3 - 1; i++) {
+        VectorElement* el = Rb_Vector_get(vec, i);
+        if(el == NULL) {
+            RBLE("Rb_Vector_get failed");
+            return -1;
+        }
+
+        if(strcmp(el->string, TEST_STR) != 0) {
+            RBLE("Rb_Vector_removeRange failed");
+            return -1;
+        }
+
+        if(el->num != i + 4) {
+            RBLE("Rb_Vector_remove failed");
+            return -1;
+        }
+    }
+
     // Test clear
     if (Rb_Vector_clear(vec) != RB_OK || Rb_Vector_getNumElements(vec) > 0) {
         RBLE("Rb_Vector_clear failed");

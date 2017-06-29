@@ -46,6 +46,9 @@ static VectorContext* VectorPriv_getContext(Rb_VectorHandle handle);
 static int32_t Rb_VectorPriv_addRange(VectorContext* vec, const void* elements,
         int32_t numElements);
 
+static int32_t Rb_VectorPriv_removeRange(VectorContext* vec, int32_t startIndex,
+        int32_t numElements);
+
 /*******************************************************/
 /*              Functions Definitions                  */
 /*******************************************************/
@@ -87,6 +90,45 @@ int32_t Rb_Vector_free(Rb_VectorHandle* handle) {
     return RB_OK;
 }
 
+int32_t Rb_Vector_remove(Rb_VectorHandle handle, int32_t index) {
+    VectorContext* vec = VectorPriv_getContext(handle);
+    if(vec == NULL) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
+    } else if(index < 0) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid argument");
+    }
+
+    LOCK_ACQUIRE
+    ;
+
+    int32_t res = Rb_VectorPriv_removeRange(vec, index, 1);
+
+    LOCK_RELEASE
+    ;
+
+    return res;
+}
+
+int32_t Rb_Vector_removeRange(Rb_VectorHandle handle, int32_t startIndex,
+        int32_t numElements) {
+    VectorContext* vec = VectorPriv_getContext(handle);
+    if(vec == NULL) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
+    } else if(startIndex < 0 || numElements <= 0) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid argument");
+    }
+
+    LOCK_ACQUIRE
+    ;
+
+    int32_t res = Rb_VectorPriv_removeRange(vec, startIndex, numElements);
+
+    LOCK_RELEASE
+    ;
+
+    return res;
+}
+
 int32_t Rb_Vector_addRange(Rb_VectorHandle handle, const void* elements,
         int32_t numElements) {
     VectorContext* vec = VectorPriv_getContext(handle);
@@ -107,6 +149,20 @@ int32_t Rb_Vector_addRange(Rb_VectorHandle handle, const void* elements,
     ;
 
     return res;
+}
+
+int32_t Rb_VectorPriv_removeRange(VectorContext* vec, int32_t startIndex,
+        int32_t numElements) {
+    int32_t endOffset = (startIndex + numElements) * vec->elementSize;
+    void* startAddress = vec->data + (startIndex * vec->elementSize);
+    void* endAddress = vec->data + endOffset;
+
+    int32_t remainderSize = vec->size - endOffset;
+    memmove(startAddress, endAddress, remainderSize);
+
+    vec->numElements -= numElements;
+
+    return RB_OK;
 }
 
 int32_t Rb_VectorPriv_addRange(VectorContext* vec, const void* elements,
