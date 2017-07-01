@@ -357,7 +357,7 @@ ListNode* ListPriv_getNode(ListContext* list, int32_t index){
 }
 
 int32_t ListPriv_insertLockless(ListContext* list, int32_t index, const void* element){
-    if((int32_t)list->size > index){
+    if(index > (int32_t)list->size){
         return RB_INVALID_ARG;
     }
 
