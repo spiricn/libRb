@@ -336,7 +336,7 @@ ListContext* ListPriv_getContext(Rb_ListHandle handle) {
 }
 
 ListNode* ListPriv_getNode(ListContext* list, int32_t index){
-    if(index >= (int32_t)list->size){
+    if(index >= (int32_t)list->size || index < 0){
         return NULL;
     }
 
@@ -364,13 +364,33 @@ int32_t ListPriv_insertLockless(ListContext* list, int32_t index, const void* el
     ListNode* node = (ListNode*)RB_CALLOC(sizeof(ListNode));
     node->element = RB_CALLOC(list->elementSize);
     memcpy(node->element, element, list->elementSize);
+
     if(!list->size){
         list->head = node;
     }
-    else{
-        ListNode* parent = ListPriv_getNode(list, index-1);
-        parent->next = node;
-        node->prev = parent;
+    else {
+        // parent -> inserted element -> child
+        ListNode* parent = ListPriv_getNode(list, index - 1);
+        ListNode* child = parent ? parent->next : NULL;
+
+        // Parent -> new element
+        if (parent) {
+            parent->next = node;
+
+            // New element -> parent
+            node->prev = parent;
+        } else {
+            child = list->head;
+            list->head = node;
+        }
+
+        // New element -> child
+        if (child) {
+            node->next = child;
+
+            // Child -> new element
+            child->prev = node;
+        }
     }
 
     list->size++;
