@@ -24,42 +24,44 @@ set(INCLUDE_DIR "${LIB_ROOT}/include")
 
 
 set(SOURCES
-	${SOURCE_DIR}/ConcurrentRingBuffer.c
-	${SOURCE_DIR}/Log.c
-	${SOURCE_DIR}/LogPriv.c
-	${SOURCE_DIR}/MessageBox.c
-	${SOURCE_DIR}/RingBuffer.c
-	${SOURCE_DIR}/Stopwatch.c
-	${SOURCE_DIR}/Common.c
-	${SOURCE_DIR}/List.c
-	${SOURCE_DIR}/Prefs.c
-	${SOURCE_DIR}/PrefsBackend.c
-	${SOURCE_DIR}/Utils.c
-	${SOURCE_DIR}/IOStream.c
-	${SOURCE_DIR}/FileStream.c
-	${SOURCE_DIR}/Timer.c
-	${SOURCE_DIR}/ErrorPriv.c
-	${SOURCE_DIR}/Vector.c
-	${SOURCE_DIR}/ConsumerProducer.c
-	${SOURCE_DIR}/BlockingQueue.c
+    ${SOURCE_DIR}/ConcurrentRingBuffer.c
+    ${SOURCE_DIR}/Log.c
+    ${SOURCE_DIR}/LogPriv.c
+    ${SOURCE_DIR}/MessageBox.c
+    ${SOURCE_DIR}/RingBuffer.c
+    ${SOURCE_DIR}/Stopwatch.c
+    ${SOURCE_DIR}/Common.c
+    ${SOURCE_DIR}/List.c
+    ${SOURCE_DIR}/Prefs.c
+    ${SOURCE_DIR}/PrefsBackend.c
+    ${SOURCE_DIR}/Utils.c
+    ${SOURCE_DIR}/IOStream.c
+    ${SOURCE_DIR}/FileStream.c
+    ${SOURCE_DIR}/Timer.c
+    ${SOURCE_DIR}/ErrorPriv.c
+    ${SOURCE_DIR}/Vector.c
+    ${SOURCE_DIR}/ConsumerProducer.c
+    ${SOURCE_DIR}/BlockingQueue.c
+    ${SOURCE_DIR}/BufferQueue.c
 )
 
 set(HEADERS
-	${INCLUDE_DIR}/rb/Common.h
-	${INCLUDE_DIR}/rb/ConcurrentRingBuffer.h
-	${INCLUDE_DIR}/rb/Log.h
-	${INCLUDE_DIR}/rb/MessageBox.h
-	${INCLUDE_DIR}/rb/RingBuffer.h
-	${INCLUDE_DIR}/rb/List.h
-	${INCLUDE_DIR}/rb/Prefs.h
-	${INCLUDE_DIR}/rb/Utils.h
-	${INCLUDE_DIR}/rb/IOStream.h
-	${INCLUDE_DIR}/rb/FileStream.h
-	${INCLUDE_DIR}/rb/Timer.h
-	${INCLUDE_DIR}/rb/Stopwatch.h
-	${INCLUDE_DIR}/rb/Vector.h
-	${INCLUDE_DIR}/rb/ConsumerProducer.h
-	${INCLUDE_DIR}/rb/BlockingQueue.h
+    ${INCLUDE_DIR}/rb/Common.h
+    ${INCLUDE_DIR}/rb/ConcurrentRingBuffer.h
+    ${INCLUDE_DIR}/rb/Log.h
+    ${INCLUDE_DIR}/rb/MessageBox.h
+    ${INCLUDE_DIR}/rb/RingBuffer.h
+    ${INCLUDE_DIR}/rb/List.h
+    ${INCLUDE_DIR}/rb/Prefs.h
+    ${INCLUDE_DIR}/rb/Utils.h
+    ${INCLUDE_DIR}/rb/IOStream.h
+    ${INCLUDE_DIR}/rb/FileStream.h
+    ${INCLUDE_DIR}/rb/Timer.h
+    ${INCLUDE_DIR}/rb/Stopwatch.h
+    ${INCLUDE_DIR}/rb/Vector.h
+    ${INCLUDE_DIR}/rb/ConsumerProducer.h
+    ${INCLUDE_DIR}/rb/BlockingQueue.h
+    ${INCLUDE_DIR}/rb/BufferQueue.h
 )
 
 include_directories(${INCLUDE_DIR})
@@ -81,15 +83,15 @@ ENDIF(UNIX AND NOT WIN32)
 find_package (Threads)
 
 add_library(
-	RingBuffer SHARED
-	${SOURCES}
-	${HEADERS}
+    RingBuffer SHARED
+    ${SOURCES}
+    ${HEADERS}
 )
 
 add_library(
-	RingBufferStatic STATIC
-	${SOURCES}
-	${HEADERS}
+    RingBufferStatic STATIC
+    ${SOURCES}
+    ${HEADERS}
 )
 
 target_link_libraries (RingBuffer ${CMAKE_THREAD_LIBS_INIT})
@@ -97,25 +99,26 @@ target_link_libraries (RingBuffer ${CMAKE_THREAD_LIBS_INIT})
 set(TEST_DIR "${LIB_ROOT}/tests")
 
 set(TEST_SOURCES
-	${TEST_DIR}/TestBuffer.c
-	${TEST_DIR}/TestCBuffer.c
-	${TEST_DIR}/TestConcurrency.c
-	${TEST_DIR}/TestMessageBox.c
-	${TEST_DIR}/TestList.c
-	${TEST_DIR}/TestPrefs.c
-	${TEST_DIR}/TestTimer.c
-	${TEST_DIR}/TestLog.c
-	${TEST_DIR}/TestUtils.c
-	${TEST_DIR}/TestStopwatch.c
-	${TEST_DIR}/TestError.c
-	${TEST_DIR}/TestVector.c
-	${TEST_DIR}/TestBlockingQueue.c
-	${TEST_DIR}/Tests.c
+    ${TEST_DIR}/TestBuffer.c
+    ${TEST_DIR}/TestCBuffer.c
+    ${TEST_DIR}/TestConcurrency.c
+    ${TEST_DIR}/TestMessageBox.c
+    ${TEST_DIR}/TestList.c
+    ${TEST_DIR}/TestPrefs.c
+    ${TEST_DIR}/TestTimer.c
+    ${TEST_DIR}/TestLog.c
+    ${TEST_DIR}/TestUtils.c
+    ${TEST_DIR}/TestStopwatch.c
+    ${TEST_DIR}/TestError.c
+    ${TEST_DIR}/TestVector.c
+    ${TEST_DIR}/TestBlockingQueue.c
+    ${TEST_DIR}/TestBufferQueue.c
+    ${TEST_DIR}/Tests.c
 )
 
 add_executable(libRingBuffer_tests ${TEST_SOURCES})
 
 TARGET_LINK_LIBRARIES(libRingBuffer_tests
-	RingBufferStatic
-	pthread
+    RingBufferStatic
+    pthread
 )

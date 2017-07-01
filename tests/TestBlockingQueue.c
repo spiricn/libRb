@@ -6,6 +6,7 @@
 #include <rb/Log.h>
 #include <rb/Utils.h>
 
+#include <unistd.h>
 #include <pthread.h>
 
 /*******************************************************/

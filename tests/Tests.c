@@ -54,6 +54,7 @@ DECLARE_TEST(Stopwatch);
 DECLARE_TEST(Error);
 DECLARE_TEST(Vector);
 DECLARE_TEST(BlockingQueue);
+DECLARE_TEST(BufferQueue);
 
 static int runTests();
 static int setupLogging();
@@ -77,6 +78,7 @@ ADD_TEST(Stopwatch)
 ADD_TEST(Error)
 ADD_TEST(Vector)
 ADD_TEST(BlockingQueue)
+ADD_TEST(BufferQueue)
 };
 
 /*******************************************************/

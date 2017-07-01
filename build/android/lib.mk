@@ -21,6 +21,7 @@ LOCAL_SRC_FILES := \
             $(SRC_DIR)/Vector.c \
             $(SRC_DIR)/ConsumerProducer.c \
             $(SRC_DIR)/BlockingQueue.c \
+            $(SRC_DIR)/BufferQueue.c \
 
 LOCAL_C_INCLUDES += \
         $(INC_DIR) \
