@@ -42,6 +42,10 @@ int32_t Rb_ConsumerProducer_acquireLock(Rb_ConsumerProducerHandle handle);
 
 int32_t Rb_ConsumerProducer_releaseLock(Rb_ConsumerProducerHandle handle);
 
+int32_t Rb_ConsumerProducer_notifyRead(Rb_ConsumerProducerHandle handle);
+
+int32_t Rb_ConsumerProducer_notifyWritten(Rb_ConsumerProducerHandle handle);
+
 #ifdef __cplusplus
 }
 #endif

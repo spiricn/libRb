@@ -107,6 +107,7 @@ int testBlockingQueue() {
         return -1;
     }
 
+    // Reader thread will finish first
     pthread_t readerTid;
     pthread_create(&readerTid, NULL, readerThread, (void*) bq);
 
@@ -120,6 +121,14 @@ int testBlockingQueue() {
         RBLE("Reader thread failed");
         return -1;
     }
+
+    // In order for writer thread to stop blocking, we need to clear the queue
+    if (Rb_BlockingQueue_clear(bq) != RB_OK) {
+        RBLE("Rb_BlockingQueue_clear failed");
+        return -1;
+    }
+
+    RBLD("Cleared queue");
 
     pthread_join(writerTid, &vrc);
     if ((intptr_t) vrc != 0) {
@@ -144,20 +153,30 @@ void* writerThread(void* arg) {
     Rb_BlockingQueueHandle bq = (Rb_BlockingQueueHandle) arg;
 
     int32_t i;
+    int32_t j;
     int32_t rc;
 
-    for (i = 0; i < NUM_TEST_MESSAGES; i++) {
-        Message msg;
-        memset(&msg, 0x00, sizeof(Message));
+    for (j = 0; j < 2; j++) {
+        int32_t numMessages =
+                j ? Rb_BlockingQueue_getCapacity(bq) : NUM_TEST_MESSAGES;
 
-        msg.num = i;
+        RBLD("Started write iteration: %d", numMessages);
 
-        rc = Rb_BlockingQueue_put(bq, &msg);
-        if (rc != RB_OK) {
-            RBLE("Rb_BlockingQueue_put failed: %s / %d",
-                    Rb_getLastErrorMessage(), Rb_getLastErrorCode());
-            return (void*) -1;
+        for (i = 0; i < numMessages; i++) {
+            Message msg;
+            memset(&msg, 0x00, sizeof(Message));
+
+            msg.num = i;
+
+            rc = Rb_BlockingQueue_put(bq, &msg);
+            if (rc != RB_OK) {
+                RBLE("Rb_BlockingQueue_put failed: %s / %d",
+                        Rb_getLastErrorMessage(), Rb_getLastErrorCode());
+                return (void*) -1;
+            }
         }
+
+        RBLD("Stopped write iteration");
     }
 
     RBLD("Write thread stopped");

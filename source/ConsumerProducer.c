@@ -15,13 +15,6 @@
 /*              Defines                                */
 /*******************************************************/
 
-#define LOCK_ACQUIRE do{ pthread_mutex_lock(&cp->mutex); }while(0)
-#define LOCK_RELEASE do{  pthread_mutex_unlock(&cp->mutex); }while(0)
-#define READ_LOCK do{  pthread_mutex_lock(&cp->readMutex);}while(0)
-#define READ_RELEASE do{  pthread_mutex_unlock(&cp->readMutex); }while(0)
-#define WRITE_LOCK do{  pthread_mutex_lock(&cp->writeMutex); }while(0)
-#define WRITE_RELEASE do{ pthread_mutex_unlock(&cp->writeMutex); }while(0)
-
 #define CONSUMER_PRODUCER_MAGIC ( 0xAB541111 )
 
 /*******************************************************/
@@ -44,6 +37,10 @@ typedef struct {
 static ConsProdContext* ConsProdPriv_getContext(
         Rb_ConsumerProducerHandle handle);
 
+static int32_t ConsProdPriv_notifyWritten(ConsProdContext* cp);
+
+static int32_t ConsProdPriv_notifyRead(ConsProdContext* cp);
+
 static bool ConsumerProducerPriv_timedWait(pthread_cond_t* cv,
         pthread_mutex_t* mutex, int64_t ms);
 
@@ -52,74 +49,134 @@ static bool ConsumerProducerPriv_timedWait(pthread_cond_t* cv,
 /*******************************************************/
 
 Rb_ConsumerProducerHandle Rb_ConsumerProducer_new() {
+    int32_t rc;
+
     ConsProdContext* cp = RB_CALLOC(sizeof(ConsProdContext));
 
     cp->magic = CONSUMER_PRODUCER_MAGIC;
 
-    pthread_mutex_init(&cp->mutex, NULL);
-    pthread_mutex_init(&cp->readMutex, NULL);
-    pthread_mutex_init(&cp->writeMutex, NULL);
-    pthread_cond_init(&cp->readCV, NULL);
-    pthread_cond_init(&cp->writeCV, NULL);
+    rc = pthread_mutex_init(&cp->mutex, NULL);
+    if (rc != 0) {
+        RB_ERR("pthread_mutex_init failed");
+        return NULL;
+    }
+
+    rc = pthread_mutex_init(&cp->readMutex, NULL);
+    if (rc != 0) {
+        RB_ERR("pthread_mutex_init failed");
+        return NULL;
+    }
+
+    rc = pthread_mutex_init(&cp->writeMutex, NULL);
+    if (rc != 0) {
+        RB_ERR("pthread_mutex_init failed");
+        return NULL;
+    }
+
+    rc = pthread_cond_init(&cp->readCV, NULL);
+    if (rc != 0) {
+        RB_ERR("pthread_cond_init failed");
+        return NULL;
+    }
+
+    rc = pthread_cond_init(&cp->writeCV, NULL);
+    if (rc != 0) {
+        RB_ERR("pthread_cond_init failed");
+        return NULL;
+    }
 
     return cp;
 }
 
 int32_t Rb_ConsumerProducer_free(Rb_ConsumerProducerHandle* handle) {
+    int32_t rc;
+
     ConsProdContext* cp = ConsProdPriv_getContext(handle ? *handle : NULL);
     if (cp == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    pthread_mutex_destroy(&cp->mutex);
-    pthread_mutex_destroy(&cp->writeMutex);
-    pthread_mutex_destroy(&cp->readMutex);
-    pthread_cond_destroy(&cp->readCV);
-    pthread_cond_destroy(&cp->writeCV);
+    rc = pthread_mutex_destroy(&cp->mutex);
+    if (rc != 0) {
+        RB_ERRC(RB_ERROR, "pthread_mutex_destroy failed");
+    }
+
+    rc = pthread_mutex_destroy(&cp->writeMutex);
+    if (rc != 0) {
+        RB_ERRC(RB_ERROR, "pthread_mutex_destroy failed");
+    }
+
+    rc = pthread_mutex_destroy(&cp->readMutex);
+    if (rc != 0) {
+        RB_ERRC(RB_ERROR, "pthread_mutex_destroy failed");
+    }
+
+    rc = pthread_cond_destroy(&cp->readCV);
+    if (rc != 0) {
+        RB_ERRC(RB_ERROR, "pthread_cond_destroy failed");
+    }
+
+    rc = pthread_cond_destroy(&cp->writeCV);
+    if (rc != 0) {
+        RB_ERRC(RB_ERROR, "pthread_cond_destroy failed");
+    }
 
     RB_FREE(&cp);
-
     *handle = NULL;
 
     return RB_OK;
 }
 
 int32_t Rb_ConsumerProducer_acquireLock(Rb_ConsumerProducerHandle handle) {
+    int32_t rc;
+
     ConsProdContext* cp = ConsProdPriv_getContext(handle);
     if (cp == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    LOCK_ACQUIRE
-    ;
+    rc = pthread_mutex_lock(&cp->mutex);
+    if (rc != 0) {
+        RB_ERRC(RB_ERROR, "pthread_mutex_lock failed");
+    }
 
     return RB_OK;
 }
 
 int32_t Rb_ConsumerProducer_releaseLock(Rb_ConsumerProducerHandle handle) {
+    int32_t rc;
+
     ConsProdContext* cp = ConsProdPriv_getContext(handle);
     if (cp == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    LOCK_RELEASE
-    ;
+    rc = pthread_mutex_unlock(&cp->mutex);
+    if (rc != 0) {
+        RB_ERRC(RB_ERROR, "pthread_mutex_lock failed");
+    }
 
     return RB_OK;
 }
 
 int32_t Rb_ConsumerProducer_acquireReadLock(Rb_ConsumerProducerHandle handle,
         Rb_ConsumerProducerConditionFnc fnc, void* arg) {
+    int32_t rc;
+
     ConsProdContext* cp = ConsProdPriv_getContext(handle);
     if (cp == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    READ_LOCK
-    ;
+    rc = pthread_mutex_lock(&cp->readMutex);
+    if (rc != 0) {
+        RB_ERRC(RB_ERROR, "pthread_mutex_lock failed");
+    }
 
-    LOCK_ACQUIRE
-    ;
+    rc = pthread_mutex_lock(&cp->mutex);
+    if (rc != 0) {
+        RB_ERRC(RB_ERROR, "pthread_mutex_lock failed");
+    }
 
     while (!fnc(arg)) {
         pthread_cond_wait(&cp->readCV, &cp->mutex);
@@ -138,34 +195,43 @@ int32_t Rb_ConsumerProducer_releaseReadLock(Rb_ConsumerProducerHandle handle,
     }
 
     if (notify) {
-        rc = pthread_cond_broadcast(&cp->writeCV);
-        if (rc != 0) {
-            RB_ERR("pthread_cond_broadcast failed: %d", rc);
-            return RB_ERROR;
+        rc = ConsProdPriv_notifyRead(cp);
+        if (rc != RB_OK) {
+            return rc;
         }
     }
 
-    LOCK_RELEASE
-    ;
+    rc = pthread_mutex_unlock(&cp->mutex);
+    if (rc != 0) {
+        RB_ERRC(RB_ERROR, "pthread_mutex_lock failed");
+    }
 
-    READ_RELEASE
-    ;
+    rc = pthread_mutex_unlock(&cp->readMutex);
+    if (rc != 0) {
+        RB_ERRC(RB_ERROR, "pthread_mutex_lock failed");
+    }
 
     return RB_OK;
 }
 
 int32_t Rb_ConsumerProducer_acquireWriteLock(Rb_ConsumerProducerHandle handle,
         Rb_ConsumerProducerConditionFnc fnc, void* arg) {
+    int32_t rc;
+
     ConsProdContext* cp = ConsProdPriv_getContext(handle);
     if (cp == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    WRITE_LOCK
-    ;
+    rc = pthread_mutex_lock(&cp->writeMutex);
+    if (rc != 0) {
+        RB_ERRC(RB_ERROR, "pthread_mutex_lock failed");
+    }
 
-    LOCK_ACQUIRE
-    ;
+    rc = pthread_mutex_lock(&cp->mutex);
+    if (rc != 0) {
+        RB_ERRC(RB_ERROR, "pthread_mutex_lock failed");
+    }
 
     while (!fnc(arg)) {
         pthread_cond_wait(&cp->writeCV, &cp->mutex);
@@ -184,18 +250,65 @@ int32_t Rb_ConsumerProducer_releaseWriteLock(Rb_ConsumerProducerHandle handle,
     }
 
     if (notify) {
-        rc = pthread_cond_broadcast(&cp->readCV);
-        if (rc != 0) {
-            RB_ERR("pthread_cond_broadcast failed: %d", rc);
-            return RB_ERROR;
+        rc = ConsProdPriv_notifyWritten(cp);
+        if (rc != RB_OK) {
+            return rc;
         }
     }
 
-    LOCK_RELEASE
-    ;
+    rc = pthread_mutex_unlock(&cp->mutex);
+    if (rc != 0) {
+        RB_ERRC(RB_ERROR, "pthread_mutex_lock failed");
+    }
 
-    WRITE_RELEASE
-    ;
+    rc = pthread_mutex_unlock(&cp->writeMutex);
+    if (rc != 0) {
+        RB_ERRC(RB_ERROR, "pthread_mutex_lock failed");
+    }
+
+    return RB_OK;
+}
+
+int32_t Rb_ConsumerProducer_notifyRead(Rb_ConsumerProducerHandle handle) {
+    int32_t rc;
+
+    ConsProdContext* cp = ConsProdPriv_getContext(handle);
+    if (cp == NULL) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
+    }
+
+    return ConsProdPriv_notifyRead(cp);
+}
+
+int32_t Rb_ConsumerProducer_notifyWritten(Rb_ConsumerProducerHandle handle) {
+    ConsProdContext* cp = ConsProdPriv_getContext(handle);
+    if (cp == NULL) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
+    }
+
+    return ConsProdPriv_notifyWritten(cp);
+}
+
+int32_t ConsProdPriv_notifyWritten(ConsProdContext* cp) {
+    int32_t rc;
+
+    rc = pthread_cond_broadcast(&cp->readCV);
+    if (rc != 0) {
+        RB_ERR("pthread_cond_broadcast failed: %d", rc);
+        return RB_ERROR;
+    }
+
+    return RB_OK;
+}
+
+int32_t ConsProdPriv_notifyRead(ConsProdContext* cp) {
+    int32_t rc;
+
+    rc = pthread_cond_broadcast(&cp->writeCV);
+    if (rc != 0) {
+        RB_ERR("pthread_cond_broadcast failed: %d", rc);
+        return RB_ERROR;
+    }
 
     return RB_OK;
 }

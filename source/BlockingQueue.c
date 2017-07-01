@@ -168,22 +168,78 @@ int32_t Rb_BlockingQueue_get(Rb_BlockingQueueHandle handle, void* message) {
     return RB_OK;
 }
 
-int32_t Rb_BlockingQueue_getNumMessages(Rb_BlockingQueueHandle handle) {
+int32_t Rb_BlockingQueue_clear(Rb_BlockingQueueHandle handle) {
+    int32_t rc;
+
     BlockingQueueContext* bq = BlockingQueue_getContext(handle);
     if (bq == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    return Rb_List_getSize(bq->list);
+    rc = Rb_ConsumerProducer_acquireLock(bq->cp);
+    if (rc != RB_OK) {
+        return rc;
+    }
+
+    int32_t res = Rb_List_clear(bq->list);
+
+    rc = Rb_ConsumerProducer_notifyRead(bq->cp);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_notifyRead failed");
+    }
+
+    rc = Rb_ConsumerProducer_releaseLock(bq->cp);
+    if (rc != RB_OK) {
+        return rc;
+    }
+
+    return res;
+}
+
+int32_t Rb_BlockingQueue_getNumMessages(Rb_BlockingQueueHandle handle) {
+    int32_t rc;
+
+    BlockingQueueContext* bq = BlockingQueue_getContext(handle);
+    if (bq == NULL) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
+    }
+
+    rc = Rb_ConsumerProducer_acquireLock(bq->cp);
+    if (rc != RB_OK) {
+        return rc;
+    }
+
+    int32_t res = Rb_List_getSize(bq->list);
+
+    rc = Rb_ConsumerProducer_releaseLock(bq->cp);
+    if (rc != RB_OK) {
+        return rc;
+    }
+
+    return res;
 }
 
 int32_t Rb_BlockingQueue_getCapacity(Rb_BlockingQueueHandle handle) {
+    int32_t rc;
+
     BlockingQueueContext* bq = BlockingQueue_getContext(handle);
     if (bq == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    return bq->capacity;
+    rc = Rb_ConsumerProducer_acquireLock(bq->cp);
+    if (rc != RB_OK) {
+        return rc;
+    }
+
+    int32_t res = bq->capacity;
+
+    rc = Rb_ConsumerProducer_releaseLock(bq->cp);
+    if (rc != RB_OK) {
+        return rc;
+    }
+
+    return res;
 }
 
 BlockingQueueContext* BlockingQueue_getContext(Rb_BlockingQueueHandle handle) {
