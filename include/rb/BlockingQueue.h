@@ -31,6 +31,8 @@ int32_t Rb_BlockingQueue_put(Rb_BlockingQueueHandle handle,
 
 int32_t Rb_BlockingQueue_get(Rb_BlockingQueueHandle handle, void* message);
 
+int32_t Rb_BlockingQueue_peek(Rb_BlockingQueueHandle handle, void* message);
+
 int32_t Rb_BlockingQueue_clear(Rb_BlockingQueueHandle handle);
 
 int32_t Rb_BlockingQueue_getNumMessages(Rb_BlockingQueueHandle handle);

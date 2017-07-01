@@ -36,6 +36,9 @@ typedef struct {
 static BlockingQueueContext* BlockingQueue_getContext(
         Rb_BlockingQueueHandle handle);
 
+static int32_t BlockingQueuePriv_get(BlockingQueueContext* bq, void* message,
+        bool pop);
+
 /*******************************************************/
 /*              Functions Definitions                  */
 /*******************************************************/
@@ -128,6 +131,17 @@ int32_t Rb_BlockingQueue_put(Rb_BlockingQueueHandle handle, const void* message)
     return RB_OK;
 }
 
+int32_t Rb_BlockingQueue_peek(Rb_BlockingQueueHandle handle, void* message) {
+    int32_t rc;
+
+    BlockingQueueContext* bq = BlockingQueue_getContext(handle);
+    if (bq == NULL) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
+    }
+
+    return BlockingQueuePriv_get(bq, message, false);
+}
+
 int32_t Rb_BlockingQueue_get(Rb_BlockingQueueHandle handle, void* message) {
     int32_t rc;
 
@@ -136,36 +150,7 @@ int32_t Rb_BlockingQueue_get(Rb_BlockingQueueHandle handle, void* message) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    rc = Rb_ConsumerProducer_acquireReadLock(bq->cp, BlockingQueuePriv_canRead,
-            bq);
-    if (rc != RB_OK) {
-        RB_ERRC(rc, "Rb_ConsumerProducer_acquireLock failed");
-    }
-
-    int32_t size = Rb_List_getSize(bq->list);
-
-    int32_t index = size - 1;
-
-    rc = Rb_List_get(bq->list, index, message);
-    if (rc != RB_OK) {
-        RB_ERR("Rb_List_get failed ( %s )", Rb_getLastErrorMessage());
-        // TODO
-        return rc;
-    }
-
-    rc = Rb_List_remove(bq->list, index);
-    if (rc != RB_OK) {
-        RB_ERR("Rb_List_remove failed ( %s )", Rb_getLastErrorMessage());
-        // TODO
-        return rc;
-    }
-
-    rc = Rb_ConsumerProducer_releaseReadLock(bq->cp, true);
-    if (rc != RB_OK) {
-        RB_ERRC(rc, "Rb_ConsumerProducer_releaseReadLock failed");
-    }
-
-    return RB_OK;
+    return BlockingQueuePriv_get(bq, message, true);
 }
 
 int32_t Rb_BlockingQueue_clear(Rb_BlockingQueueHandle handle) {
@@ -240,6 +225,43 @@ int32_t Rb_BlockingQueue_getCapacity(Rb_BlockingQueueHandle handle) {
     }
 
     return res;
+}
+
+int32_t BlockingQueuePriv_get(BlockingQueueContext* bq, void* message, bool pop) {
+    int32_t rc;
+
+    rc = Rb_ConsumerProducer_acquireReadLock(bq->cp, BlockingQueuePriv_canRead,
+            bq);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_acquireLock failed");
+    }
+
+    int32_t size = Rb_List_getSize(bq->list);
+
+    int32_t index = size - 1;
+
+    rc = Rb_List_get(bq->list, index, message);
+    if (rc != RB_OK) {
+        RB_ERR("Rb_List_get failed ( %s )", Rb_getLastErrorMessage());
+        // TODO
+        return rc;
+    }
+
+    if (pop) {
+        rc = Rb_List_remove(bq->list, index);
+        if (rc != RB_OK) {
+            RB_ERR("Rb_List_remove failed ( %s )", Rb_getLastErrorMessage());
+            // TODO
+            return rc;
+        }
+    }
+
+    rc = Rb_ConsumerProducer_releaseReadLock(bq->cp, pop);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_releaseReadLock failed");
+    }
+
+    return RB_OK;
 }
 
 BlockingQueueContext* BlockingQueue_getContext(Rb_BlockingQueueHandle handle) {

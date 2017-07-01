@@ -88,6 +88,26 @@ int testBlockingQueue() {
         return -1;
     }
 
+    // Peek message
+    rc = Rb_BlockingQueue_peek(bq, &msgOut);
+    if (rc != RB_OK) {
+        RBLE("Rb_BlockingQueue_peek failed: %s / %d", Rb_getLastErrorMessage(),
+                Rb_getLastErrorCode());
+        return -1;
+    }
+
+    if (Rb_BlockingQueue_getNumMessages(bq) != 1) {
+        RBLE("Rb_BlockingQueue_getNumMessages failed: %s / %d",
+                Rb_getLastErrorMessage(), Rb_getLastErrorCode());
+        return -1;
+    }
+
+    // Check data
+    if (memcmp(&msgIn, &msgOut, sizeof(Message))) {
+        RBLE("Invalid data");
+        return -1;
+    }
+
     // Read message
     rc = Rb_BlockingQueue_get(bq, &msgOut);
     if (rc != RB_OK) {
