@@ -153,6 +153,101 @@ int32_t Rb_BlockingQueue_get(Rb_BlockingQueueHandle handle, void* message) {
     return BlockingQueuePriv_get(bq, message, true);
 }
 
+int32_t Rb_BlockingQueue_isFull(Rb_BlockingQueueHandle handle) {
+    int32_t rc;
+
+    BlockingQueueContext* bq = BlockingQueue_getContext(handle);
+    if (bq == NULL) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
+    }
+
+    rc = Rb_ConsumerProducer_acquireLock(bq->cp);
+    if (rc != RB_OK) {
+        return rc;
+    }
+
+    int32_t res =
+            Rb_List_getSize(bq->list) == bq->capacity ? RB_TRUE : RB_FALSE;
+
+    rc = Rb_ConsumerProducer_releaseLock(bq->cp);
+    if (rc != RB_OK) {
+        return rc;
+    }
+
+    return res;
+}
+
+int32_t Rb_BlockingQueue_isEmpty(Rb_BlockingQueueHandle handle) {
+    int32_t rc;
+
+    BlockingQueueContext* bq = BlockingQueue_getContext(handle);
+    if (bq == NULL) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
+    }
+
+    rc = Rb_ConsumerProducer_acquireLock(bq->cp);
+    if (rc != RB_OK) {
+        return rc;
+    }
+
+    int32_t res = Rb_List_getSize(bq->list) == 0 ? RB_TRUE : RB_FALSE;
+
+    rc = Rb_ConsumerProducer_releaseLock(bq->cp);
+    if (rc != RB_OK) {
+        return rc;
+    }
+
+    return res;
+}
+
+int32_t Rb_BlockingQueue_resize(Rb_BlockingQueueHandle handle, int32_t capacity) {
+    int32_t rc;
+    int32_t i;
+
+    BlockingQueueContext* bq = BlockingQueue_getContext(handle);
+    if (bq == NULL) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
+    } else if (capacity <= 0) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid capacity");
+    }
+
+    rc = Rb_ConsumerProducer_acquireLock(bq->cp);
+    if (rc != RB_OK) {
+        return rc;
+    }
+
+    int32_t res = Rb_List_getSize(bq->list);
+
+    // Notify there's free space only when we're at max capactiy and we increase the it
+    bool notifyRead = res == bq->capacity && capacity > bq->capacity;
+
+    if (capacity < res) {
+        // Remove excess elements
+        for (i = 0; i < res - capacity; i++) {
+            rc = Rb_List_remove(bq->list, 0);
+            if (rc != RB_OK) {
+                RB_ERRC(rc, "Rb_List_remove failed");
+            }
+        }
+    }
+
+    bq->capacity = capacity;
+
+    if (notifyRead) {
+        rc = Rb_ConsumerProducer_notifyRead(bq->cp);
+        if (rc != RB_OK) {
+            RB_ERRC(rc, "Rb_ConsumerProducer_notifyRead failed");
+        }
+    }
+
+    rc = Rb_ConsumerProducer_releaseLock(bq->cp);
+    if (rc != RB_OK) {
+        return rc;
+    }
+
+    return RB_OK;
+}
+
 int32_t Rb_BlockingQueue_clear(Rb_BlockingQueueHandle handle) {
     int32_t rc;
 

@@ -33,7 +33,13 @@ int32_t Rb_BlockingQueue_get(Rb_BlockingQueueHandle handle, void* message);
 
 int32_t Rb_BlockingQueue_peek(Rb_BlockingQueueHandle handle, void* message);
 
+int32_t Rb_BlockingQueue_resize(Rb_BlockingQueueHandle handle, int32_t capacity);
+
 int32_t Rb_BlockingQueue_clear(Rb_BlockingQueueHandle handle);
+
+int32_t Rb_BlockingQueue_isFull(Rb_BlockingQueueHandle handle);
+
+int32_t Rb_BlockingQueue_isEmpty(Rb_BlockingQueueHandle handle);
 
 int32_t Rb_BlockingQueue_getNumMessages(Rb_BlockingQueueHandle handle);
 

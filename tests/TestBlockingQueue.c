@@ -150,6 +150,17 @@ int testBlockingQueue() {
 
     RBLD("Cleared queue");
 
+    while (!Rb_BlockingQueue_isFull(bq)) {
+        usleep(1000);
+    }
+
+    RBLD("Queue filled, resizing ..");
+    rc = Rb_BlockingQueue_resize(bq, Rb_BlockingQueue_getCapacity(bq) + 64);
+    if (rc != RB_OK) {
+        RBLE("Rb_BlockingQueue_resize failed");
+        return -1;
+    }
+
     pthread_join(writerTid, &vrc);
     if ((intptr_t) vrc != 0) {
         RBLE("Writer thread failed");
@@ -176,9 +187,15 @@ void* writerThread(void* arg) {
     int32_t j;
     int32_t rc;
 
-    for (j = 0; j < 2; j++) {
-        int32_t numMessages =
-                j ? Rb_BlockingQueue_getCapacity(bq) : NUM_TEST_MESSAGES;
+    for (j = 0; j < 3; j++) {
+        int32_t numMessages = 0;
+        if (j == 0) {
+            numMessages = NUM_TEST_MESSAGES;
+        } else if (j == 1) {
+            numMessages = Rb_BlockingQueue_getCapacity(bq);
+        } else if (j == 2) {
+            numMessages = Rb_BlockingQueue_getCapacity(bq) + 3;
+        }
 
         RBLD("Started write iteration: %d", numMessages);
 
