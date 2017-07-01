@@ -15,12 +15,12 @@
 
 #define RB_ERR(fmt, ...) \
     do{ \
-        Rb_errorPriv_setLastError(RB_ERROR, "[%s:%d]: " fmt, RB_FILENAME, __LINE__, # __VA_ARGS__); \
+        Rb_errorPriv_setLastError(RB_ERROR, "[%s:%d]: " fmt, RB_FILENAME, __LINE__, ## __VA_ARGS__); \
     } while(0)
 
 #define RB_ERRC(code, fmt, ...) \
     do{ \
-        Rb_errorPriv_setLastError(code,  "[%s:%d]: " fmt, RB_FILENAME, __LINE__, # __VA_ARGS__); \
+        Rb_errorPriv_setLastError(code,  "[%s:%d]: " fmt, RB_FILENAME, __LINE__, ## __VA_ARGS__); \
         return code; \
     } while(0)
 

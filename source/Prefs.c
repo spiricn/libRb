@@ -204,7 +204,7 @@ int32_t Rb_Prefs_getInt64(Rb_PrefsHandle handle, const char* key, int64_t* value
     }
 
     if(entry->value.type != eRB_VAR_TYPE_INT64){
-        RB_ERRC(RB_INVALID_ARG, "Invalid type (expected %d but got %d)", eRB_VAR_TYPE_INT64, entry->value->type);
+        RB_ERRC(RB_INVALID_ARG, "Invalid type (expected %d but got %d)", eRB_VAR_TYPE_INT64, entry->value.type);
     }
 
     *value = entry->value.val.int64Val;
@@ -224,7 +224,7 @@ int32_t Rb_Prefs_getFloat(Rb_PrefsHandle handle, const char* key, float* value){
     }
 
     if(entry->value.type != eRB_VAR_TYPE_FLOAT){
-        RB_ERRC(RB_INVALID_ARG, "Invalid type (expected %d but got %d)", eRB_VAR_TYPE_FLOAT, entry->value->type);
+        RB_ERRC(RB_INVALID_ARG, "Invalid type (expected %d but got %d)", eRB_VAR_TYPE_FLOAT, entry->value.type);
     }
 
     *value = entry->value.val.floatVal;
@@ -244,7 +244,7 @@ int32_t Rb_Prefs_getString(Rb_PrefsHandle handle, const char* key, char** value)
     }
 
     if(entry->value.type != eRB_VAR_TYPE_STRING){
-        RB_ERRC(RB_INVALID_ARG, "Invalid type (expected %d but got %d)", eRB_VAR_TYPE_STRING, entry->value->type);
+        RB_ERRC(RB_INVALID_ARG, "Invalid type (expected %d but got %d)", eRB_VAR_TYPE_STRING, entry->value.type);
     }
 
     *value = (char*)RB_MALLOC(strlen(entry->value.val.stringVal) + 1);
@@ -265,7 +265,7 @@ int32_t Rb_Prefs_getBlob(Rb_PrefsHandle handle, const char* key, void** data, ui
     }
 
     if(entry->value.type != eRB_VAR_TYPE_BLOB){
-        RB_ERRC(RB_INVALID_ARG, "Invalid type (expected %d but got %d)", eRB_VAR_TYPE_BLOB, entry->value->type);
+        RB_ERRC(RB_INVALID_ARG, "Invalid type (expected %d but got %d)", eRB_VAR_TYPE_BLOB, entry->value.type);
     }
 
     *size = entry->value.val.blobVal.size;
