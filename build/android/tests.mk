@@ -20,6 +20,7 @@ LOCAL_SRC_FILES := \
             $(SRC_DIR)/TestError.c \
             $(SRC_DIR)/TestBlockingQueue.c \
             $(SRC_DIR)/TestBufferQueue.c \
+            $(SRC_DIR)/TestVector.c \
 
 LOCAL_WHOLE_STATIC_LIBRARIES += libRingBuffer-static
 

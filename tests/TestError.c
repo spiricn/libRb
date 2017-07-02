@@ -68,6 +68,8 @@ int testError() {
 }
 
 void* testThread(void* arg) {
+    RB_UNUSED(arg);
+
     return (void*) (intptr_t) causeError();
 }
 

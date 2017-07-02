@@ -30,10 +30,10 @@
 
 typedef struct {
     uint32_t magic;
-    uint32_t size;
-    uint32_t elementSize;
-    uint32_t numElements;
-    void* data;
+    int32_t size;
+    int32_t elementSize;
+    int32_t numElements;
+    uint8_t* data;
     pthread_mutex_t mutex;
 } VectorContext;
 
@@ -90,11 +90,12 @@ int32_t Rb_Vector_free(Rb_VectorHandle* handle) {
     return RB_OK;
 }
 
-int32_t Rb_Vector_insert(Rb_VectorHandle handle, int32_t index, const void* element){
+int32_t Rb_Vector_insert(Rb_VectorHandle handle, int32_t index,
+        const void* element) {
     VectorContext* vec = VectorPriv_getContext(handle);
-    if(vec == NULL) {
+    if (vec == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
-    } else if(index < 0 || element == NULL) {
+    } else if (index < 0 || element == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid argument");
     }
 
@@ -109,11 +110,12 @@ int32_t Rb_Vector_insert(Rb_VectorHandle handle, int32_t index, const void* elem
     return res;
 }
 
-int32_t Rb_Vector_insertRange(Rb_VectorHandle handle, int32_t startIndex, const void* elements, int32_t numElements){
+int32_t Rb_Vector_insertRange(Rb_VectorHandle handle, int32_t startIndex,
+        const void* elements, int32_t numElements) {
     VectorContext* vec = VectorPriv_getContext(handle);
-    if(vec == NULL) {
+    if (vec == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
-    } else if(startIndex < 0 || elements == NULL || numElements <= 0) {
+    } else if (startIndex < 0 || elements == NULL || numElements <= 0) {
         RB_ERRC(RB_INVALID_ARG, "Invalid argument");
     }
     LOCK_ACQUIRE
@@ -130,9 +132,9 @@ int32_t Rb_Vector_insertRange(Rb_VectorHandle handle, int32_t startIndex, const 
 
 int32_t Rb_Vector_remove(Rb_VectorHandle handle, int32_t index) {
     VectorContext* vec = VectorPriv_getContext(handle);
-    if(vec == NULL) {
+    if (vec == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
-    } else if(index < 0) {
+    } else if (index < 0) {
         RB_ERRC(RB_INVALID_ARG, "Invalid argument");
     }
 
@@ -150,9 +152,9 @@ int32_t Rb_Vector_remove(Rb_VectorHandle handle, int32_t index) {
 int32_t Rb_Vector_removeRange(Rb_VectorHandle handle, int32_t startIndex,
         int32_t numElements) {
     VectorContext* vec = VectorPriv_getContext(handle);
-    if(vec == NULL) {
+    if (vec == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
-    } else if(startIndex < 0 || numElements <= 0) {
+    } else if (startIndex < 0 || numElements <= 0) {
         RB_ERRC(RB_INVALID_ARG, "Invalid argument");
     }
 
@@ -181,7 +183,8 @@ int32_t Rb_Vector_addRange(Rb_VectorHandle handle, const void* elements,
     LOCK_ACQUIRE
     ;
 
-    int32_t res = Rb_VectorPriv_addRange(vec, vec->numElements, elements, numElements);
+    int32_t res = Rb_VectorPriv_addRange(vec, vec->numElements, elements,
+            numElements);
 
     LOCK_RELEASE
     ;
@@ -192,8 +195,8 @@ int32_t Rb_Vector_addRange(Rb_VectorHandle handle, const void* elements,
 int32_t Rb_VectorPriv_removeRange(VectorContext* vec, int32_t startIndex,
         int32_t numElements) {
     int32_t endOffset = (startIndex + numElements) * vec->elementSize;
-    void* startAddress = vec->data + (startIndex * vec->elementSize);
-    void* endAddress = vec->data + endOffset;
+    uint8_t* startAddress = vec->data + (startIndex * vec->elementSize);
+    uint8_t* endAddress = vec->data + endOffset;
 
     int32_t remainderSize = vec->size - endOffset;
     memmove(startAddress, endAddress, remainderSize);
@@ -203,8 +206,8 @@ int32_t Rb_VectorPriv_removeRange(VectorContext* vec, int32_t startIndex,
     return RB_OK;
 }
 
-int32_t Rb_VectorPriv_addRange(VectorContext* vec, int32_t startIndex, const void* elements,
-        int32_t numElements) {
+int32_t Rb_VectorPriv_addRange(VectorContext* vec, int32_t startIndex,
+        const void* elements, int32_t numElements) {
     if ((vec->numElements + numElements) * vec->elementSize > vec->size) {
         // TODO Resize exponentially
 
@@ -218,7 +221,7 @@ int32_t Rb_VectorPriv_addRange(VectorContext* vec, int32_t startIndex, const voi
         }
     }
 
-    if(startIndex == vec->numElements) {
+    if (startIndex == vec->numElements) {
         // Push back
         memcpy(vec->data + (vec->numElements * vec->elementSize), elements,
                 vec->elementSize * numElements);
@@ -226,8 +229,8 @@ int32_t Rb_VectorPriv_addRange(VectorContext* vec, int32_t startIndex, const voi
         // Inserting, so first make room for new elements
         int32_t blockSize = vec->size - (numElements * vec->elementSize);
 
-        void* oldAddr = vec->data + (startIndex * vec->elementSize);
-        void* newAddr = vec->data
+        uint8_t* oldAddr = vec->data + (startIndex * vec->elementSize);
+        uint8_t* newAddr = vec->data
                 + ((startIndex + numElements) * vec->elementSize);
         memmove(oldAddr, newAddr, numElements * vec->elementSize);
         ;

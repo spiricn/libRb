@@ -63,7 +63,7 @@ int testVector() {
     }
 
     // There should at least be enough data to store a single element
-    if (Rb_Vector_getSize(vec) < sizeof(VectorElement)) {
+    if (Rb_Vector_getSize(vec) < (int32_t)sizeof(VectorElement)) {
         RBLE("Rb_Vector_getSize failed");
         return -1;
     }
@@ -95,7 +95,7 @@ int testVector() {
         return -1;
     }
 
-    if (Rb_Vector_getSize(vec) < NUM_TEST_ELEMENTS * sizeof(VectorElement)) {
+    if (Rb_Vector_getSize(vec) < NUM_TEST_ELEMENTS * (int32_t)sizeof(VectorElement)) {
         RBLE("Invalid vector size");
         return -1;
     }

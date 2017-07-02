@@ -354,7 +354,7 @@ int32_t Rb_log_terminate(){
     for (i = 0; i < eRB_LOG_OUTPUT_MAX; i++) {
         LogOutputContext* output = &gLogContext.outputs[i];
 
-        for(j =0; j<output->compiledFormat.numComponents; j++){
+        for(j =0; j<(int32_t)output->compiledFormat.numComponents; j++){
             RB_FREE(&output->compiledFormat.components[j].value);
         }
 

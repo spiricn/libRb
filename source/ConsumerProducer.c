@@ -22,7 +22,7 @@
 /*******************************************************/
 
 typedef struct {
-    int32_t magic;
+    uint32_t magic;
     pthread_mutex_t mutex;
     pthread_mutex_t readMutex;
     pthread_mutex_t writeMutex;

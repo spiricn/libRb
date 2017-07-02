@@ -267,6 +267,8 @@ int32_t Rb_BufferQueue_queueInputBuffer(Rb_BufferQueueHandle handle,
 
 int32_t Rb_BufferQueuePriv_dequeueBuffer(BufferQueueContext* bq, Queue queue,
         int32_t* index, int32_t timeoutMs) {
+    RB_UNUSED(timeoutMs);
+
     return Rb_BlockingQueue_get(bq->queues[queue], index);
 }
 
@@ -277,6 +279,8 @@ int32_t Rb_BufferQueuePriv_queueBuffer(BufferQueueContext* bq, Queue queue,
 
 int32_t Rb_BufferQueue_dequeueFreeBuffer(Rb_BufferQueueHandle handle,
         int32_t* index, int32_t timeoutMs) {
+    RB_UNUSED(timeoutMs);
+
     BufferQueueContext* bq = Rb_BufferQueuePriv_getContext(handle);
     if (bq == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
