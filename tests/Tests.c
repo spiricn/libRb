@@ -44,7 +44,6 @@ typedef struct {
 DECLARE_TEST(Buffer);
 DECLARE_TEST(CBuffer);
 DECLARE_TEST(Concurrency);
-DECLARE_TEST(MessageBox);
 DECLARE_TEST(List);
 DECLARE_TEST(Prefs);
 DECLARE_TEST(Timer);
@@ -68,7 +67,6 @@ static const TestEntry gTests[] = {
 ADD_TEST(Buffer)
 ADD_TEST(CBuffer)
 ADD_TEST(Concurrency)
-ADD_TEST(MessageBox)
 ADD_TEST(List)
 ADD_TEST(Prefs)
 ADD_TEST(Timer)

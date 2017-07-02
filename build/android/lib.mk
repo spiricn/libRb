@@ -5,7 +5,6 @@ INC_DIR := $(LOCAL_PATH)/../../include
 LOCAL_SRC_FILES := \
             $(SRC_DIR)/RingBuffer.c \
             $(SRC_DIR)/ConcurrentRingBuffer.c \
-            $(SRC_DIR)/MessageBox.c \
             $(SRC_DIR)/Stopwatch.c \
             $(SRC_DIR)/Log.c \
             $(SRC_DIR)/Common.c \

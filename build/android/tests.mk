@@ -11,7 +11,6 @@ LOCAL_SRC_FILES := \
             $(SRC_DIR)/TestBuffer.c \
             $(SRC_DIR)/TestCBuffer.c \
             $(SRC_DIR)/TestConcurrency.c \
-            $(SRC_DIR)/TestMessageBox.c \
             $(SRC_DIR)/TestList.c \
             $(SRC_DIR)/TestPrefs.c \
             $(SRC_DIR)/TestTimer.c \

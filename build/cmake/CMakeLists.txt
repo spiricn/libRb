@@ -27,7 +27,6 @@ set(SOURCES
     ${SOURCE_DIR}/ConcurrentRingBuffer.c
     ${SOURCE_DIR}/Log.c
     ${SOURCE_DIR}/LogPriv.c
-    ${SOURCE_DIR}/MessageBox.c
     ${SOURCE_DIR}/RingBuffer.c
     ${SOURCE_DIR}/Stopwatch.c
     ${SOURCE_DIR}/Common.c
@@ -49,7 +48,6 @@ set(HEADERS
     ${INCLUDE_DIR}/rb/Common.h
     ${INCLUDE_DIR}/rb/ConcurrentRingBuffer.h
     ${INCLUDE_DIR}/rb/Log.h
-    ${INCLUDE_DIR}/rb/MessageBox.h
     ${INCLUDE_DIR}/rb/RingBuffer.h
     ${INCLUDE_DIR}/rb/List.h
     ${INCLUDE_DIR}/rb/Prefs.h
@@ -102,7 +100,6 @@ set(TEST_SOURCES
     ${TEST_DIR}/TestBuffer.c
     ${TEST_DIR}/TestCBuffer.c
     ${TEST_DIR}/TestConcurrency.c
-    ${TEST_DIR}/TestMessageBox.c
     ${TEST_DIR}/TestList.c
     ${TEST_DIR}/TestPrefs.c
     ${TEST_DIR}/TestTimer.c
