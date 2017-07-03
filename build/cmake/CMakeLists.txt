@@ -110,6 +110,7 @@ set(TEST_SOURCES
     ${TEST_DIR}/TestVector.c
     ${TEST_DIR}/TestBlockingQueue.c
     ${TEST_DIR}/TestBufferQueue.c
+    ${TEST_DIR}/TestConsProd.c
     ${TEST_DIR}/Tests.c
 )
 
