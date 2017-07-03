@@ -62,6 +62,13 @@ int testBlockingQueue() {
     Message msgIn = { 42 };
     Message msgOut;
 
+    // Test timeut
+    rc = Rb_BlockingQueue_getTimed(bq, &msgOut, 50);
+    ASSERT_EQUAL(RB_TIMEOUT, rc);
+
+    rc = Rb_BlockingQueue_peekTimed(bq, &msgOut, 50);
+    ASSERT_EQUAL(RB_TIMEOUT, rc);
+
     // Write message
     rc = Rb_BlockingQueue_put(bq, &msgIn);
     ASSERT_EQUAL(RB_OK, rc);
@@ -94,6 +101,9 @@ int testBlockingQueue() {
 
     pthread_join(readerTid, &vrc);
     ASSERT_EQUAL(0, (intptr_t ) vrc);
+
+    rc = Rb_BlockingQueue_putTimed(bq, &msgIn, 50);
+    ASSERT_EQUAL(RB_TIMEOUT, rc);
 
     // In order for writer thread to stop blocking, we need to clear the queue
     rc = Rb_BlockingQueue_clear(bq);

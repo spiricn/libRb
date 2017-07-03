@@ -37,7 +37,9 @@ static BlockingQueueContext* BlockingQueue_getContext(
         Rb_BlockingQueueHandle handle);
 
 static int32_t BlockingQueuePriv_get(BlockingQueueContext* bq, void* message,
-        bool pop);
+        bool pop, int64_t timeoutMs);
+
+static int32_t BlockingQueuePriv_put(BlockingQueueContext* bq, const void* message, int64_t timeoutMs);
 
 /*******************************************************/
 /*              Functions Definitions                  */
@@ -108,27 +110,7 @@ int32_t Rb_BlockingQueue_put(Rb_BlockingQueueHandle handle, const void* message)
     if (bq == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
-
-    int32_t rc;
-
-    rc = Rb_ConsumerProducer_acquireWriteLock(bq->cp,
-            BlockingQueuePriv_canWrite, bq);
-    if (rc != RB_OK) {
-        RB_ERRC(rc, "Rb_ConsumerProducer_acquireLock failed");
-    }
-
-    rc = Rb_List_insert(bq->list, 0, message);
-    if (rc != RB_OK) {
-        RB_ERR("Rb_List_add failed ( %s )", Rb_getLastErrorMessage());
-        return rc;
-    }
-
-    rc = Rb_ConsumerProducer_releaseWriteLock(bq->cp, true);
-    if (rc != RB_OK) {
-        RB_ERRC(rc, "Rb_ConsumerProducer_releaseWriteLock failed");
-    }
-
-    return RB_OK;
+    return BlockingQueuePriv_put(bq, message, RB_WAIT_INFINITE);
 }
 
 int32_t Rb_BlockingQueue_peek(Rb_BlockingQueueHandle handle, void* message) {
@@ -139,7 +121,7 @@ int32_t Rb_BlockingQueue_peek(Rb_BlockingQueueHandle handle, void* message) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    return BlockingQueuePriv_get(bq, message, false);
+    return BlockingQueuePriv_get(bq, message, false, RB_WAIT_INFINITE);
 }
 
 int32_t Rb_BlockingQueue_get(Rb_BlockingQueueHandle handle, void* message) {
@@ -150,7 +132,7 @@ int32_t Rb_BlockingQueue_get(Rb_BlockingQueueHandle handle, void* message) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    return BlockingQueuePriv_get(bq, message, true);
+    return BlockingQueuePriv_get(bq, message, true, RB_WAIT_INFINITE);
 }
 
 int32_t Rb_BlockingQueue_isFull(Rb_BlockingQueueHandle handle) {
@@ -322,13 +304,86 @@ int32_t Rb_BlockingQueue_getCapacity(Rb_BlockingQueueHandle handle) {
     return res;
 }
 
-int32_t BlockingQueuePriv_get(BlockingQueueContext* bq, void* message, bool pop) {
+int32_t Rb_BlockingQueue_putTimed(Rb_BlockingQueueHandle handle,
+        const void* message, int64_t timeoutMs){
     int32_t rc;
 
-    rc = Rb_ConsumerProducer_acquireReadLock(bq->cp, BlockingQueuePriv_canRead,
-            bq);
-    if (rc != RB_OK) {
+    BlockingQueueContext* bq = BlockingQueue_getContext(handle);
+    if (bq == NULL) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
+    }
+
+    return BlockingQueuePriv_put(bq, message, timeoutMs);
+}
+
+int32_t Rb_BlockingQueue_getTimed(Rb_BlockingQueueHandle handle, void* message, int64_t timeoutMs){
+    int32_t rc;
+
+    BlockingQueueContext* bq = BlockingQueue_getContext(handle);
+    if (bq == NULL) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
+    }
+
+    return BlockingQueuePriv_get(bq, message, true, timeoutMs);
+}
+
+int32_t Rb_BlockingQueue_peekTimed(Rb_BlockingQueueHandle handle, void* message, int64_t timeoutMs){
+    int32_t rc;
+
+    BlockingQueueContext* bq = BlockingQueue_getContext(handle);
+    if (bq == NULL) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
+    }
+
+    return BlockingQueuePriv_get(bq, message, false, timeoutMs);
+}
+
+int32_t BlockingQueuePriv_put(BlockingQueueContext* bq, const void* message, int64_t timeoutMs){
+    int32_t rc;
+
+    if (timeoutMs != RB_WAIT_INFINITE && timeoutMs <= 0) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid timeout value: %lld", timeoutMs);
+    } else if (message == NULL) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid message arg: %p", message);
+    }
+
+    rc = Rb_ConsumerProducer_acquireWriteLock(bq->cp,
+            BlockingQueuePriv_canWrite, bq, timeoutMs);
+    if(rc == RB_TIMEOUT){
+        return rc;
+    }
+    else if (rc != RB_OK) {
         RB_ERRC(rc, "Rb_ConsumerProducer_acquireLock failed");
+    }
+
+    rc = Rb_List_insert(bq->list, 0, message);
+    if (rc != RB_OK) {
+        RB_ERR("Rb_List_add failed ( %s )", Rb_getLastErrorMessage());
+        return rc;
+    }
+
+    rc = Rb_ConsumerProducer_releaseWriteLock(bq->cp, true);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_releaseWriteLock failed");
+    }
+}
+
+int32_t BlockingQueuePriv_get(BlockingQueueContext* bq, void* message, bool pop, int64_t timeoutMs) {
+    int32_t rc;
+
+    if (timeoutMs != RB_WAIT_INFINITE && timeoutMs <= 0) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid timeout value: %lld", timeoutMs);
+    } else if (message == NULL) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid message arg: %p", message);
+    }
+
+    rc = Rb_ConsumerProducer_acquireReadLock(bq->cp, BlockingQueuePriv_canRead,
+            bq, timeoutMs);
+    if(rc == RB_TIMEOUT){
+        return rc;
+    }
+    else if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_acquireLock failed:\n%s", Rb_getLastErrorMessage());
     }
 
     int32_t size = Rb_List_getSize(bq->list);

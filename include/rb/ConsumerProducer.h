@@ -38,7 +38,7 @@ int32_t Rb_ConsumerProducer_free(Rb_ConsumerProducerHandle* handle);
  * TODO
  */
 int32_t Rb_ConsumerProducer_acquireReadLock(Rb_ConsumerProducerHandle handle,
-        Rb_ConsumerProducerConditionFnc fnc, void* arg);
+        Rb_ConsumerProducerConditionFnc fnc, void* arg, int64_t timeoutMs);
 
 /*
  * TODO
@@ -50,7 +50,7 @@ int32_t Rb_ConsumerProducer_releaseReadLock(Rb_ConsumerProducerHandle handle,
  * TODO
  */
 int32_t Rb_ConsumerProducer_acquireWriteLock(Rb_ConsumerProducerHandle handle,
-        Rb_ConsumerProducerConditionFnc fnc, void* arg);
+        Rb_ConsumerProducerConditionFnc fnc, void* arg, int64_t timeoutMs);
 
 /*
  * TODO

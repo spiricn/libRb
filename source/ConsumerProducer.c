@@ -11,6 +11,7 @@
 
 #include <pthread.h>
 #include <stdbool.h>
+#include <errno.h>
 
 /*******************************************************/
 /*              Defines                                */
@@ -43,12 +44,14 @@ static int32_t ConsProdPriv_notifyWritten(ConsProdContext* cp);
 
 static int32_t ConsProdPriv_notifyRead(ConsProdContext* cp);
 
-static bool ConsumerProducerPriv_timedWait(pthread_cond_t* cv,
+static int32_t ConsumerProducerPriv_timedWait(pthread_cond_t* cv,
         pthread_mutex_t* mutex, int64_t ms);
+
+static int32_t ConsumerProducerPriv_timedLock(pthread_mutex_t* mutex, int64_t ms);
 
 static int32_t ConsProdPriv_acquireLock(ConsProdContext* cp,
         pthread_mutex_t* mutex, pthread_cond_t* cv,
-        Rb_ConsumerProducerConditionFnc fnc, void* arg);
+        Rb_ConsumerProducerConditionFnc fnc, void* arg, int64_t timeoutMs);
 
 /*******************************************************/
 /*              Functions Definitions                  */
@@ -167,7 +170,7 @@ int32_t Rb_ConsumerProducer_releaseLock(Rb_ConsumerProducerHandle handle) {
 }
 
 int32_t Rb_ConsumerProducer_acquireReadLock(Rb_ConsumerProducerHandle handle,
-        Rb_ConsumerProducerConditionFnc fnc, void* arg) {
+        Rb_ConsumerProducerConditionFnc fnc, void* arg, int64_t timeoutMs) {
     int32_t rc;
 
     ConsProdContext* cp = ConsProdPriv_getContext(handle);
@@ -175,7 +178,7 @@ int32_t Rb_ConsumerProducer_acquireReadLock(Rb_ConsumerProducerHandle handle,
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    return ConsProdPriv_acquireLock(cp, &cp->readMutex, &cp->readCV, fnc, arg);
+    return ConsProdPriv_acquireLock(cp, &cp->readMutex, &cp->readCV, fnc, arg, timeoutMs);
 }
 
 int32_t Rb_ConsumerProducer_releaseReadLock(Rb_ConsumerProducerHandle handle,
@@ -208,16 +211,31 @@ int32_t Rb_ConsumerProducer_releaseReadLock(Rb_ConsumerProducerHandle handle,
 }
 
 int32_t ConsProdPriv_acquireLock(ConsProdContext* cp, pthread_mutex_t* mutex,
-        pthread_cond_t* cv, Rb_ConsumerProducerConditionFnc fnc, void* arg) {
+        pthread_cond_t* cv, Rb_ConsumerProducerConditionFnc fnc, void* arg, int64_t timeoutMs) {
     int32_t rc;
 
-    rc = pthread_mutex_lock(mutex);
-    if(rc != 0) {
-        RB_ERRC(RB_ERROR, "pthread_mutex_lock failed");
+    // Start measuring time
+    Rb_StopwatchHandle sw = Rb_Stopwatch_new();
+    Rb_Stopwatch_start(sw);
+
+    // Attempt to lock reader/writer mutex in the given time period
+    rc = ConsumerProducerPriv_timedLock(mutex, timeoutMs - Rb_Stopwatch_elapsedMs(sw));
+    if (rc == RB_TIMEOUT) {
+        // Did not manage to lock it in time
+        Rb_Stopwatch_free(&sw);
+
+        return rc;
+    }
+    else if(rc != RB_OK){
+        Rb_Stopwatch_free(&sw);
+
+        RB_ERRC(rc, "ConsumerProducerPriv_timedLock failed");
     }
 
-    // Disabled checkpoint
+    // Check if we got disabled in the meantime
     if(!cp->enabled) {
+        Rb_Stopwatch_free(&sw);
+
         rc = pthread_mutex_unlock(mutex);
         if(rc != 0) {
             RB_ERRC(RB_ERROR, "pthread_mutex_lock failed");
@@ -226,13 +244,28 @@ int32_t ConsProdPriv_acquireLock(ConsProdContext* cp, pthread_mutex_t* mutex,
         return RB_DISABLED;
     }
 
-    rc = pthread_mutex_lock(&cp->mutex);
-    if(rc != 0) {
-        RB_ERRC(RB_ERROR, "pthread_mutex_lock failed");
+    // Attempt to acquire global lock in the given time period
+    rc = ConsumerProducerPriv_timedLock(&cp->mutex, timeoutMs - Rb_Stopwatch_elapsedMs(sw));
+    if(rc == RB_TIMEOUT){
+        Rb_Stopwatch_free(&sw);
+
+        // Did not manage to lock it in time (so unlock the reader/writer mutex and return
+        rc = pthread_mutex_unlock(mutex);
+        if (rc != 0) {
+            RB_ERRC(rc, "pthread_mutex_unlock failed");
+        }
+        return RB_TIMEOUT;
+    }
+    else if (rc != RB_OK) {
+        Rb_Stopwatch_free(&sw);
+
+        RB_ERRC(rc, "ConsumerProducerPriv_timedLock failed");
     }
 
-    // Disabled checkpoint
+    // Check if we got disabled in the meantime
     if(!cp->enabled) {
+        Rb_Stopwatch_free(&sw);
+
         rc = pthread_mutex_unlock(mutex);
         if(rc != 0) {
             RB_ERRC(RB_ERROR, "pthread_mutex_lock failed");
@@ -246,12 +279,44 @@ int32_t ConsProdPriv_acquireLock(ConsProdContext* cp, pthread_mutex_t* mutex,
         return RB_DISABLED;
     }
 
-    while(!fnc(arg) && cp->enabled) {
-        pthread_cond_wait(cv, &cp->mutex);
+    // Wait until:
+    // - We're either ready for reading/writing
+    // - We timeout
+    // - We get disable
+    while(true){
+        bool rwReady = fnc(arg);
+        if (rwReady) {
+            break;
+        }
+
+        // Not ready yet so wait
+        rc = ConsumerProducerPriv_timedWait(cv, &cp->mutex, timeoutMs - Rb_Stopwatch_elapsedMs(sw));
+        if(rc == RB_TIMEOUT){
+            Rb_Stopwatch_free(&sw);
+
+            rc = pthread_mutex_unlock(mutex);
+            if (rc != 0) {
+                RB_ERRC(RB_ERROR, "pthread_mutex_lock failed");
+            }
+
+            rc = pthread_mutex_unlock(&cp->mutex);
+            if (rc != 0) {
+                RB_ERRC(RB_ERROR, "pthread_mutex_lock failed");
+            }
+
+            return RB_TIMEOUT;
+        }
+        else if(rc != RB_OK){
+            Rb_Stopwatch_free(&sw);
+
+            RB_ERRC(rc, "ConsumerProducerPriv_timedWait failed:\n%s", Rb_getLastErrorMessage());
+        }
     }
 
-    // Disabled checkpoint
+    // Check if we got disabled in the meantime
     if(!cp->enabled) {
+        Rb_Stopwatch_free(&sw);
+
         rc = pthread_mutex_unlock(mutex);
         if(rc != 0) {
             RB_ERRC(RB_ERROR, "pthread_mutex_lock failed");
@@ -269,7 +334,7 @@ int32_t ConsProdPriv_acquireLock(ConsProdContext* cp, pthread_mutex_t* mutex,
 }
 
 int32_t Rb_ConsumerProducer_acquireWriteLock(Rb_ConsumerProducerHandle handle,
-        Rb_ConsumerProducerConditionFnc fnc, void* arg) {
+        Rb_ConsumerProducerConditionFnc fnc, void* arg, int64_t timeoutMs) {
     int32_t rc;
 
     ConsProdContext* cp = ConsProdPriv_getContext(handle);
@@ -277,7 +342,7 @@ int32_t Rb_ConsumerProducer_acquireWriteLock(Rb_ConsumerProducerHandle handle,
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    return ConsProdPriv_acquireLock(cp, &cp->writeMutex, &cp->writeCV, fnc, arg);
+    return ConsProdPriv_acquireLock(cp, &cp->writeMutex, &cp->writeCV, fnc, arg, timeoutMs);
 }
 
 int32_t Rb_ConsumerProducer_releaseWriteLock(Rb_ConsumerProducerHandle handle,
@@ -426,20 +491,62 @@ ConsProdContext* ConsProdPriv_getContext(Rb_ConsumerProducerHandle handle) {
     return cp;
 }
 
-bool ConsumerProducerPriv_timedWait(pthread_cond_t* cv, pthread_mutex_t* mutex,
+int32_t ConsumerProducerPriv_timedWait(pthread_cond_t* cv, pthread_mutex_t* mutex,
         int64_t ms) {
-    if (ms == RB_WAIT_INFINITE) {
-        pthread_cond_wait(cv, mutex);
+    int32_t rc;
 
-        return true;
+    if (ms == RB_WAIT_INFINITE) {
+        rc = pthread_cond_wait(cv, mutex);
+        if(rc != 0){
+            RB_ERRC(RB_ERROR, "pthread_cond_wait failed");
+        }
+
+        return RB_OK;
     } else {
         if (ms <= 0) {
-            return false;
+            return RB_TIMEOUT;
         }
 
         struct timespec time;
         Rb_Utils_getOffsetTime(&time, ms);
 
-        return pthread_cond_timedwait(cv, mutex, &time) == 0;
+        rc = pthread_cond_timedwait(cv, mutex, &time) == 0;
+        if (rc == 0) {
+            return RB_OK;
+        } else if (rc == ETIMEDOUT) {
+            return RB_TIMEOUT;
+        } else {
+            RB_ERRC(RB_ERROR, "pthread_cond_timedwait failed");
+        }
+    }
+}
+
+
+static int32_t ConsumerProducerPriv_timedLock(pthread_mutex_t* mutex, int64_t ms){
+    int32_t rc;
+
+    if (ms == RB_WAIT_INFINITE) {
+        rc = pthread_mutex_lock(mutex);
+        if(rc != 0){
+            return RB_ERROR;
+        }
+
+        return RB_OK;
+    } else {
+        if (ms <= 0) {
+            return RB_TIMEOUT;
+        }
+
+        struct timespec time;
+        Rb_Utils_getOffsetTime(&time, ms);
+
+        rc = pthread_mutex_timedlock(mutex, &time);
+        if (rc == 0) {
+            return RB_OK;
+        } else if (rc == ETIMEDOUT) {
+            return RB_TIMEOUT;
+        } else {
+            return RB_ERROR;
+        }
     }
 }
