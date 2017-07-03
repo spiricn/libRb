@@ -2,6 +2,8 @@
 /*              Includes                               */
 /*******************************************************/
 
+#include "TestCommon.h"
+
 #include <rb/Log.h>
 #include <rb/Utils.h>
 
@@ -26,10 +28,8 @@
 
 int testUtils() {
     int rc;
-    if (!RB_CHECK_VERSION) {
-        RBLE("Invalid binary version");
-        return -1;
-    }
+
+    ASSERT_EQUAL(RB_TRUE, RB_CHECK_VERSION);
 
     {
         // Test Rb_Utils_growAppend
@@ -39,21 +39,14 @@ int testUtils() {
         RBLI("base string '%s' [%d]", base, baseSize);
 
         Rb_Utils_growAppend(&base, baseSize, &baseSize, "[First append]");
+        ASSERT_EQUAL(strlen(base) + 1, baseSize);
         RBLI("appended string '%s' [%d]", base, baseSize);
-        if (baseSize != strlen(base) + 1) {
-            RBLE("Unexpected size %d", baseSize);
-            return -1;
-        }
 
         Rb_Utils_growAppend(&base, baseSize, &baseSize, " [Second append]");
+        ASSERT_EQUAL(strlen(base) + 1, baseSize);
         RBLI("appended string '%s' [%d]", base, baseSize);
-        if (baseSize != strlen(base) + 1) {
-            RBLE("Unexpected size %d", baseSize);
-            return -1;
-        }
 
         RB_FREE(&base);
-        base = NULL;
         baseSize = 0;
     }
 
@@ -61,6 +54,7 @@ int testUtils() {
         // Test Rb_Utils_print
         char* str = Rb_Utils_print("Test int=%d float=%.2f string='%s'", 42,
                 3.14, "TEST");
+        ASSERT_NOT_EQUAL(str, NULL);
 
         RBLI("Printed string: '%s'", str);
 

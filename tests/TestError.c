@@ -2,6 +2,8 @@
 /*              Includes                               */
 /*******************************************************/
 
+#include "TestCommon.h"
+
 #include <rb/Log.h>
 #include <rb/ConcurrentRingBuffer.h>
 #include <rb/Utils.h>
@@ -43,26 +45,17 @@ int testError() {
     pthread_t testThreadId;
     void* threadRc;
 
-    if (!RB_CHECK_VERSION) {
-        RBLE("Invalid binary version");
-        return -1;
-    }
+    ASSERT_EQUAL(RB_TRUE, RB_CHECK_VERSION);
 
     // Cause an error on the main thread
     rc = causeError();
-    if (rc != 0) {
-        RBLE("causeError failed");
-        return -1;
-    }
+    ASSERT_EQUAL(0, rc);
 
     // Cause an error on another thread (previously caused error message shouldn't exist there)
     pthread_create(&testThreadId, NULL, testThread, NULL);
     pthread_join(testThreadId, &threadRc);
 
-    if ((intptr_t) threadRc != 0) {
-        RBLE("testThread failed");
-        return -1;
-    }
+    ASSERT_EQUAL(0, (intptr_t) threadRc);
 
     return 0;
 }

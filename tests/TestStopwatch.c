@@ -2,6 +2,8 @@
 /*              Includes                               */
 /*******************************************************/
 
+#include "TestCommon.h"
+
 #include <rb/Stopwatch.h>
 #include <rb/Log.h>
 
@@ -25,18 +27,13 @@
 
 int testStopwatch() {
     int32_t rc;
+    ASSERT_EQUAL(RB_TRUE, RB_CHECK_VERSION);
 
     Rb_StopwatchHandle sw = Rb_Stopwatch_new();
-    if (sw == NULL) {
-        RBLE("Rb_Stopwatch_new failed");
-        return -1;
-    }
+    ASSERT_NOT_NULL(sw);
 
     rc = Rb_Stopwatch_start(sw);
-    if (rc != RB_OK) {
-        RBLE("Rb_Stopwatch_start failed");
-        return -1;
-    }
+    ASSERT_EQUAL(RB_OK, rc);
 
     RBLD("Sleeping ..");
     usleep(SLEEP_PERIOD_MS * 1000);
@@ -48,16 +45,11 @@ int testStopwatch() {
     // Take absolute value
     delta = delta < 0 ? -delta : delta;
 
-    if (delta > ALLOWED_DELTA) {
-        RBLE("Allowed delta exceeded: %lld", delta);
-        return -1;
-    }
+    ASSERT(delta <= ALLOWED_DELTA);
 
     rc = Rb_Stopwatch_free(&sw);
-    if (rc != RB_OK || sw != NULL) {
-        RBLE("Rb_Stopwatch_free failed");
-        return -1;
-    }
+    ASSERT_EQUAL(RB_OK, rc);
+    ASSERT_EQUAL(sw, NULL);
 
     return 0;
 }

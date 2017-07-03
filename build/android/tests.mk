@@ -8,7 +8,7 @@ LOCAL_C_INCLUDES += \
 
 LOCAL_SRC_FILES := \
             $(SRC_DIR)/Tests.c \
-            $(SRC_DIR)/TestBuffer.c \
+            $(SRC_DIR)/TestCRingBuffer.c \
             $(SRC_DIR)/TestCBuffer.c \
             $(SRC_DIR)/TestConcurrency.c \
             $(SRC_DIR)/TestList.c \

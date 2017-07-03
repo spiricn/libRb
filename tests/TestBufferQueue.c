@@ -2,6 +2,8 @@
 /*              Includes                               */
 /*******************************************************/
 
+#include "TestCommon.h"
+
 #include <rb/BufferQueue.h>
 #include <rb/Log.h>
 #include <rb/Common.h>
@@ -33,8 +35,6 @@ static void* inputThread(void* arg);
 
 static void* processorThread(void* arg);
 
-static void* outputThread(void* arg);
-
 /*******************************************************/
 /*              Functions Definitions                  */
 /*******************************************************/
@@ -42,26 +42,15 @@ static void* outputThread(void* arg);
 int testBufferQueue() {
     int32_t rc;
     int32_t i;
-
     Rb_BufferQueueHandle bq;
 
+    ASSERT_EQUAL(RB_TRUE, RB_CHECK_VERSION);
+
     bq = Rb_BufferQueue_new(NUM_BUFFERS, BUFFER_SIZE);
-    if (bq == NULL) {
-        RBLE("Rb_BufferQueue_new failed");
-        return -1;
-    }
+    ASSERT_NOT_NULL(bq);
 
-    for (i = 0; i < NUM_BUFFERS; i++) {
-        rc = Rb_BufferQueue_containsBuffer(bq, i);
-        if (rc < 0) {
-            RBLE("Rb_BufferQueue_containsBuffer failed");
-            return -1;
-        }
-
-        if (rc != RB_TRUE) {
-            RBLE("Buffer not added");
-            return -1;
-        }
+    for(i = 0; i < NUM_BUFFERS; i++) {
+        ASSERT_EQUAL(RB_TRUE, Rb_BufferQueue_containsBuffer(bq, i));
     }
 
     // Reader thread will finish first
@@ -74,22 +63,14 @@ int testBufferQueue() {
     void* vrc = NULL;
 
     pthread_join(inputTid, &vrc);
-    if ((intptr_t) vrc != 0) {
-        RBLE("Input thread failed");
-        return -1;
-    }
+    ASSERT_EQUAL(0, (intptr_t ) vrc);
 
     pthread_join(processorTid, &vrc);
-    if ((intptr_t) vrc != 0) {
-        RBLE("Processor thread failed");
-        return -1;
-    }
+    ASSERT_EQUAL(0, (intptr_t ) vrc);
 
     rc = Rb_BufferQueue_free(&bq);
-    if (rc != RB_OK || bq) {
-        RBLE("Rb_BufferQueue_new failed");
-        return -1;
-    }
+    ASSERT_EQUAL(RB_OK, rc);
+    ASSERT_NULL(bq);
 
     return 0;
 }

@@ -2,6 +2,8 @@
 /*              Includes                               */
 /*******************************************************/
 
+#include "TestCommon.h"
+
 #include <rb/Log.h>
 
 #include <stdlib.h>
@@ -31,10 +33,8 @@ int testLog() {
     ;
 
     int rc;
-    if (!RB_CHECK_VERSION) {
-        RBLE("Invalid binary version");
-        RBL_RETURN(-1);
-    }
+
+    ASSERT_EQUAL(RB_TRUE, RB_CHECK_VERSION);
 
     RBLT("Test trace");
     RBLV("Test verbose");
@@ -47,29 +47,20 @@ int testLog() {
     Rb_LogOutputConfig config;
 
     rc = Rb_log_getOutputConfig(eRB_LOG_OUTPUT_CUSTOM, &config);
-    if (rc != RB_OK) {
-        RBLE("Rb_log_getOutputConfig failed");
-        RBL_RETURN(-1);
-    }
+    ASSERT_EQUAL(RB_OK, rc);
 
     config.enabled = true;
     config.data.custom.fnc = testLogCallback;
     config.data.custom.userData = (void*) 0xAAAAAAAA;
 
     rc = Rb_log_setOutputConfig(eRB_LOG_OUTPUT_CUSTOM, &config);
-    if (rc != RB_OK) {
-        RBLE("Rb_log_setOutputConfig failed");
-        RBL_RETURN(-1);
-    }
+    ASSERT_EQUAL(RB_OK, rc);
 
     RBLI("Test log !");
 
     config.enabled = false;
     rc = Rb_log_setOutputConfig(eRB_LOG_OUTPUT_CUSTOM, &config);
-    if (rc != RB_OK) {
-        RBLE("Rb_log_setOutputConfig failed");
-        RBL_RETURN(-1);
-    }
+    ASSERT_EQUAL(RB_OK, rc);
 
     RBLI("Test new line log:\n"
             "Line1\n"
@@ -78,14 +69,10 @@ int testLog() {
             "\n"
             "Line3");
 
-
     config.enabled = true;
     config.logLevel = eRB_LOG_DEBUG;
     rc = Rb_log_setOutputConfig(eRB_LOG_OUTPUT_CUSTOM, &config);
-    if (rc != RB_OK) {
-        RBLE("Rb_log_setOutputConfig failed");
-        RBL_RETURN(-1);
-    }
+    ASSERT_EQUAL(RB_OK, rc);
 
     RBLT("Test trace, should not be seen");
     RBLV("Test verbose, should not be seen");
@@ -94,10 +81,7 @@ int testLog() {
 
     config.enabled = false;
     rc = Rb_log_setOutputConfig(eRB_LOG_OUTPUT_CUSTOM, &config);
-    if (rc != RB_OK) {
-        RBLE("Rb_log_setOutputConfig failed");
-        RBL_RETURN(-1);
-    }
+    ASSERT_EQUAL(RB_OK, rc);
 
     RBL_RETURN(0);
 }

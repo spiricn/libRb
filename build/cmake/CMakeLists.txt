@@ -97,8 +97,8 @@ target_link_libraries (RingBuffer ${CMAKE_THREAD_LIBS_INIT})
 set(TEST_DIR "${LIB_ROOT}/tests")
 
 set(TEST_SOURCES
-    ${TEST_DIR}/TestBuffer.c
-    ${TEST_DIR}/TestCBuffer.c
+    ${TEST_DIR}/TestRingBuffer.c
+    ${TEST_DIR}/TestCRingBuffer.c
     ${TEST_DIR}/TestConcurrency.c
     ${TEST_DIR}/TestList.c
     ${TEST_DIR}/TestPrefs.c

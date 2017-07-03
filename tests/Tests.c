@@ -41,8 +41,8 @@ typedef struct {
 /*              Functions Declarations                 */
 /*******************************************************/
 
-DECLARE_TEST(Buffer);
-DECLARE_TEST(CBuffer);
+DECLARE_TEST(RingBuffer);
+DECLARE_TEST(CRingBuffer);
 DECLARE_TEST(Concurrency);
 DECLARE_TEST(List);
 DECLARE_TEST(Prefs);
@@ -64,8 +64,8 @@ static void* testRunner(void* arg);
 /********************************************************/
 
 static const TestEntry gTests[] = {
-ADD_TEST(Buffer)
-ADD_TEST(CBuffer)
+ADD_TEST(RingBuffer)
+ADD_TEST(CRingBuffer)
 ADD_TEST(Concurrency)
 ADD_TEST(List)
 ADD_TEST(Prefs)
