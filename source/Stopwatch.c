@@ -39,9 +39,18 @@ static StopwatchContext* StopwatchPriv_getContext(Rb_StopwatchHandle handle);
 
 
 Rb_StopwatchHandle Rb_Stopwatch_new(){
+    int32_t rc;
+
     StopwatchContext* sw = (StopwatchContext*)RB_CALLOC(sizeof(StopwatchContext));
 
     sw->magic = STOPWATCH_MAGIC;
+
+    rc = Rb_Stopwatch_start(sw);
+    if(rc != RB_OK){
+        RB_ERR("Rb_Stopwatch_startf failed");
+        RB_FREE(&sw);
+        return NULL;
+    }
 
     return (Rb_StopwatchHandle)sw;
 }
