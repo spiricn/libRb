@@ -477,6 +477,29 @@ int32_t Rb_ConsumerProducer_enable(Rb_ConsumerProducerHandle handle) {
     return RB_OK;
 }
 
+int32_t Rb_ConsumerProducer_isEnabled(Rb_ConsumerProducerHandle handle) {
+    int32_t rc;
+
+    ConsProdContext* cp = ConsProdPriv_getContext(handle);
+    if (cp == NULL) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
+    }
+
+    rc = Rb_ConsumerProducer_acquireLock(handle);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_acquireLock failed");
+    }
+
+    bool res = cp->enabled;
+
+    rc = Rb_ConsumerProducer_releaseLock(handle);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_releaseLock failed");
+    }
+
+    return res ? RB_TRUE : RB_FALSE;
+}
+
 ConsProdContext* ConsProdPriv_getContext(Rb_ConsumerProducerHandle handle) {
     if (handle == NULL) {
         return NULL;

@@ -94,6 +94,21 @@ int32_t Rb_BlockingQueue_getNumMessages(Rb_BlockingQueueHandle handle);
  */
 int32_t Rb_BlockingQueue_getCapacity(Rb_BlockingQueueHandle handle);
 
+/**
+ * TODO
+ */
+int32_t Rb_BlockingQueue_disable(Rb_BlockingQueueHandle handle);
+
+/**
+ * TODO
+ */
+int32_t Rb_BlockingQueue_enable(Rb_BlockingQueueHandle handle);
+
+/**
+ * TODO
+ */
+int32_t Rb_BlockingQueue_isEnabled(Rb_BlockingQueueHandle handle);
+
 #ifdef __cplusplus
 }
 #endif

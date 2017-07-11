@@ -304,6 +304,37 @@ int32_t Rb_BlockingQueue_getCapacity(Rb_BlockingQueueHandle handle) {
     return res;
 }
 
+int32_t Rb_BlockingQueue_disable(Rb_BlockingQueueHandle handle) {
+    int32_t rc;
+
+    BlockingQueueContext* bq = BlockingQueue_getContext(handle);
+    if (bq == NULL) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
+    }
+
+    return Rb_ConsumerProducer_disable(bq->cp);
+}
+
+int32_t Rb_BlockingQueue_enable(Rb_BlockingQueueHandle handle) {
+    int32_t rc;
+
+    BlockingQueueContext* bq = BlockingQueue_getContext(handle);
+    if (bq == NULL) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
+    }
+
+    return Rb_ConsumerProducer_enable(bq->cp);
+}
+
+int32_t Rb_BlockingQueue_isEnabled(Rb_BlockingQueueHandle handle){
+    BlockingQueueContext* bq = BlockingQueue_getContext(handle);
+    if (bq == NULL) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid handle");
+    }
+
+    return Rb_ConsumerProducer_isEnabled(bq->cp);
+}
+
 int32_t Rb_BlockingQueue_putTimed(Rb_BlockingQueueHandle handle,
         const void* message, int64_t timeoutMs){
     int32_t rc;

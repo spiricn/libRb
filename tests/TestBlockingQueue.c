@@ -166,6 +166,30 @@ int testBlockingQueue() {
     // Queue should be full
     ASSERT(Rb_BlockingQueue_isFull(bq));
 
+    // Should be enabled by default
+    rc = Rb_BlockingQueue_isEnabled(bq);
+    ASSERT_EQUAL_INT32(RB_TRUE, rc);
+
+    // Disable it
+    rc = Rb_BlockingQueue_disable(bq);
+    ASSERT_EQUAL_INT32(RB_OK, rc);
+
+    // Check if really disabled
+    rc = Rb_BlockingQueue_isEnabled(bq);
+    ASSERT_EQUAL_INT32(RB_FALSE, rc);
+
+    // Call should fail
+    rc = Rb_BlockingQueue_putTimed(bq, &msgIn, 50);
+    ASSERT_EQUAL_INT32(RB_DISABLED, rc);
+
+    // Re-enable it
+    rc = Rb_BlockingQueue_enable(bq);
+    ASSERT_EQUAL_INT32(RB_OK, rc);
+
+    // Check if really enabled
+    rc = Rb_BlockingQueue_isEnabled(bq);
+    ASSERT_EQUAL_INT32(RB_TRUE, rc);
+
     // Destroy blocking queue
     rc = Rb_BlockingQueue_free(&bq);
     ASSERT_EQUAL_INT32(RB_OK, rc);

@@ -88,6 +88,11 @@ int32_t Rb_ConsumerProducer_disable(Rb_ConsumerProducerHandle handle);
  */
 int32_t Rb_ConsumerProducer_enable(Rb_ConsumerProducerHandle handle);
 
+/*
+ * TODO
+ */
+int32_t Rb_ConsumerProducer_isEnabled(Rb_ConsumerProducerHandle handle);
+
 #ifdef __cplusplus
 }
 #endif
