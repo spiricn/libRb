@@ -119,4 +119,5 @@ add_executable(libRingBuffer_tests ${TEST_SOURCES})
 TARGET_LINK_LIBRARIES(libRingBuffer_tests
     RingBufferStatic
     pthread
+    m
 )

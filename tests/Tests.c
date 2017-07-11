@@ -8,6 +8,8 @@
 
 #include <stdlib.h>
 #include <pthread.h>
+#include <stdio.h>
+#include <math.h>
 
 /*******************************************************/
 /*              Defines                                */
@@ -25,6 +27,7 @@
 #define LOG_FILE "rb_log.txt"
 #endif
 
+#define MAX_CONCURRENT_THREADS ( 4 )
 /*******************************************************/
 /*              Typedefs                               */
 /*******************************************************/
@@ -138,6 +141,7 @@ int main(int argc, char* argv[]) {
 
 int runTests(const TestEntry* entries, uint32_t numTests) {
     uint32_t i;
+    int32_t j;
     int32_t rc;
     int32_t numFailed = 0;
     int32_t numPassed = 0;
@@ -148,18 +152,43 @@ int runTests(const TestEntry* entries, uint32_t numTests) {
 
     pthread_t* testThreads = (pthread_t*) RB_MALLOC(numTests * sizeof(pthread_t));
 
-    for (i = 0; i < numTests; i++) {
-        pthread_create(&testThreads[i], NULL, testRunner, (TestEntry*)&entries[i]);
-    }
+    for(i=0; i<(int32_t)(ceil((float)numTests/MAX_CONCURRENT_THREADS)); i++){
+        RBLD("Running test iteration %d ..", i);
 
-    for (i = 0; i < numTests; i++) {
-        void* res = NULL;
-        pthread_join(testThreads[i], &res);
+        // Start threads
+        for (j = 0; j < MAX_CONCURRENT_THREADS; j++) {
+            int32_t idx = i * MAX_CONCURRENT_THREADS + j;
+            if(idx >= numTests){
+                break;
+            }
 
-        if ((intptr_t) res) {
-            ++numFailed;
-        } else {
-            ++numPassed;
+            rc = pthread_create(&testThreads[idx], NULL, testRunner,
+                    (TestEntry*) &entries[idx]);
+            if(rc != 0){
+                RBLE("pthread_create failed");
+                return -1;
+            }
+        }
+
+        // Stop threads
+        for (j = 0; j < MAX_CONCURRENT_THREADS; j++) {
+            int32_t idx = i * MAX_CONCURRENT_THREADS + j;
+            if (idx >= numTests) {
+                break;
+            }
+
+            void* res = NULL;
+            rc = pthread_join(testThreads[idx], &res);
+            if (rc != 0) {
+                RBLE("pthread_join failed");
+                return -1;
+            }
+
+            if ((intptr_t) res) {
+                ++numFailed;
+            } else {
+                ++numPassed;
+            }
         }
     }
 
