@@ -366,6 +366,8 @@ int32_t BlockingQueuePriv_put(BlockingQueueContext* bq, const void* message, int
     if (rc != RB_OK) {
         RB_ERRC(rc, "Rb_ConsumerProducer_releaseWriteLock failed");
     }
+
+    return RB_OK;
 }
 
 int32_t BlockingQueuePriv_get(BlockingQueueContext* bq, void* message, bool pop, int64_t timeoutMs) {

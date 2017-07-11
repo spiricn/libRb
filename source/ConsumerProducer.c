@@ -219,7 +219,7 @@ int32_t ConsProdPriv_acquireLock(ConsProdContext* cp, pthread_mutex_t* mutex,
     Rb_Stopwatch_start(sw);
 
     // Attempt to lock reader/writer mutex in the given time period
-    rc = ConsumerProducerPriv_timedLock(mutex, timeoutMs - Rb_Stopwatch_elapsedMs(sw));
+    rc = ConsumerProducerPriv_timedLock(mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE : timeoutMs - Rb_Stopwatch_elapsedMs(sw));
     if (rc == RB_TIMEOUT) {
         // Did not manage to lock it in time
         Rb_Stopwatch_free(&sw);
@@ -245,7 +245,7 @@ int32_t ConsProdPriv_acquireLock(ConsProdContext* cp, pthread_mutex_t* mutex,
     }
 
     // Attempt to acquire global lock in the given time period
-    rc = ConsumerProducerPriv_timedLock(&cp->mutex, timeoutMs - Rb_Stopwatch_elapsedMs(sw));
+    rc = ConsumerProducerPriv_timedLock(&cp->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE : timeoutMs - Rb_Stopwatch_elapsedMs(sw));
     if(rc == RB_TIMEOUT){
         Rb_Stopwatch_free(&sw);
 
@@ -290,7 +290,7 @@ int32_t ConsProdPriv_acquireLock(ConsProdContext* cp, pthread_mutex_t* mutex,
         }
 
         // Not ready yet so wait
-        rc = ConsumerProducerPriv_timedWait(cv, &cp->mutex, timeoutMs - Rb_Stopwatch_elapsedMs(sw));
+        rc = ConsumerProducerPriv_timedWait(cv, &cp->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE : timeoutMs - Rb_Stopwatch_elapsedMs(sw));
         if(rc == RB_TIMEOUT){
             Rb_Stopwatch_free(&sw);
 
