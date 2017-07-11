@@ -39,12 +39,12 @@ int32_t Rb_Stopwatch_free(Rb_StopwatchHandle* handle);
 /**
  * (Re)starts counting time.
  *
- * @return RB_OK on succes, negative value otherwise.
+ * @return Number of milliseconds elapsed since the last reset/new call on success, negative value otherwise.
  */
-int32_t Rb_Stopwatch_start(Rb_StopwatchHandle handle);
+int64_t Rb_Stopwatch_reset(Rb_StopwatchHandle handle);
 
 /**
- * Acquires current elapsed time since the last 'Rb_Stopwatch_start' call.
+ * Acquires current elapsed time since the last 'Rb_Stopwatch_reset' call.
  *
  * @return Elapsed time in milliseconds on success, negative value otherwise.
  */

@@ -199,7 +199,6 @@ int32_t Rb_CRingBuffer_readTimed(Rb_CRingBufferHandle handle, uint8_t* data, uin
     }
 
     Rb_StopwatchHandle sw = Rb_Stopwatch_new();
-    Rb_Stopwatch_start(sw);
 
     uint32_t bytesRead = 0;
 
@@ -331,7 +330,6 @@ int32_t Rb_CRingBuffer_writeTimed(Rb_CRingBufferHandle handle, const uint8_t* da
     }
 
     Rb_StopwatchHandle sw = Rb_Stopwatch_new();
-    Rb_Stopwatch_start(sw);
 
     // Total bytes written
     uint32_t bytesWritten = 0;

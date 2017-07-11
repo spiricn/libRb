@@ -32,7 +32,7 @@ int testStopwatch() {
     Rb_StopwatchHandle sw = Rb_Stopwatch_new();
     ASSERT_NOT_NULL(sw);
 
-    rc = Rb_Stopwatch_start(sw);
+    rc = Rb_Stopwatch_reset(sw);
     ASSERT_EQUAL(RB_OK, rc);
 
     RBLD("Sleeping ..");

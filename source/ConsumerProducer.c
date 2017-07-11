@@ -216,7 +216,6 @@ int32_t ConsProdPriv_acquireLock(ConsProdContext* cp, pthread_mutex_t* mutex,
 
     // Start measuring time
     Rb_StopwatchHandle sw = Rb_Stopwatch_new();
-    Rb_Stopwatch_start(sw);
 
     // Attempt to lock reader/writer mutex in the given time period
     rc = ConsumerProducerPriv_timedLock(mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE : timeoutMs - Rb_Stopwatch_elapsedMs(sw));

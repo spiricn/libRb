@@ -25,6 +25,7 @@
 typedef struct {
     int32_t magic;
     struct timespec time;
+    bool timeSet;
 } StopwatchContext;
 
 /*******************************************************/
@@ -45,9 +46,9 @@ Rb_StopwatchHandle Rb_Stopwatch_new(){
 
     sw->magic = STOPWATCH_MAGIC;
 
-    rc = Rb_Stopwatch_start(sw);
+    rc = Rb_Stopwatch_reset(sw);
     if(rc != RB_OK){
-        RB_ERR("Rb_Stopwatch_startf failed");
+        RB_ERR("Rb_Stopwatch_resetf failed");
         RB_FREE(&sw);
         return NULL;
     }
@@ -67,25 +68,42 @@ int32_t Rb_Stopwatch_free(Rb_StopwatchHandle* handle){
     return RB_OK;
 }
 
-int32_t Rb_Stopwatch_start(Rb_StopwatchHandle handle){
+int64_t Rb_Stopwatch_reset(Rb_StopwatchHandle handle){
     StopwatchContext* sw = StopwatchPriv_getContext(handle);
-    if(sw == NULL) {
+    if (sw == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    clock_gettime(CLOCK_REALTIME, &sw->time);
+    int64_t elapsedMs = sw->timeSet ? Rb_Stopwatch_elapsedMs(handle) : 0;
+    if(elapsedMs < 0){
+        RB_ERRC(elapsedMs, "Rb_Stopwatch_elapsedMs failed");
+    }
 
-    return 0;
+    int32_t rc = clock_gettime(CLOCK_REALTIME, &sw->time);
+    if(rc != 0){
+        RB_ERRC(RB_ERROR, "clock_gettime failed: %d", rc);
+    }
+
+    if(!sw->timeSet){
+        sw->timeSet = true;
+    }
+
+    return elapsedMs;
 }
 
 int64_t Rb_Stopwatch_elapsedMs(Rb_StopwatchHandle handle){
+    int32_t rc;
+
     StopwatchContext* sw = StopwatchPriv_getContext(handle);
     if(sw == NULL) {
         RB_ERRC(-1, "Invalid handle");
     }
 
     struct timespec currTime;
-    clock_gettime(CLOCK_REALTIME, &currTime);
+    rc = clock_gettime(CLOCK_REALTIME, &currTime);
+    if(rc != 0){
+        RB_ERRC(RB_ERROR, "clock_gettime failed: %d", rc);
+    }
 
     int64_t elapsedMs = 0;
 
