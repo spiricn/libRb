@@ -19,37 +19,36 @@ extern "C" {
 /*******************************************************/
 
 typedef enum {
-    /**
-     * Block until there is enough data to fill the entire buffer
-     */
-    eRB_READ_BLOCK_FULL,
+    eCRB_READ_MODE_INVALID,
 
     /**
-     * Blocks until there is at least some data available
+     * Reads all the requested data. May block.
      */
-    eRB_READ_BLOCK_PARTIAL,
+    eCRB_READ_MODE_ALL,
 
     /**
-     * Return immidietly without blocking (may return zero)
+     * Reads at least some of the requested data. May block.
      */
-    eRB_READ_BLOCK_NONE
+    eCRB_READ_MODE_SOME,
 } Rb_CRingBuffer_ReadMode;
 
 typedef enum {
-    /**
-     * Blocks until there is enough free space to write the total ammount of data provided
-     */
-    eRB_WRITE_BLOCK_FULL,
+    eCRB_WRITE_MODE_INVALID,
 
     /**
-     * Does not block, writes all data possibly overwriting old data
+     * Writes all the data, without overwriting existing. May block.
      */
-    eRB_WRITE_OVERFLOW,
+    eCRB_WRITE_MODE_ALL,
 
     /**
-     * Does not block, attempts to write all data if there is enough space, otherwise writes at least some data
+     * Writes all data possibly overwriting existing. Does not block.
      */
-    eRB_WRITE_WRITE_SOME
+    eCRB_WRITE_MODE_OVERFLOW,
+
+    /**
+     * Writes at least some data, without overwriting existing. May block.
+     */
+    eCRB_WRITE_MODE_SOME
 } Rb_CRingBuffer_WriteMode;
 
 typedef void* Rb_CRingBufferHandle;
@@ -64,7 +63,7 @@ typedef void* Rb_CRingBufferHandle;
  * @param[in] size Buffer capacity
  * @return Buffer object on sucess, NULL on failure
  */
-Rb_CRingBufferHandle Rb_CRingBuffer_new(uint32_t size);
+Rb_CRingBufferHandle Rb_CRingBuffer_new(int32_t size);
 
 /**
  * Creates ring buffer from an already allocated memory block (may be shared between processes).
@@ -92,9 +91,17 @@ int32_t Rb_CRingBuffer_free(Rb_CRingBufferHandle* handle);
  * @param[in] data Destination buffer.
  * @param[in] size Size of the destination buffer.
  * @param[in] mode Mode which decides the behavior of the function call. See 'CRingBuffer_ReadMode' enumeration for more info.
- * @return Negative value on failure, number of bytes read otherwise.
+ * @return
+ *      - If mode is set to eCRB_READ_MODE_BLOCK_FULL:
+ *          - If returnValue < size and Rb_CRingBuffer_isEnabled returns true, all data wasn't written due to buffer being disabled.
+ *          - If returnValue == size, call succeeded.
+ *          - Otherwise, an error occurred.
+ *
+ *      - If mode is set to eCRB_READ_MODE_SOME:
+ *          - If returnValue <= 0, an error occurred.
+ *          - Otherwise, the function call succeeded.
  */
-int32_t Rb_CRingBuffer_read(Rb_CRingBufferHandle handle, uint8_t* data, uint32_t size, Rb_CRingBuffer_ReadMode mode);
+int32_t Rb_CRingBuffer_read(Rb_CRingBufferHandle handle, uint8_t* data, int32_t size, Rb_CRingBuffer_ReadMode mode, int32_t* bytesRead);
 
 /**
  * Reads data from the buffer. May block depending on the read mode.
@@ -104,9 +111,18 @@ int32_t Rb_CRingBuffer_read(Rb_CRingBufferHandle handle, uint8_t* data, uint32_t
  * @param[in] size Size of the destination buffer.
  * @param[in] mode Mode which decides the behavior of the function call. See 'CRingBuffer_ReadMode' enumeration for more info.
  * @param[in] timeoutMs Time in milliseconds after which the function times out and exists with a failure.
- * @return Negative value on failure, number of bytes read otherwise.
+ * @return
+ *      - If mode is set to eCRB_READ_MODE_BLOCK_FULL:
+ *          - If returnValue < size and Rb_CRingBuffer_isEnabled returns true, all data wasn't written due to buffer being disabled.
+ *          - If returnValue < size, Rb_CRingBUffer_isEnabled returns false. and timeoutMs > 0, all data wasn't written due to timeout.
+ *          - If returnValue == size, call succeeded.
+ *          - Otherwise, an error occurred.
+ *
+ *      - If mode is set to eCRB_READ_MODE_SOME:
+ *          - If returnValue <= 0, an error occurred.
+ *          - Otherwise, the function call succeeded.
  */
-int32_t Rb_CRingBuffer_readTimed(Rb_CRingBufferHandle handle, uint8_t* data, uint32_t size, Rb_CRingBuffer_ReadMode mode, int64_t timeoutMs);
+int32_t Rb_CRingBuffer_readTimed(Rb_CRingBufferHandle handle, uint8_t* data, int32_t size, Rb_CRingBuffer_ReadMode mode, int64_t timeoutMs, int32_t* bytesRead);
 
 /**
  * Writes data to the buffer. May block depending on the write mode.
@@ -118,7 +134,7 @@ int32_t Rb_CRingBuffer_readTimed(Rb_CRingBufferHandle handle, uint8_t* data, uin
  * @return Negative value on failure, number of bytes written otherwise.
  */
 int32_t Rb_CRingBuffer_write(Rb_CRingBufferHandle handle, const uint8_t* data,
-        uint32_t size, Rb_CRingBuffer_WriteMode mode);
+        int32_t size, Rb_CRingBuffer_WriteMode mode, int32_t* bytesWritten);
 
 /**
  * Writes data to the buffer. May block depending on the write mode.
@@ -131,7 +147,7 @@ int32_t Rb_CRingBuffer_write(Rb_CRingBufferHandle handle, const uint8_t* data,
  * @return Negative value on failure, number of bytes written otherwise.
  */
 int32_t Rb_CRingBuffer_writeTimed(Rb_CRingBufferHandle handle, const uint8_t* data,
-        uint32_t size, Rb_CRingBuffer_WriteMode mode, int64_t timeoutMs);
+        int32_t size, Rb_CRingBuffer_WriteMode mode, int64_t timeoutMs, int32_t* bytesWritten);
 
 /**
  * Gets the number of bytes currently contained in the buffer.

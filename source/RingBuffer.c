@@ -14,7 +14,7 @@
 /*              Defines                                */
 /*******************************************************/
 
-#define RING_BUFFER_MAGIC (0xA354BDDD )
+#define RING_BUFFER_MAGIC ( 0xA354BDDD )
 
 #ifndef MIN
 #define MIN(x, y) ( (x) < (y) ? (x) : (y) )

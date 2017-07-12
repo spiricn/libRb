@@ -4,8 +4,8 @@
 
 #include "rb/ConcurrentRingBuffer.h"
 #include "rb/RingBuffer.h"
-#include "rb/Stopwatch.h"
 #include "rb/Utils.h"
+#include "rb/ConsumerProducer.h"
 #include "rb/priv/ErrorPriv.h"
 
 #include <pthread.h>
@@ -20,37 +20,14 @@
 
 #define CONCURRENT_RING_BUFFER_MAGIC ( 0xC04C6B43 )
 
-#define LOCK_ACQUIRE do{ pthread_mutex_lock(&rb->base->mutex); }while(0)
-
-#define LOCK_RELEASE do{ pthread_mutex_unlock(&rb->base->mutex); }while(0)
-
-#define READ_LOCK do{ pthread_mutex_lock(&rb->base->readMutex); }while(0)
-
-#define READ_RELEASE do{ pthread_mutex_unlock(&rb->base->readMutex); }while(0)
-
-#define WRITE_LOCK do{ pthread_mutex_lock(&rb->base->writeMutex); }while(0)
-
-#define WRITE_RELEASE do{ pthread_mutex_unlock(&rb->base->writeMutex); }while(0)
-
 /*******************************************************/
 /*              Typedefs                               */
 /*******************************************************/
 
 typedef struct {
-    pthread_mutex_t mutex;
-    pthread_mutex_t readMutex;
-    pthread_mutex_t writeMutex;
-    pthread_cond_t readCV;
-    pthread_cond_t writeCV;
-    int enabled;
-} CRingBufferBase;
-
-typedef struct {
     uint32_t magic;
-    CRingBufferBase* base;
     Rb_RingBufferHandle buffer;
-    int sharedMemory;
-    int owned;
+    Rb_ConsumerProducerHandle cp;
 } CRingBufferContext;
 
 /*******************************************************/
@@ -59,109 +36,35 @@ typedef struct {
 
 static CRingBufferContext* CRingBufferPriv_getContext(Rb_CRingBufferHandle handle);
 
-static bool CRingBufferPriv_timedLock(pthread_mutex_t* mutex, int64_t ms){
-    if(ms == RB_WAIT_INFINITE){
-        pthread_mutex_lock(mutex);
+static int32_t CRingBufferPriv_canWrite(void* arg);
 
-        return true;
-    }
-    else{
-        if(ms <= 0){
-            return false;
-        }
-
-        struct timespec time;
-        Rb_Utils_getOffsetTime(&time, ms);
-
-        return pthread_mutex_timedlock(mutex, &time) == 0;
-    }
-}
-
-static bool CRingBufferPriv_timedWait(pthread_cond_t* cv, pthread_mutex_t* mutex, int64_t ms){
-    if(ms == RB_WAIT_INFINITE){
-        pthread_cond_wait(cv, mutex);
-
-        return true;
-    }
-    else{
-        if(ms <= 0){
-            return false;
-        }
-
-        struct timespec time;
-        Rb_Utils_getOffsetTime(&time, ms);
-
-        return pthread_cond_timedwait(cv, mutex, &time) == 0;
-    }
-}
+static int32_t CRingBufferPriv_canRead(void* arg);
 
 /*******************************************************/
 /*              Functions Definitions                  */
 /*******************************************************/
 
-Rb_CRingBufferHandle Rb_CRingBuffer_fromSharedMemory(void* memory, uint32_t size,
-        int init) {
-    if(size == 0) {
-        RB_ERR("Invalid size");
-        return NULL;
-    }
-
-    CRingBufferContext* rb = (CRingBufferContext*) RB_CALLOC(sizeof(CRingBufferContext));
-    rb->base = (CRingBufferBase*) memory;
-
-    rb->magic = CONCURRENT_RING_BUFFER_MAGIC;
-
-    rb->buffer = Rb_RingBuffer_fromSharedMemory(
-            ((uint8_t*) memory) + sizeof(CRingBufferBase),
-            size - sizeof(CRingBufferBase), init);
-
-    if(init) {
-        rb->base->enabled = 1;
-
-        pthread_mutexattr_t mutexAttr;
-        pthread_mutexattr_init(&mutexAttr);
-        pthread_mutexattr_setpshared(&mutexAttr, PTHREAD_PROCESS_SHARED);
-        pthread_mutex_init(&rb->base->mutex, &mutexAttr);
-
-        pthread_condattr_t condAttr;
-        pthread_condattr_init(&condAttr);
-        pthread_condattr_setpshared(&condAttr, PTHREAD_PROCESS_SHARED);
-
-        pthread_cond_init(&rb->base->readCV, &condAttr);
-
-        pthread_cond_init(&rb->base->writeCV, &condAttr);
-
-        rb->owned = 1;
-    } else {
-        rb->owned = 0;
-    }
-
-    rb->sharedMemory = 1;
-
-    return rb;
-}
-
-Rb_CRingBufferHandle Rb_CRingBuffer_new(uint32_t size) {
-    if(size == 0) {
-        RB_ERR("Invalid size");
+Rb_CRingBufferHandle Rb_CRingBuffer_new(int32_t size) {
+    if(size <= 0) {
+        RB_ERR("Invalid size: %d", size);
         return NULL;
     }
 
     CRingBufferContext* rb = (CRingBufferContext*) RB_CALLOC(sizeof(CRingBufferContext));
 
-    rb->base = (CRingBufferBase*) RB_MALLOC(sizeof(CRingBufferBase));
     rb->magic = CONCURRENT_RING_BUFFER_MAGIC;
-
-    pthread_mutex_init(&rb->base->mutex, NULL);
-    pthread_mutex_init(&rb->base->readMutex, NULL);
-    pthread_mutex_init(&rb->base->writeMutex, NULL);
-    pthread_cond_init(&rb->base->readCV, NULL);
-    pthread_cond_init(&rb->base->writeCV, NULL);
 
     rb->buffer = Rb_RingBuffer_new(size);
-    rb->base->enabled = 1;
-    rb->sharedMemory = 0;
-    rb->owned = 1;
+    if (rb->buffer == NULL) {
+        RB_ERR("Rb_RingBuffer_new failed");
+        return NULL;
+    }
+
+    rb->cp = Rb_ConsumerProducer_new();
+    if (rb->cp == NULL) {
+        RB_ERR("Rb_ConsumerProducer_new failed");
+        return NULL;
+    }
 
     return rb;
 }
@@ -172,437 +75,460 @@ int32_t Rb_CRingBuffer_free(Rb_CRingBufferHandle* handle) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    if(rb->owned) {
-        pthread_mutex_destroy(&rb->base->mutex);
-        pthread_mutex_destroy(&rb->base->writeMutex);
-        pthread_mutex_destroy(&rb->base->readMutex);
-        pthread_cond_destroy(&rb->base->readCV);
-        pthread_cond_destroy(&rb->base->writeCV);
+    int32_t rc;
+
+    rc = Rb_RingBuffer_free(&rb->buffer);
+    if(rc != RB_OK){
+        RB_ERRC(rc, "Rb_RingBuffer_free failed");
     }
 
-    const int32_t res = Rb_RingBuffer_free(&rb->buffer);
-
-    if(!rb->sharedMemory) {
-        RB_FREE(&rb->base);
+    rc = Rb_ConsumerProducer_free(&rb->cp);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_free failed");
     }
 
     RB_FREE(&rb);
     *handle = NULL;
 
-    return res;
+    return RB_OK;
 }
 
-int32_t Rb_CRingBuffer_readTimed(Rb_CRingBufferHandle handle, uint8_t* data, uint32_t size, Rb_CRingBuffer_ReadMode mode, int64_t timeoutMs){
+int32_t Rb_CRingBuffer_readTimed(Rb_CRingBufferHandle handle, uint8_t* data, int32_t size, Rb_CRingBuffer_ReadMode mode, int64_t timeoutMs, int32_t* bytesRead){
+    int32_t rc;
+
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
-    if(rb == NULL) {
+    if (rb == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
+    } else if (size <= 0) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid size: %d", size);
     }
 
-    Rb_StopwatchHandle sw = Rb_Stopwatch_new();
-
-    uint32_t bytesRead = 0;
-
-    // Checkpoint
-    if(!rb->base->enabled) {
-        Rb_Stopwatch_free(&sw);
-        return 0;
+    switch (mode) {
+    case eCRB_READ_MODE_ALL:
+    case eCRB_READ_MODE_SOME:
+        break;
+    default:
+        RB_ERRC(RB_INVALID_ARG, "Invalid read mode: %d", mode);
     }
 
-    // Read lock
-    if(!CRingBufferPriv_timedLock(&rb->base->readMutex, timeoutMs)){
-        Rb_Stopwatch_free(&sw);
-        return RB_TIMEOUT;
-    }
+    *bytesRead = 0;
 
-    // Buffer lock
-    if(!CRingBufferPriv_timedLock(&rb->base->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE : timeoutMs - Rb_Stopwatch_elapsedMs(sw))){
-        Rb_Stopwatch_free(&sw);
-        return RB_TIMEOUT;
-    }
+    int32_t bytesRemaining = size;
 
-    // Checkpoint
-    if(!rb->base->enabled) {
-        LOCK_RELEASE
-        ;
-        READ_RELEASE
-        ;
-        Rb_Stopwatch_free(&sw);
-        return 0;
-    }
-
-    if(mode == eRB_READ_BLOCK_FULL) {
-        uint32_t bytesRemaining = size;
-        uint32_t bytesUsed = 0;
-
-        while(bytesRemaining) {
-            // Wait until some data is available
-            while((bytesUsed = Rb_RingBuffer_getBytesUsed(rb->buffer)) == 0 && rb->base->enabled) {
-                if(!CRingBufferPriv_timedWait(&rb->base->writeCV, &rb->base->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE : timeoutMs - Rb_Stopwatch_elapsedMs(sw))){
-                    LOCK_RELEASE
-                    ;
-                    READ_RELEASE
-                    ;
-                    Rb_Stopwatch_free(&sw);
-                    return RB_TIMEOUT;
-                }
-            }
-
-            // Checkpoint
-            if(!rb->base->enabled) {
-                LOCK_RELEASE
-                ;
-                READ_RELEASE
-                ;
-                Rb_Stopwatch_free(&sw);
-                return size - bytesRemaining;
-            }
-
-            const int32_t toRead = bytesRemaining < bytesUsed ? bytesRemaining : bytesUsed;
-
-            Rb_RingBuffer_read(rb->buffer, data + (size - bytesRemaining), toRead);
-
-            bytesRemaining -= toRead;
-
-            pthread_cond_broadcast(&rb->base->readCV);
+    while(true){
+        rc = Rb_ConsumerProducer_acquireReadLock(rb->cp,
+                CRingBufferPriv_canRead, rb, timeoutMs);
+        if (rc == RB_TIMEOUT || rc == RB_DISABLED) {
+            *bytesRead = size - bytesRemaining;
+            return rc;
+        } else if (rc != RB_OK) {
+            RB_ERRC(rc, "Rb_ConsumerProducer_acquireReadLock failed");
         }
 
-        bytesRead = size - bytesRemaining;
-    } else {
-        if(mode == eRB_READ_BLOCK_PARTIAL) {
-            // Wait at least some of the data we requires is available
-            while(Rb_RingBuffer_getBytesUsed(rb->buffer) == 0 && rb->base->enabled) {
-                if(!CRingBufferPriv_timedWait(&rb->base->writeCV, &rb->base->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE : timeoutMs - Rb_Stopwatch_elapsedMs(sw))){
-                    LOCK_RELEASE
-                    ;
-                    READ_RELEASE
-                    ;
-                    Rb_Stopwatch_free(&sw);
-                    return RB_TIMEOUT;
-                }
-            }
-
-            // Checkpoint
-            if(!rb->base->enabled) {
-                LOCK_RELEASE
-                ;
-                READ_RELEASE
-                ;
-                Rb_Stopwatch_free(&sw);
-                return 0;
-            }
-
-            uint32_t available = Rb_RingBuffer_getBytesUsed(rb->buffer);
-
-            size = size > available ? available : size;
-        } else if(mode == eRB_READ_BLOCK_NONE) {
-            // Read whatever data is available at the moment (may be nothing)
-            uint32_t available = Rb_RingBuffer_getBytesUsed(rb->buffer);
-
-            size = size > available ? available : size;
+        int32_t bytesAvailable = Rb_RingBuffer_getBytesUsed(rb->buffer);
+        if (bytesAvailable <= 0) {
+            RB_ERRC(RB_ERROR, "Rb_RingBuffer_getBytesUsed failed: %d", bytesAvailable);
         }
 
-        if(size) {
-            bytesRead = Rb_RingBuffer_read(rb->buffer, data, size);
+        int32_t bytesToRead = bytesAvailable < bytesRemaining ? bytesAvailable : bytesRemaining;
 
-            pthread_cond_broadcast(&rb->base->readCV);
+        bytesRemaining -= bytesToRead;
+
+        rc = Rb_ConsumerProducer_releaseReadLock(rb->cp, true);
+        if (rc != RB_OK) {
+            RB_ERRC(rc, "Rb_ConsumerProducer_releaseReadLock failed");
+        }
+
+        if(mode == eCRB_READ_MODE_SOME || (mode == eCRB_READ_MODE_ALL && bytesRemaining == 0)){
+            *bytesRead = size - bytesRemaining;
+            return RB_OK;
         }
     }
-
-    LOCK_RELEASE
-    ;
-    READ_RELEASE
-    ;
-    Rb_Stopwatch_free(&sw);
-    return bytesRead;
 }
 
-int32_t Rb_CRingBuffer_read(Rb_CRingBufferHandle handle, uint8_t* data, uint32_t size,
-        Rb_CRingBuffer_ReadMode mode) {
-    return Rb_CRingBuffer_readTimed(handle, data, size, mode, RB_WAIT_INFINITE);
+int32_t Rb_CRingBuffer_read(Rb_CRingBufferHandle handle, uint8_t* data, int32_t size,
+        Rb_CRingBuffer_ReadMode mode, int32_t* bytesRead) {
+    return Rb_CRingBuffer_readTimed(handle, data, size, mode, RB_WAIT_INFINITE, bytesRead);
 }
 
 int32_t Rb_CRingBuffer_writeTimed(Rb_CRingBufferHandle handle, const uint8_t* data,
-        uint32_t size, Rb_CRingBuffer_WriteMode mode, int64_t timeoutMs){
+        int32_t size, Rb_CRingBuffer_WriteMode mode, int64_t timeoutMs, int32_t* bytesWritten){
+    int32_t rc;
+    int32_t res;
 
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
-
-    Rb_StopwatchHandle sw = Rb_Stopwatch_new();
-
-    // Total bytes written
-    uint32_t bytesWritten = 0;
-
-    // Checkpoint
-    if(!rb->base->enabled) {
-        Rb_Stopwatch_free(&sw);
-        return 0;
+    else if (size <= 0) {
+        RB_ERRC(RB_INVALID_ARG, "Invalid size: %d", size);
     }
 
-    // Write lock
-    if(!CRingBufferPriv_timedLock(&rb->base->writeMutex, timeoutMs)){
-        Rb_Stopwatch_free(&sw);
-        return RB_TIMEOUT;
+    switch (mode) {
+    case eCRB_WRITE_MODE_ALL:
+    case eCRB_WRITE_MODE_OVERFLOW:
+    case eCRB_WRITE_MODE_SOME:
+        break;
+    default:
+        RB_ERRC(RB_INVALID_ARG, "Invalid write mode: %d", mode);
     }
 
-    // Buffer lock
-    if(!CRingBufferPriv_timedLock(&rb->base->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE : timeoutMs - Rb_Stopwatch_elapsedMs(sw))){
-        Rb_Stopwatch_free(&sw);
-        return RB_TIMEOUT;
-    }
+    *bytesWritten = 0;
 
-    // Checkpoint
-    if(!rb->base->enabled) {
-        LOCK_RELEASE
-        ;
-        WRITE_RELEASE
-        ;
-        Rb_Stopwatch_free(&sw);
-        return 0;
-    }
+    if(mode ==  eCRB_WRITE_MODE_OVERFLOW){
+        bool enabled = false;
 
-    if(mode == eRB_WRITE_BLOCK_FULL) {
-        uint32_t bytesRemaining = size;
-        uint32_t bytesFree = 0;
+        rc = Rb_ConsumerProducer_acquireLock(rb->cp, &enabled);
+        if (rc != RB_OK) {
+            RB_ERRC(rc, "Rb_ConsumerProducer_acquireLock failed");
+        }
 
-        while(bytesRemaining) {
-            // Wait until some space is free
-            while((bytesFree = Rb_RingBuffer_getBytesFree(rb->buffer)) == 0
-                    && rb->base->enabled) {
-                if(!CRingBufferPriv_timedWait(&rb->base->readCV, &rb->base->mutex, timeoutMs == RB_WAIT_INFINITE ? RB_WAIT_INFINITE :  timeoutMs - Rb_Stopwatch_elapsedMs(sw))){
-                   LOCK_RELEASE
-                   ;
-                   WRITE_RELEASE
-                   ;
-                   Rb_Stopwatch_free(&sw);
-                   return RB_TIMEOUT;
-               }
+        // We acquired the global lock, but our CP is disable so just return
+        if(!enabled){
+            rc = Rb_ConsumerProducer_releaseLock(rb->cp);
+            if (rc != RB_OK) {
+                RB_ERRC(rc, "Rb_ConsumerProducer_releaseLock failed");
             }
 
-            // Checkpoint
-            if(!rb->base->enabled) {
-                LOCK_RELEASE
-                ;
-                WRITE_RELEASE
-                ;
-                Rb_Stopwatch_free(&sw);
-                return size - bytesRemaining;
+            return RB_DISABLED;
+        }
+
+        rc = Rb_RingBuffer_write(rb->buffer, data, size);
+        if (rc != size) {
+            RB_ERRC(rc, "Rb_RingBuffer_write failed");
+        }
+
+        rc = Rb_ConsumerProducer_notifyWritten(rb->cp);
+        if (rc != RB_OK) {
+            RB_ERRC(rc, "Rb_ConsumerProducer_notifyWritten failed");
+        }
+
+        rc = Rb_ConsumerProducer_releaseLock(rb->cp);
+        if (rc != RB_OK) {
+            RB_ERRC(rc, "Rb_ConsumerProducer_releaseLock failed");
+        }
+
+        *bytesWritten = size;
+        return RB_OK;
+    }
+    else if(mode == eCRB_WRITE_MODE_SOME) {
+        // Acquire write lock
+        rc = Rb_ConsumerProducer_acquireWriteLock(rb->cp,
+                CRingBufferPriv_canWrite, rb, timeoutMs);
+        if (rc == RB_TIMEOUT || rc == RB_DISABLED) {
+            return rc;
+        } else if (rc != RB_OK) {
+            RB_ERRC(rc, "Rb_ConsumerProducer_acquireLock failed");
+        }
+
+        int32_t bytesFree = Rb_RingBuffer_getBytesFree(rb->buffer);
+        if (bytesFree <= 0) {
+            RB_ERRC(RB_ERROR, "Rb_RingBuffer_getBytesFree failed");
+        }
+
+        int32_t bytesToWrite =
+                bytesFree < size ? bytesFree : size;
+
+        rc = Rb_RingBuffer_write(rb->buffer, data, bytesToWrite);
+        if (rc != bytesToWrite) {
+            RB_ERRC(RB_ERROR, "Rb_RingBuffer_write failed");
+        }
+
+        // Release write lock
+        rc = Rb_ConsumerProducer_releaseWriteLock(rb->cp, true);
+        if (rc != RB_OK) {
+            RB_ERRC(rc, "Rb_ConsumerProducer_releaseWriteLock failed");
+        }
+
+        *bytesWritten = bytesToWrite;
+        return RB_OK;
+    }
+    else if(mode == eCRB_WRITE_MODE_ALL){
+        int32_t bytesRemaining = size;
+
+        while(true) {
+            // Acquire write lock
+            rc = Rb_ConsumerProducer_acquireWriteLock(rb->cp,
+                    CRingBufferPriv_canWrite, rb, timeoutMs);
+            if (rc == RB_TIMEOUT || rc == RB_DISABLED) {
+                *bytesWritten = size - bytesRemaining;
+                return rc;
+            } else if (rc != RB_OK) {
+                RB_ERRC(rc, "Rb_ConsumerProducer_acquireLock failed");
             }
 
-            const uint32_t toWrite =
-                    bytesRemaining < bytesFree ? bytesRemaining : bytesFree;
+            int32_t bytesFree = Rb_RingBuffer_getBytesFree(rb->buffer);
+            if (bytesFree <= 0) {
+                RB_ERRC(RB_ERROR, "Rb_RingBuffer_getBytesFree failed");
+            }
 
-            Rb_RingBuffer_write(rb->buffer, data + (size - bytesRemaining),
-                    toWrite);
+            int32_t bytesToWrite = bytesFree < bytesRemaining ? bytesFree : bytesRemaining;
 
-            bytesRemaining -= toWrite;
+            rc = Rb_RingBuffer_write(rb->buffer, &data[size - bytesRemaining], bytesToWrite);
+            if (rc != bytesToWrite) {
+                RB_ERRC(RB_ERROR, "Rb_RingBuffer_write failed");
+            }
+            bytesRemaining -= bytesToWrite;
 
-            pthread_cond_broadcast(&rb->base->writeCV);
-        }
+            // Release write lock
+            rc = Rb_ConsumerProducer_releaseWriteLock(rb->cp, true);
+            if (rc != RB_OK) {
+                RB_ERRC(rc, "Rb_ConsumerProducer_releaseWriteLock failed");
+            }
 
-        bytesWritten = size - bytesRemaining;
-    } else {
-        if(mode == eRB_WRITE_WRITE_SOME) {
-            // Write as much data as we can without blocking
-            uint32_t free = Rb_RingBuffer_getBytesFree(rb->buffer);
-
-            size = size > free ? free : size;
-        }
-
-        if(size) {
-            bytesWritten = Rb_RingBuffer_write(rb->buffer, data, size);
-
-            pthread_cond_broadcast(&rb->base->writeCV);
+            if (bytesRemaining == 0) {
+                *bytesWritten = size;
+                return RB_OK;
+            }
         }
     }
-
-    LOCK_RELEASE
-    ;
-    WRITE_RELEASE
-    ;
-    Rb_Stopwatch_free(&sw);
-    return bytesWritten;
+    else {
+        // Sanity check
+        RB_ERRC(RB_ERROR, "Invalid mode: %d", mode);
+    }
 }
 
 int32_t Rb_CRingBuffer_write(Rb_CRingBufferHandle handle, const uint8_t* data,
-        uint32_t size, Rb_CRingBuffer_WriteMode mode) {
-    return Rb_CRingBuffer_writeTimed(handle, data, size, mode, RB_WAIT_INFINITE);
+        int32_t size, Rb_CRingBuffer_WriteMode mode, int32_t* bytesWritten) {
+    return Rb_CRingBuffer_writeTimed(handle, data, size, mode, RB_WAIT_INFINITE, bytesWritten);
 }
 
 int32_t Rb_CRingBuffer_getBytesUsed(Rb_CRingBufferHandle handle) {
+    int32_t rc;
+
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
-    if(rb == NULL) {
+    if (rb == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    LOCK_ACQUIRE
-    ;
+    rc = Rb_ConsumerProducer_acquireLock(rb->cp, NULL);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_acquireLock failed");
+    }
 
-    const int32_t res = Rb_RingBuffer_getBytesUsed(rb->buffer);
+    int32_t res = Rb_RingBuffer_getBytesUsed(rb->buffer);
 
-    LOCK_RELEASE
-    ;
+    rc = Rb_ConsumerProducer_releaseLock(rb->cp);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_releaseLock failed");
+    }
 
     return res;
 }
 
 int32_t Rb_CRingBuffer_getBytesFree(Rb_CRingBufferHandle handle) {
+    int32_t rc;
+
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    LOCK_ACQUIRE
-    ;
+    rc = Rb_ConsumerProducer_acquireLock(rb->cp, NULL);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_acquireLock failed");
+    }
 
-    const int32_t res = Rb_RingBuffer_getBytesFree(rb->buffer);
+    int32_t res = Rb_RingBuffer_getBytesFree(rb->buffer);
 
-    LOCK_RELEASE
-    ;
+    rc = Rb_ConsumerProducer_releaseLock(rb->cp);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_releaseLock failed");
+    }
 
     return res;
 }
 
 int32_t Rb_CRingBuffer_getCapacity(Rb_CRingBufferHandle handle) {
+    int32_t rc;
+
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
-    if(rb == NULL) {
+    if (rb == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    LOCK_ACQUIRE
-    ;
+    rc = Rb_ConsumerProducer_acquireLock(rb->cp, NULL);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_acquireLock failed");
+    }
 
-    const int32_t res = Rb_RingBuffer_getCapacity(rb->buffer);
+    int32_t res = Rb_RingBuffer_getCapacity(rb->buffer);
 
-    LOCK_RELEASE
-    ;
+    rc = Rb_ConsumerProducer_releaseLock(rb->cp);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_releaseLock failed");
+    }
 
     return res;
 }
 
 int32_t Rb_CRingBuffer_disable(Rb_CRingBufferHandle handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
-    if(rb == NULL) {
+    if (rb == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    LOCK_ACQUIRE
-    ;
-
-    rb->base->enabled = 0;
-
-    pthread_cond_broadcast(&rb->base->readCV);
-    pthread_cond_broadcast(&rb->base->writeCV);
-
-    LOCK_RELEASE
-    ;
-
-    return 0;
+    return Rb_ConsumerProducer_enable(rb->cp);
 }
 
 int32_t Rb_CRingBuffer_enable(Rb_CRingBufferHandle handle) {
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
-    if(rb == NULL) {
+    if (rb == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    LOCK_ACQUIRE
-    ;
-
-    rb->base->enabled = 1;
-
-    LOCK_RELEASE
-    ;
-
-    return 0;
+    return Rb_ConsumerProducer_enable(rb->cp);
 }
 
 int32_t Rb_CRingBuffer_isEnabled(Rb_CRingBufferHandle handle) {
+    int32_t rc;
+
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
-    if(rb == NULL) {
+    if (rb == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    LOCK_ACQUIRE
-    ;
+    rc = Rb_ConsumerProducer_acquireLock(rb->cp, NULL);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_acquireLock failed");
+    }
 
-    const int32_t res = rb->base->enabled;
+    int32_t res = Rb_ConsumerProducer_isEnabled(rb->cp);
 
-    LOCK_RELEASE
-    ;
+    rc = Rb_ConsumerProducer_releaseLock(rb->cp);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_releaseLock failed");
+    }
 
     return res;
 }
 
 int32_t Rb_CRingBuffer_clear(Rb_CRingBufferHandle handle) {
+    int32_t rc;
+
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
-    if(rb == NULL) {
+    if (rb == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    LOCK_ACQUIRE
-    ;
+    rc = Rb_ConsumerProducer_acquireLock(rb->cp, NULL);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_acquireLock failed");
+    }
 
-    Rb_RingBuffer_clear(rb->buffer);
+    rc = Rb_RingBuffer_clear(rb->buffer);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_RingBuffer_clear failed");
+    }
 
-    pthread_cond_broadcast(&rb->base->readCV);
+    rc = Rb_ConsumerProducer_notifyRead(rb->cp);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_notifyRead failed");
+    }
 
-    LOCK_RELEASE
-    ;
+    rc = Rb_ConsumerProducer_releaseLock(rb->cp);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_acquireLock failed");
+    }
 
-    return 0;
+    return RB_OK;
 }
 
 int32_t Rb_CRingBuffer_isFull(Rb_CRingBufferHandle handle) {
+    int32_t rc;
+
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    LOCK_ACQUIRE
-    ;
+    rc = Rb_ConsumerProducer_acquireLock(rb->cp, NULL);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_acquireLock failed");
+    }
 
     int32_t res = Rb_RingBuffer_isFull(rb->buffer);
 
-    LOCK_RELEASE
-    ;
+    rc = Rb_ConsumerProducer_releaseLock(rb->cp);
+    if(rc != RB_OK){
+        RB_ERRC(rc, "Rb_ConsumerProducer_releaseLock failed");
+    }
 
     return res;
 }
 
 int32_t Rb_CRingBuffer_isEmpty(Rb_CRingBufferHandle handle) {
+    int32_t rc;
+
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    LOCK_ACQUIRE
-    ;
+    rc = Rb_ConsumerProducer_acquireLock(rb->cp, NULL);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_acquireLock failed");
+    }
 
     int32_t res = Rb_RingBuffer_isEmpty(rb->buffer);
 
-    LOCK_RELEASE
-    ;
+    rc = Rb_ConsumerProducer_releaseLock(rb->cp);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_releaseLock failed");
+    }
 
     return res;
 }
 
 int32_t Rb_CRingBuffer_resize(Rb_CRingBufferHandle handle, uint32_t capacity){
+    int32_t rc;
+
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    LOCK_ACQUIRE
-    ;
+    rc = Rb_ConsumerProducer_acquireLock(rb->cp, NULL);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_acquireLock failed");
+    }
 
     int32_t res = Rb_RingBuffer_resize(rb->buffer, capacity);
 
-    LOCK_RELEASE
-    ;
+    rc = Rb_ConsumerProducer_releaseLock(rb->cp);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_releaseLock failed");
+    }
 
     return res;
+}
+
+int32_t CRingBufferPriv_canWrite(void* arg) {
+    CRingBufferContext* rb = CRingBufferPriv_getContext(arg);
+    if (rb == NULL) {
+        return RB_INVALID_ARG;
+    }
+
+    int32_t bytesFree = Rb_RingBuffer_getBytesFree(rb->buffer);
+    if (bytesFree < 0) {
+        return bytesFree;
+    }
+
+    return bytesFree > 0 ? RB_TRUE : RB_FALSE;
+}
+
+int32_t CRingBufferPriv_canRead(void* arg) {
+    CRingBufferContext* rb = CRingBufferPriv_getContext(arg);
+    if (rb == NULL) {
+        return RB_INVALID_ARG;
+    }
+
+    int32_t bytesUsed = Rb_RingBuffer_getBytesUsed(rb->buffer);
+    if (bytesUsed < 0) {
+        return bytesUsed;
+    }
+
+    return bytesUsed > 0 ? RB_TRUE : RB_FALSE;
 }
 
 CRingBufferContext* CRingBufferPriv_getContext(Rb_CRingBufferHandle handle) {
@@ -619,21 +545,27 @@ CRingBufferContext* CRingBufferPriv_getContext(Rb_CRingBufferHandle handle) {
 }
 
 float Rb_CRingBuffer_usedSpacePercentage(Rb_CRingBufferHandle handle) {
+    int32_t rc;
+
     CRingBufferContext* rb = CRingBufferPriv_getContext(handle);
     if(rb == NULL) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    LOCK_ACQUIRE
-    ;
+    rc = Rb_ConsumerProducer_acquireLock(rb->cp, NULL);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_acquireLock failed");
+    }
 
     int32_t bytesUsed = Rb_RingBuffer_getBytesUsed(rb->buffer);
     int32_t capacity = Rb_RingBuffer_getCapacity(rb->buffer);
 
     float res = 100 * (float) bytesUsed / (float) capacity;
 
-    LOCK_RELEASE
-    ;
+    rc = Rb_ConsumerProducer_releaseLock(rb->cp);
+    if (rc != RB_OK) {
+        RB_ERRC(rc, "Rb_ConsumerProducer_releaseLock failed");
+    }
 
     return res;
 }

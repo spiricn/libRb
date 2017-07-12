@@ -31,10 +31,21 @@
 #define ASSERT_EQUAL(expected, actual) ASSERT(expected == actual)
 
 // Integer
-#define ASSERT_EQUAL_INT32(expected, actual) \
-    do { \
+#define ASSERT_EQUAL_INT32_R(expected, actual, ret) \
+	do { \
         if((expected) != (actual)){ \
             RBLE("Assertion failure: %d != %d", (expected), (actual)); \
+            LOG_LAST_ERROR; \
+            return ret; \
+        } \
+    } while(0)
+
+#define ASSERT_EQUAL_INT32(expected, actual) ASSERT_EQUAL_INT32_R(expected, actual, -1)
+
+#define ASSERT_EQUAL_BFR(expected, actual, size) \
+    do { \
+        if(memcmp((expected), (actual), size) != 0){ \
+            RBLE("Assertion failure: %p != %p", (expected), (actual)); \
             LOG_LAST_ERROR; \
             return -1; \
         } \
