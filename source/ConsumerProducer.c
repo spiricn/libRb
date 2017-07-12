@@ -137,7 +137,7 @@ int32_t Rb_ConsumerProducer_free(Rb_ConsumerProducerHandle* handle) {
     return RB_OK;
 }
 
-int32_t Rb_ConsumerProducer_acquireLock(Rb_ConsumerProducerHandle handle) {
+int32_t Rb_ConsumerProducer_acquireLock(Rb_ConsumerProducerHandle handle, bool* isEnabled) {
     int32_t rc;
 
     ConsProdContext* cp = ConsProdPriv_getContext(handle);
@@ -148,6 +148,10 @@ int32_t Rb_ConsumerProducer_acquireLock(Rb_ConsumerProducerHandle handle) {
     rc = pthread_mutex_lock(&cp->mutex);
     if (rc != 0) {
         RB_ERRC(RB_ERROR, "pthread_mutex_lock failed");
+    }
+
+    if(isEnabled) {
+        *isEnabled = cp->enabled;
     }
 
     return RB_OK;
@@ -283,9 +287,25 @@ int32_t ConsProdPriv_acquireLock(ConsProdContext* cp, pthread_mutex_t* mutex,
     // - We timeout
     // - We get disable
     while(true){
-        bool rwReady = fnc(arg);
-        if (rwReady) {
+        int32_t rwReady = fnc(arg);
+        if (rwReady == RB_TRUE) {
             break;
+        }
+        else if(rwReady != RB_FALSE){
+            Rb_Stopwatch_free(&sw);
+
+            rc = pthread_mutex_unlock(mutex);
+            if (rc != 0) {
+                RB_ERRC(RB_ERROR, "pthread_mutex_lock failed");
+            }
+
+            rc = pthread_mutex_unlock(&cp->mutex);
+            if (rc != 0) {
+                RB_ERRC(RB_ERROR, "pthread_mutex_lock failed");
+            }
+
+            // Error occurred in rw check function
+            RB_ERRC(rwReady, "Rb_ConsumerProducerConditionFnc failed: %d", rwReady);
         }
 
         // Not ready yet so wait
@@ -425,7 +445,7 @@ int32_t Rb_ConsumerProducer_disable(Rb_ConsumerProducerHandle handle) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    rc = Rb_ConsumerProducer_acquireLock(handle);
+    rc = Rb_ConsumerProducer_acquireLock(handle, NULL);
     if(rc != RB_OK) {
         RB_ERRC(rc, "Rb_ConsumerProducer_acquireLock failed");
     }
@@ -460,7 +480,7 @@ int32_t Rb_ConsumerProducer_enable(Rb_ConsumerProducerHandle handle) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    rc = Rb_ConsumerProducer_acquireLock(handle);
+    rc = Rb_ConsumerProducer_acquireLock(handle, NULL);
     if(rc != RB_OK) {
         RB_ERRC(rc, "Rb_ConsumerProducer_acquireLock failed");
     }
@@ -485,7 +505,7 @@ int32_t Rb_ConsumerProducer_isEnabled(Rb_ConsumerProducerHandle handle) {
         RB_ERRC(RB_INVALID_ARG, "Invalid handle");
     }
 
-    rc = Rb_ConsumerProducer_acquireLock(handle);
+    rc = Rb_ConsumerProducer_acquireLock(handle, NULL);
     if (rc != RB_OK) {
         RB_ERRC(rc, "Rb_ConsumerProducer_acquireLock failed");
     }

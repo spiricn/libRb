@@ -18,7 +18,7 @@ extern "C" {
 
 typedef void* Rb_ConsumerProducerHandle;
 
-typedef bool (*Rb_ConsumerProducerConditionFnc)(void* arg);
+typedef int32_t (*Rb_ConsumerProducerConditionFnc)(void* arg);
 
 /*******************************************************/
 /*              Functions Declarations                 */
@@ -61,7 +61,7 @@ int32_t Rb_ConsumerProducer_releaseWriteLock(Rb_ConsumerProducerHandle handle,
 /*
  * TODO
  */
-int32_t Rb_ConsumerProducer_acquireLock(Rb_ConsumerProducerHandle handle);
+int32_t Rb_ConsumerProducer_acquireLock(Rb_ConsumerProducerHandle handle, bool* isEnabled);
 
 /*
  * TODO
