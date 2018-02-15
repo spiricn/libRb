@@ -16,7 +16,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 project("libRingBuffer")
 
 
-set(LIB_ROOT "../../")
+set(LIB_ROOT "${CMAKE_CURRENT_LIST_DIR}")
 
 set(SOURCE_DIR "${LIB_ROOT}/source")
 
@@ -81,14 +81,17 @@ add_library(
 	${SOURCES}
 	${HEADERS}
 )
+install (TARGETS RingBuffer DESTINATION lib)
 
 add_library(
 	RingBufferStatic STATIC
 	${SOURCES}
 	${HEADERS}
 )
+install (TARGETS RingBufferStatic DESTINATION lib)
 
 target_link_libraries (RingBuffer ${CMAKE_THREAD_LIBS_INIT})
+
 
 set(TEST_DIR "${LIB_ROOT}/tests")
 
